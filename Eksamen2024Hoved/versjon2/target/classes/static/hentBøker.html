@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <title>Books App</title>
+    <style>
+        body {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Knapper for å hente og lagre bøker -->
+    <button type="button" class="btn btn-primary" id="hentBøker">Fetch Books</button>
+    <button type="button" class="btn btn-success" id="lagrebøker">Save Books</button>
+    <button type="button" class="btn btn-info" id="hentStatistikk">Get book Statistics</button>
+    <button type="button" class="btn btn-success" id="loginPage">LoginPAge</button>
+    <br><br>
+
+    <!-- Bootstrap-stylet tabell for å vise bøkene -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead style="background-color: #f2f2f2;">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Year</th>
+                <th>Rating</th>
+                <th>category</th>
+            </tr>
+            </thead>
+            <tbody id="books-table-body"></tbody>
+        </table>
+    </div>
+    <div id="book-statistics"style="display: none"></div>
+
+    <div class="container">
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h1>Slette poesibøker</h1>
+                <p>Trykk på knappen for å slette poesi bøker publisert etter 2000. Du må være logget inn.</p>
+                <button type="button" class="btn btn-danger" id="deletePoetryBooksBtn">Slett poesiBøker</button>
+                <div id="statusMessagePoesi"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Området hvor feilmeldinger vil bli vist -->
+    <div id="errorInForm" class="alert alert-danger" style="display: none;"></div>
+</div>
+
+<script>
+    // Legger til event listeners for knappene
+    document.getElementById("hentBøker").addEventListener('click', fetchbooks);
+    document.getElementById("lagrebøker").addEventListener('click', lagrebok);
+    document.getElementById('hentStatistikk').addEventListener('click',fetchStatistics);
+    document.getElementById('loginPage').addEventListener('click',() => {
+        window.location.href='/loginPage.html';
+    });
+    document.getElementById('deletePoetryBooksBtn').addEventListener('click',deletePoetryBooks);
+    async function fetchStatistics() {
+        try {
+            const response = await fetch("BookController/bookStatistics");
+            // hvis responser ikke er ok
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch statistics: ${errorText}`);
+            }
+
+            // Vent på at responsen skal bli konvertert til tekst (fordi du returnerer en tekststreng fra serveren)
+            const data = await response.text();
+
+            // Bruk innerHTML for å sette HTML-innholdet
+            document.getElementById('book-statistics').innerHTML = `<div style="color: red">${data}</div>`;
+
+            // Vis statistikk-div-en
+            document.getElementById('book-statistics').style.display = 'block';
+
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('errorInForm').innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            document.getElementById('errorInForm').style.display = 'block'; // Vis feilmeldingen
+        }
+    }
+
+    async function lagrebok() {
+        try {
+            // Sender en POST-forespørsel til "/saveBooks"
+            const response = await fetch("BookController/saveBooks", { method: "POST" });
+
+            // Sjekker om forespørselen var vellykket
+            if (response.ok) {
+                const message = await response.text(); // Leser rå tekst fra responsen
+                console.log("Books saved successfully: ", message);
+            } else {
+                // Logger statuskode hvis forespørselen feiler
+                console.error(`Failed to save books. Status: ${response.status}`);
+            }
+        } catch (error) {
+            // Håndterer nettverksfeil eller andre problemer
+            console.error("There was an error saving books: ", error);
+        }
+    }
+
+    /**
+     * Funksjon for å hente bøker.
+     * Sender en GET-forespørsel til serveren og fyller tabellen med bøker.
+     */
+    async function fetchbooks() {
+        try {
+            // Sender en GET-forespørsel til "/getBooks"
+            const response = await fetch("BookController/getBooks");
+            // Sjekker om responsen er vellykket
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            // Konverterer JSON-data til JavaScript-objekter
+            const books = await response.json();
+            console.log(books); // Logger dataen for debugging
+            createBooksTable(books); // Oppdaterer tabellen med bøkene
+        } catch (error) {
+            // Viser feilmelding dersom noe går galt
+            console.error("There has been a problem with your fetch operation: ", error);
+            // Oppdaterer feilmeldingsseksjonen på siden
+            const errorDiv = document.getElementById('errorInForm');
+            errorDiv.textContent = `Error fetching books: ${error.message}`;
+            errorDiv.style.display = 'block';
+        }
+    }
+    function createBooksTable(books) {
+        const tableBody = document.getElementById('books-table-body');
+        tableBody.innerHTML = ''; // Tømmer eksisterende innhold i tabellen
+
+        // Itererer over listen av bøker og oppretter tabellrader
+        books.forEach(book => {
+            const row = document.createElement('tr');
+
+            // Oppretter celler for hver egenskap (title, author, year, rating)
+            const titleCell = document.createElement('td');
+            titleCell.textContent = book.title;
+
+            const authorCell = document.createElement('td');
+            authorCell.textContent = book.author;
+
+            const yearCell = document.createElement('td');
+            yearCell.textContent = book.publishingYear;
+
+            const ratingCell = document.createElement('td');
+            ratingCell.textContent = book.rating;
+
+            const categoryCell = document.createElement('td');
+            categoryCell.textContent = book.category;
+            // Legger cellene til raden
+            row.appendChild(titleCell);
+            row.appendChild(authorCell);
+            row.appendChild(yearCell);
+            row.appendChild(ratingCell);
+            row.appendChild(categoryCell);
+            // Legger raden til tabellen
+            tableBody.appendChild(row);
+        });
+    }
+    async function deletePoetryBooks() {
+        try {
+            const response = await fetch("/BookController/deletePoetryBooks", {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json(); // husk awwait her
+            if(!response.ok) {
+                console.error("Server error:", data.message || "No error message provided");
+                document.getElementById('statusMessagePoesi').innerHTML =
+                    `<div class="alert alert-danger">${data.message}</div>`;
+                return;
+            }
+            document.getElementById('statusMessagePoesi').innerHTML =
+                `<div class="alert alert-success">${data.success}</div>`;
+        } catch (error) {
+            console.error(error.message); // logger feilmelding
+            document.getElementById('statusMessagePoesi').innerHTML =
+                `<div class="alert alert-danger">${error.message}</div>`;
+        }
+    }
+</script>
+</body>
+</html>

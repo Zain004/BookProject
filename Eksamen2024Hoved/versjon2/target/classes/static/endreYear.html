@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oppdater Publiseringsår for Bok</title>
+    <!-- Legger til Bootstrap for styling -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <h2 class = "mb-4">Oppdater Publiseringssår for Bok</h2>
+    <!-- Skjema for å oppdatere bokens publiseringsår -->
+    <form id="updateBookYearForm">
+        <div class="mb-3">
+            <label for="bookId" class="form-label">Bok ID</label>
+            <input type="number" class="form-control" id="bookId" required placeholder="skriv bokens Id"/>
+        </div>
+        <div class="mb-3">
+            <label for="publishingYear" class="form-label">Nytt publiseringsår</label>
+            <input type="number" class="form-control" id="publishingYear" required placeholder="skriv inn nytt publiseringsår"/>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Oppdater</button>
+    </form>
+    <!-- Responsmeldinger vises her -->
+    <div id="responseMessage" class="mt-4"></div>
+</div>
+<script>
+    document.getElementById("updateBookYearForm").addEventListener("submit", sendOppdatering);
+
+    async function sendOppdatering() {
+        event.preventDefault(); // Hindrer skjemaet fra å sende en vanlig HTTP-forespørsel,
+        // brukes for å for eks: gjøre validering før skjema skaø sendes
+        // Henter verdiene fra inputfeltene
+        const bookId = document.getElementById("bookId").value;
+        const newYear = document.getElementById("publishingYear").value;
+        try {
+
+            // Valider at begge feltene er fylt ut
+            if (!bookId || !newYear) {
+                document.getElementById("responseMessage").innerHTML =
+                    `<div class="alert alert-warning">Vennligst fyll ut både Bok ID og Publiseringsår</div>`;
+                return; // Avbryt dersom feltene ikke er fylt ut
+            }
+            //http://localhost:8080/updateBookYear/{id}?newYear={newYear}
+            const url = `/BookController/updateBookYear/${bookId}?newYear=${newYear}`;
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({bookId: bookId, newYear: newYear}) // send data som JSON
+            })
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('responseMessage').innerHTML =
+                    `<div class="alert alert-success">${data.success}</div>`;
+                console.log(data.success);
+            } else {
+                document.getElementById('responseMessage').innerHTML =
+                    `<div class="alert alert-danger">${data.error}</div>`;
+                console.log(data.error)
+            }
+        } catch (error) {
+            document.getElementById('responseMessage').innerHTML =
+                `<div class="alert alert-danger">Feil: ${error.message}</div>`;
+            console.log(error.message);
+        }
+    }
+</script>
+</body>
+</html>

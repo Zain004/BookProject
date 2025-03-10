@@ -1,0 +1,127 @@
+package com.example.versjon2.Book.Service;
+
+import com.example.versjon2.Book.Entity.Book;
+import com.example.versjon2.Book.Repository.BookRepository;
+import com.example.versjon2.Authentication.Service.UserService;
+import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@AllArgsConstructor
+@Service
+public class BookService {
+    private final BookRepository bookRepository;
+    private final Logger logger = LoggerFactory.getLogger(BookService.class);
+    private final UserService userService;
+    public List<Book> getAllBooks() {
+        List<Book> books = bookRepository.findAll();
+        if(books.isEmpty()) {
+            throw new RuntimeException("No books found in the database.");
+        }
+        return books;
+    }
+    public void saveBooks(List<Book> books) {
+        if(books == null || books.isEmpty()) {
+            throw new IllegalArgumentException("Book list cannot be null or empty.");
+        }
+        bookRepository.saveAll(books);
+    }
+    public Book updateBookYear(Long id, int newYear) {
+        // optional brukes for å se om boken er null eller ikke i kombinasjon med isPresent
+        Optional<Book> optionalBook = bookRepository.findById(id);
+        if(optionalBook.isPresent()) {
+            Book book = optionalBook.get();
+            book.setPublishingYear(newYear);
+            return bookRepository.save(book);
+        } else {
+            throw new RuntimeException("Book with ID " + id + " not found");
+        }
+    }
+    public void deleteBookById(Long id) {
+        if(bookRepository.existsById(id)) {
+            bookRepository.deleteById(id);
+            logger.info("Successfully deleted book with ID: " + id);
+        } else {
+            logger.warn("Book with ID : " + id + " not found.");
+            throw new RuntimeException("Book with ID " + id + " does not exist");
+        }
+    }
+
+    public String getBookStatistics(List<Book> books) {
+
+        if(books == null || books.isEmpty()) {
+            throw new IllegalArgumentException("Book List cannot be null or empty. ");
+        }
+
+        // Metode 1: Beregn antall bøker i listen
+        int bookCount = books.size(); // Antall bøker
+        // Opprett en Map for å holde oversikt over antall bøker per forfatter
+        Map<String, Integer> authorCountMap = new HashMap<>();
+        for(Book book : books) {
+            // Hvis forfatteren finnes, øk antallet med 1, ellers sett til 1
+            authorCountMap.put(book.getAuthor(), authorCountMap.getOrDefault(book.getAuthor(),0) + 1);
+        }
+        // Metode 2: Finn den eldste boken ved å sammenligne publiseringsåret
+        Book oldestBook = books.stream()
+                .min((book1, book2) -> Integer.compare(book1.getPublishingYear(), book2.getPublishingYear()))
+                .orElseThrow(() -> new RuntimeException("No books available. ")); // Kaster unntak hvis listen er tom
+        // Metode 3: Finn forfattere som kommer mer enn 1 ganger
+        String authorsAppearMoreThanOnce = authorCountMap.entrySet().stream()
+                .filter(objekt -> objekt.getValue() > 1) // Filtrer ut forfattere som har mer enn en bok
+                .map(Map.Entry::getKey) // Hent forfatternavnene (nøklene)
+                .reduce((book1, book2) -> (book1 + ", " + book2)) // slå sammen forfatterNavnene til en streng
+                .orElse("No Authors appear more than once. "); // Hvis ingen forfattere har mer enn en bok vis denne meldingen
+        // Metode 4: Finn forfatteren med flest bøker
+        int maxBooks = authorCountMap.entrySet().stream()
+                .max((author1, author2) -> Integer.compare(author1.getValue(), author2.getValue())) // finn den største verdien
+                .map(Map.Entry::getValue) // hent antall bøker for dne mest frekvente forfatteren
+                .orElse(0); // Hvis ingen bøker finnes, returner 0 som standard
+        // Finn alle forfattere som har det maksimale antallet bøker
+        List<String> authorsWithMostBooks = authorCountMap.entrySet().stream() // filtrer forfattere med samme antall bøker
+                .filter(objekt -> objekt.getValue() == maxBooks) // hent forfatternavnene
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList()); // samle dem i en lsite
+        // hvis flere forfattere har flest bøker, ramse dem opp
+        String mostFrequentAuthors = String.join(", ", authorsWithMostBooks);
+
+    // Returner resultatet som en formatert streng
+        return String.format("We have %d books. The oldest book is %s by %s publishes in %d. " +
+            "Authors that appears more than Once: '%s'. The Author with most books is %s",
+            bookCount, oldestBook.getTitle(), oldestBook.getAuthor(), oldestBook.getPublishingYear(),
+                authorsAppearMoreThanOnce, mostFrequentAuthors
+        );
+    }
+
+    public int deletePoetryBooksPublishedAfter2000(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        // sjekk om brukeren er logger inn
+        if(userId == null || !userService.isUserLoggedIn(session)) {
+            logger.warn("User is not logged in.");
+            throw new RuntimeException("USer is not logged in.");
+        }
+        // Hvis brukeren er logget inn, fortsett å slette bøker
+        try {
+            // Antall slettede bøker
+            int deletedCount = bookRepository.deleteBooksByCategoryAndPublishingYearGreaterThan("Poetry",2000);
+            logger.info("Deleted {} poetry books published after 2000", deletedCount);
+            return deletedCount;
+        } catch (RuntimeException e) {
+            logger.error("Runtime error while deleting books: " + e);
+            throw e;
+        }
+        catch (Exception e) {
+            logger.error("Error while deleting books: " + e);
+            throw new RuntimeException("An error occured while deleting books.");
+        }
+    }
+
+}
+

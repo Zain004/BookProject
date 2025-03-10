@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h1>Register</h1>
+            <br>
+
+            <label for="inFirstname">Firstname : </label>
+            <input type="text" id="inFirstname" name="firstname" class="form-control" required>
+            <span id="errorFirstname" style="color: red" aria-live="polite"></span> <!-- aria-live="polite" brukes for at feilmeldingen skal bli lest opp etter hverandre-->
+            <br>
+            <label for="inLastname">Lastname : </label>
+            <input type="text" id="inLastname" name="lastname" class="form-control" required>
+            <span id="errorLastname" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <label for="inDob">Date of Birth</label>
+            <input type="date" id="inDob" name="dob" class="form-control" required>
+            <span id="errorDob" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <label for="inPhone">Phone number : </label>
+            <input type="tel" id="inPhone" name="phone" class="form-control" required>
+            <span id="errorPhone" style="color: red" aria-live="polite"></span>
+            <br>
+
+
+            <label for="inEmail">Email: </label>
+            <input type="email" id="inEmail" name="email" class="form-control" required>
+            <span id="errorEmail" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <button type="button" id="saveUser" class="btn-primary">Send</button>
+
+            <div id="errorInForm"></div>
+
+        </div>
+        <div class="col-md-6">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead style="background-color: #f2f2f2">
+                    <tr>
+                        <th>Firstname</th>
+                        <th>Lastname</th>
+                        <th>Date of Birth</th>
+                        <th>Phone</th>
+                        <th>E-mail</th>
+                    </tr>
+                    </thead>
+                    <tbody id="users-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstarp for å vise kunder -->
+<div id="errorInTable" class="alert alert-danger" style="display: none;"></div>
+
+<script>
+    $(document).ready(function () { //Hele javascriptet må være inne denne hvis du bruker jquery
+        $("#inFirstname").change(validateFirstname);
+        $("#inLastname").change(validateLastname);
+        //oppgaven spør om å kun validere 3 stk
+        $("#inDob").change(validateDob);
+        $("#inPhone").change(validatePhone);
+        $("#inEmail").change(validateEmail);
+        // Dette gjør jeg hvis de id'ene endres så sjekker den emd change funksjon
+        // istedenfor å bruke en onchange, er nyere metode
+        function validatePhone() {
+            let phone = $("#inPhone").val();
+            let regex = /^(?!\s)[0-9]{8}(?<!\s)$/;
+            if(regex.test(phone)) {
+                $("#errorPhone").text("");
+                return true;
+            } else {
+                $("#errorPhone").text("Error in phone, must be 8 digits");
+                return false;
+            }
+        }
+
+        function validateDob() {
+            const dobInput = $("#inDob").val();
+            const errorSpan = $("#errorDob");
+
+            if(!dobInput) {
+                errorSpan.text("Please enter your date of birth.");
+                return false;
+            }
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDifference = today.getMonth() - dob.getMonth();
+            if(monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if(age < 18) {
+                errorSpan.text("You must be at least 18 years old to create an account.");
+                return false;
+            } else {
+                errorSpan.text(""); //Clear any previous error messages
+                return true;
+            }
+        }
+        function validateEmail() {
+            let email = $("#inEmail").val();
+            let regex = /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+            if(regex.test(email)) {
+                $("#errorEmail").text("");
+                return true;
+            } else {
+                $("#errorEmail").text("Please enter a valid email address.");
+                return false;
+            }
+        }
+        function validateFirstname() {
+            let firstname = $("#inFirstname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(firstname)) {
+                $("#errorFirstname").text("");
+                return true;
+            } else {
+                $("#errorFirstname").text("Firstname must be between 2 and 50 chacters. ");
+                return false;
+            }
+        }
+        function validateLastname() {
+            let lastname = $("#inLastname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(lastname)) {
+                $("#errorLastname").text("");
+                return true;
+            } else {
+                $("#errorLastname").text("Lastname must be between 2 and 50 characters. ");
+                return false;
+            }
+        }
+
+        $("#saveUser").click(saveUser);
+
+
+
+        async function saveUser() {
+            const firstName = $("#inFirstname").val();
+            const lastName = $("#inLastname").val();
+            const dob = $("#inDob").val();
+            const phone = $("#inPhone").val();
+            const email = $("#inEmail").val().trim();
+            //sjekk om alle feltene er fylt ut
+            if(!firstName || !lastName || !dob || !phone || !email){
+                $("#errorInForm").text("One or more fields are empty. ");
+                return;
+            }// valider feltene
+            if(validateFirstname() && validateLastname() && validateDob() && validatePhone() && validateEmail()) {
+                const users = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    dob: dob,
+                    phone: phone,
+                    email: email
+                };
+                console.log("User to be saved: ", users);
+                try {
+                    const response = await fetch("/saveUser", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(users)
+                    });
+
+                    // Denne koden kjøres når API-kallet er fullført
+                    if (response.ok) {
+                        alert("User saved successfully!");
+                        $("#errorInForm").text("");
+                        $("input").val(""); // Tøm inputfeltene etter lagring
+                        fetchBooks(); // Kjør funksjonen for å hente bøker (hvis nødvendig)
+                    } else {
+                        // Hvis responsen ikke er vellykket, kast en feil
+                        const errorMessage = await response.text();
+                        throw new Error(errorMessage);
+                    }
+                } catch (error) {
+                    // Kjøres hvis noe går galt i fetch eller i response-check
+                    $("#errorInForm").text("Error saving users: " + error.message);
+                    console.error("Error saving users: ", error);
+                }
+
+            } else {
+                $("#errorInForm").text("One or more fields are inncorrectly formatted.")
+            }
+        }
+
+
+    })
+
+    // kall funksjonen når siden lastes
+    window.onload = fetchBooks;
+
+    async function fetchBooks() {
+        try {// Sender en GET - forespørsel til api
+            const response = await fetch("/usersController/getUsers")
+            // sjekker om responsen var vellykket
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            // konverter JSON-data til javascript objekter
+            let users;
+            try {
+                users = await response.json();
+            } catch (jsonError) { // behandler error hvis JSON konvertering ikke lykkes
+                console.error('Error converting response to Json: ', jsonError);
+                throw new Error('Invalid JSON response');
+            }
+            console.log(users); // Logger dataen for debugging
+            createUsersTable(users); // oppdaterer tabellen med bøkene
+        } catch (error) {
+            console.error('Error fethcing users: ', error);
+            const errorDiv = document.getElementById('errorInForm');
+            errorDiv.textContent = `Error fetching users: ${error.message}`;
+            errorDiv.style.display = 'block'; // feilmelding blir synlig
+        }
+    }
+    function createUsersTable(users) {
+        const tableUser = document.getElementById('users-table');
+        tableUser.innerHTML = '';
+        users.forEach(user => {
+            // oppretter en ny rad
+            const row = document.createElement('tr');
+            // oppretter celler for hver egenskap (firstname, lastname, dob, phone, email)
+            const firstnameCell = document.createElement('td');
+            firstnameCell.textContent = user.firstName;
+            const lastnameCell = document.createElement('td');
+            lastnameCell.textContent = user.lastName;
+            const dobCell = document.createElement('td');
+            dobCell.textContent = user.dob;
+            const phoneCell = document.createElement('td');
+            phoneCell.textContent = user.phone;
+            const emailCell = document.createElement('td');
+            emailCell.textContent = user.email;
+            row.appendChild(firstnameCell);
+            row.appendChild(lastnameCell);
+            row.appendChild(dobCell);
+            row.appendChild(phoneCell);
+            row.appendChild(emailCell);
+            tableUser.appendChild(row);
+        })
+    }
+</script>
+</body>
+</html>
