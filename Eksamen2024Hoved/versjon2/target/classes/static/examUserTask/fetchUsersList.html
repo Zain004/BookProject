@@ -7,8 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
           crossorigin="anonymous">
-
-
 </head>
 <body>
 <!-- Navbar -->
@@ -109,18 +107,15 @@
             loadingClass: 'loading-active',
             hiddenClass: 'loading-hidden',
             hideNoUsersDisplay: true,
-            timeout: 0,
             targetElement: null
         }
         #indicatorElement
-        #timeoutId
         #options // lagres internt
 
         constructor(options = {}) {
             // 1. Validering og sammenslåing av konfigurasjon
             this.#options = this.#validateAndMergeOptions(options);
             this.#indicatorElement = null;
-            this.#timeoutId = null;
             this.#initializeIndicatorElement();
         }
         /*
@@ -153,10 +148,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#indicatorElement = document.getElementById(this.#options.indicatorId);
 
             if (!this.#indicatorElement) {
-                this.#indicatorElement = this._createIndicatorElement(); // oppretter et nytt objekt og lagrer referansen i #indiactorElement
-                const target = this.#options.targetElement || document.body;
-                target.appendChild(this.#indicatorElement);
-                console.debug("Successfully created loading indicator: " + this.#indicatorElement);
+                console.error(`Loading indicator element with ID '${this.#options.indicatorId}' not found in the DOM. The loading indicator will not be displayed.`);
+                return; // Avslutter funksjonen tidlig
             }
             // sjekker at det faktisk er et HTMLElement
             if (!(this.#indicatorElement instanceof HTMLElement)) {
@@ -164,35 +157,15 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             }
         }
 
-        _createIndicatorElement() {
-            const element = document.createElement('div');
-            element.id = this.#options.indicatorId;
-            element.setAttribute('role', 'alert'); // role="alert"
-            element.setAttribute('aria-live', 'assertive'); // aria-live="assertive"
-            element.setAttribute('aria-busy', false); // aria-busy="false"
-
-            if (this.#options.displayType == 'class') {
-                element.classList.add(this.#options.hiddenClass)
-            } else {
-                element.style.display = 'none';
-            }
-
-            const spinner = document.createElement('div');
-            spinner.classList.add('spinner');
-            element.appendChild(spinner);
-            return element;
-        }
-
         show() {
             if (!this.#indicatorElement) {
                 console.error("Loading indicator element not initialized.");
                 return;
             }
-            this.#clearExistingTimeout(); // slett eksisterende timeout før ny kjøres
 
             if (this.#options.displayType === 'class') {
-                this.#indicatorElement.classList.add(this.loadingClass);
-                this.#indicatorElement.classList.remove(this.hiddenClass);
+                this.#indicatorElement.classList.add(LoadingIndicator.DEFAULT_OPTIONS.loadingClass);
+                this.#indicatorElement.classList.remove(LoadingIndicator.DEFAULT_OPTIONS.hiddenClass);
             } else {
                 this.#indicatorElement.style.display = 'block';
             }
@@ -211,13 +184,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
              */
             this.#setAriaBusy(true);
 
-            if (this.#options.timeout > 0) {
-                this.#timeoutId = setTimeout(() => this.hide(), this.#options.timeout);
-            }
-// timer kalles og skjuler den etter at det ahr gått this.#options.timeout antall sekunder
-// er det samme som setTimeout(() => {
-// this.hide();
-// }, 5000);
         }
 
         hide() {
@@ -225,11 +191,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 console.error("Loading indicator element not initialized."); //Bør aldri skje
                 return;
             }
-            this.#clearExistingTimeout(); // slett eksisterende timout før ny kjøres
 
             if (this.#options.displayType === 'class') {
-                this.#indicatorElement.classList.remove(this.loadingClass);
-                this.#indicatorElement.classList.add(this.hiddenClass);
+                this.#indicatorElement.classList.remove(LoadingIndicator.DEFAULT_OPTIONS.loadingClass);
+                this.#indicatorElement.classList.add(LoadingIndicator.DEFAULT_OPTIONS.hiddenClass);
             } else { // Default: style.display
                 this.#indicatorElement.style.display = 'none';
             }
@@ -244,6 +209,62 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 this.#indicatorElement.setAttribute('aria-busy', isBusy.toString());
             }
         }
+    }
+
+    class MessageHandler {
+        static DEFAULT_OPTIONS = {
+            noUsersMessageId: 'noUserMessage',
+            timeoutDuration: 5000 // Standardverdi hvis ikke spesifisert på 5 sekunder
+        }
+
+        #noUsersMessageElement
+        #options
+        #timeoutId
+        #timeoutDuration
+
+        constructor(options = {}) {
+            this.#options = {
+                ...MessageHandler.DEFAULT_OPTIONS,
+                ...options
+            };
+            this.#timeoutId = null;
+            this.#noUsersMessageElement = document.getElementById(this.#options.noUsersMessageId);
+            this.#timeoutDuration = this.#options.timeoutDuration; // Hent fra options
+            this.validateElements();
+        }
+
+        validateElements() {
+            if (!this.#noUsersMessageElement) {
+                throw new Error(`Element with ID '${this.#options.noUsersMessageId}' not found.`);
+            }
+        }
+
+        displayNoUserMessage = (message = "No users found.") => {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.showMessage(this.#noUsersMessageElement, message);
+            this.hideNoUsersMessage(); // Start alltid timeout
+        }
+
+        showMessage(element, message) {
+            if (element) {
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+        }
+
+        hideNoUsersMessage() {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.#timeoutId = setTimeout(() => {
+                this.hideMessage(this.#noUsersMessageElement);
+            }, this.#timeoutDuration); // Bruk den faste timeout-verdien
+        }
+
+        hideMessage(element) {
+            if (element) {
+                element.style.display = 'none';
+            }
+        }
+
         #clearExistingTimeout() {
             if (this.#timeoutId) {
                 clearTimeout(this.#timeoutId);
@@ -251,51 +272,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             }
         }
     }
-    class MessageHandler {
-        static DEFAULT_OPTIONS = {
-            noUsersMessageId: 'noUserMessage'
-        }
-        #noUsersMessageElement
-        #options
-        constructor(options = {}) {
-            this.#options = {
-                ...MessageHandler.DEFAULT_OPTIONS,
-                ...options
-            };
-            this.#noUsersMessageElement = document.getElementById(this.#options.noUsersMessageId);
-            this.validateElements();
-        }
-        validateElements() {
-            if (!this.#noUsersMessageElement) {
-                throw new Error(`Element with ID '${this.#options.noUsersMessageId}' not found.`);
-            }
-        }
-        displayNoUserMessage = (message = "No users found.") => {
-            this.showMessage(this.hideNoUsersMessage());
-        }
-        showMessage(element, message) {
-            if (element) { // Sjekker om elementer er null
-                element.textContent = message; // Set the message text
-                element.style.display = 'block';
-            }
-        }
-        hideNoUsersMessage() {
-            this.hideMessage(this.#noUsersMessageElement);
-        }
-        hideMessage(element) {
-            if (element) {
-                element.style.display = 'none';
-            }
-        }
-        clearAndHideMessage(element) {
-            if(element) {
-                element.textContent = '';
-                element.style.display = none;
-            }
-        }
-    }
-    const messageHandler = new MessageHandler();
-    const loadingIndicator = new LoadingIndicator();
+
+
+    const messageHandler = new MessageHandler({timeoutDuration : 2000});
+    const loadingIndicator = new LoadingIndicator({ displayType: 'class' }); // Overstyrer både ID og displayType
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, backOffFactor = 2) => {
         loadingIndicator.show();
@@ -381,7 +361,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 showToast(userFriendlyErrorMessage, false);
             }
         }
-
         finally {
             loadingIndicator.hide();
         }
@@ -397,14 +376,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         users.forEach(user => {
             console.log("User: " + JSON.stringify(user))
             // Objekt destrukturering for å hente ur attributer
-            const {id, firstName, lastName, dob, phone, email} = user;
+            const {id, firstname, lastname, dob, phone, email} = user;
 
             // Bruk template literals for å bygge HTML-raden mer lesbart
             htmlRows += `
                 <tr>
                     <td>${id}</td>
-                    <td>${firstName}</td>
-                    <td>${lastName}</td>
+                    <td>${firstname}</td>
+                    <td>${lastname}</td>
                     <td>${dob}</td>
                     <td>${phone}</td>
                     <td>${email}</td>

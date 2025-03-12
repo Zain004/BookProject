@@ -1,10 +1,28 @@
-/*INSERT INTO users (first_Name, last_Name, dob, phone, email)
+INSERT INTO users (first_name, last_name, dob, phone, email)
 VALUES
     ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'),
     ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'),
     ('Per', 'Hansen', '1992-11-22', '34567890', 'per.hansen@example.com'),
-    ('Lise', 'Johansen', '1980-07-10', '45678901', 'lise.johansen@example.com');
- */
+    ('Lise', 'Johansen', '1980-07-10', '45678901', 'lise.johansen@example.com'),
+
+    ('Victoria', 'Ottesen', '2000-01-19', '44556677', 'victoria.ottesen@example.com'),
+    ('Magnus', 'Gregersen', '1971-10-01', '55667788', 'magnus.gregersen@example.com'),
+    ('Natalie', 'Knudsen', '1983-06-24', '66778899', 'natalie.knudsen@example.com'),
+    ('Filip', 'Eriksen', '1997-03-03', '77889900', 'filip.eriksen@example.com'),
+    ('Isabella', 'Berg', '1979-09-10', '88990011', 'isabella.berg@example.com'),
+    ('Oliver', 'Strand', '1990-12-16', '99001122', 'oliver.strand@example.com'),
+    ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com'),
+
+    ('Kristoffer', 'Evensen', '1972-09-29', '55667788', 'kristoffer.evensen@example.com'),
+    ('Sofie', 'Paulsen', '1984-03-08', '66778899', 'sofie.paulsen@example.com'),
+    ('Daniel', 'Fredriksen', '1991-07-17', '77889900', 'daniel.fredriksen@example.com'),
+    ('Emilie', 'Mortensen', '1976-12-04', '88990011', 'emilie.mortensen@example.com'),
+    ('Sebastian', 'Christensen', '1989-05-21', '99001122', 'sebastian.christensen@example.com'),
+    ('Julie', 'Svendsen', '1996-02-07', '00112233', 'julie.svendsen@example.com'),
+    ('Andreas', 'Jacobsen', '1973-11-13', '11223344', 'andreas.jacobsen@example.com'),
+    ('Camilla', 'Pedersen', '1986-04-30', '22334455', 'camilla.pedersen@example.com'),
+    ('Elias', 'Jensen', '1994-08-06', '33445566', 'elias.jensen@example.com');
+
 
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
