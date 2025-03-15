@@ -4,6 +4,7 @@ import com.example.versjon2.APIResponse;
 import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.Users;
 import com.example.versjon2.ExamUserTask.Service.UsersService;
+import com.example.versjon2.PagedResponseDTO;
 import com.example.versjon2.SecurityConfig;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -66,19 +67,30 @@ public class UsersController {
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }
 
-    @GetMapping
-    public ResponseEntity<APIResponse<Page<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
+    /**
+     *
+     * @param pageable
+     * @return
+     */
+    @GetMapping("/users/paged")
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
         logger.info("Recieved request to fetch all users with pageable: {}", pageable);
         Page<UsersDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
 
+        PagedResponseDTO<UsersDTO> pagedResponseDTO;
+
         if (usersPage.isEmpty()) {
-            logger.info("No users found. ");
-            return APIResponse.okResponse(usersPage, "No users found. ");
+            logger.info("No users found for requsted page - Page: {}, Size: {}",
+                    pageable.getPageNumber(), pageable.getPageSize());
+            pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
+            return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
         }
 
-        logger.info("Successfully fetched {} users from DB. Page number: {}, Page size: {}, Total elements: {}",
-                usersPage.getTotalElements(), pageable.getPageNumber(), pageable.getPageSize(), usersPage.getTotalElements());
-        return APIResponse.okResponse(usersPage, "Users successfully retrieved from DB.");
+        logger.info("Successfully fetched {} users - Page {} of {}, Total Users: {}",
+                usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages(), usersPage.getTotalElements());
+        pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
+
+        return APIResponse.okResponse(pagedResponseDTO, "Users successfully retrieved from DB.");
     }
 
 }

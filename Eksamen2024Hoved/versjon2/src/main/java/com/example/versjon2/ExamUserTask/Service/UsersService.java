@@ -48,9 +48,20 @@ public class UsersService {
          logger.info("Recieved {} users.", users);
          return users;
     }
+
+    /**
+     *
+     * @param pageable
+     * @return
+     */
     public Page<UsersDTO> fetchAllUsersPaginated(Pageable pageable) {
-        logger.info("Fetching all users from DB, pageable: {}", pageable);
+        logger.info("Service Request: Fetching paginated users from DB - Page: {}, Size: {}",
+                pageable.getPageNumber(), pageable.getPageSize());
+
         Page<Users> usersPage = usersRepository.findAll(pageable);
+        logger.debug("Fetched {} Users entities from DB for page {} of {}",
+                usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages());
+
         return usersPage.map(UsersDTO::convertToDTO); // Convert each entity to DTO
     }
 
