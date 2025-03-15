@@ -1,5 +1,6 @@
 package com.example.versjon2.ExamUserTask.Service;
 
+import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.Users;
 import com.example.versjon2.ExamUserTask.Repository.UsersRepository;
 import lombok.AllArgsConstructor;
@@ -32,12 +33,28 @@ public class UsersService {
         return users;
     }
 
-    public Page<Users> fetchAllUsers(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        logger.info("Fetching all users from DB with page {} and size {}", pageable, size);
-        Page<Users> users = usersRepository.findAll(pageable);
-        return users;
+    public List<Users> fetchAllUsersSortedByFirstNameAsc(boolean sortByFirstName) {
+        logger.info("Fetching all users from DB, sorting by: {}", sortByFirstName);
+        List<Users> users;
+        if (sortByFirstName) {
+            users = usersRepository.findAllByOrderByFirstNameAsc();
+        } else {
+            users = usersRepository.findAll();
+        }
+         if(users.isEmpty()) {
+             logger.info("No users found in the database");
+             return Collections.emptyList();
+         }
+         logger.info("Recieved {} users.", users);
+         return users;
     }
+    public Page<UsersDTO> fetchAllUsersPaginated(Pageable pageable) {
+        logger.info("Fetching all users from DB, pageable: {}", pageable);
+        Page<Users> usersPage = usersRepository.findAll(pageable);
+        return usersPage.map(UsersDTO::convertToDTO); // Convert each entity to DTO
+    }
+
+
 
     // Metode for å lagre en bruker
 

@@ -22,15 +22,15 @@ public class UsersDTO {
     private String phone;
     private String email;
 
-    private static UsersDTO convertToDTO(Users user) {
-        UsersDTO dto = new UsersDTO();
-        dto.setId(user.getId());
-        dto.setFirstname(user.getFirstName());
-        dto.setLastname(user.getLastName());
-        dto.setDob(user.getDob());
-        dto.setPhone(user.getPhone());
-        dto.setEmail(user.getEmail());
-        return dto;
+    public static UsersDTO convertToDTO(Users user) {
+        return new UsersDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getDob(),
+                user.getPhone(),
+                user.getEmail()
+        );
     }
 
     public static List<UsersDTO> convertToDtoList(List<Users> users) {

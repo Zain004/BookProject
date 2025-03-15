@@ -69,5 +69,4 @@ public class Users {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
 }
