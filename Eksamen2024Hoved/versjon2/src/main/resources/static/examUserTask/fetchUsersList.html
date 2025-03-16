@@ -11,27 +11,36 @@
         .navbar-brand {
             padding-left: 0.8rem;
         }
+        .loading-active {
+            display: block;
+        }
+        .loading-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="#">User Management</a>
-    <!-- lager en hamburgermeny-->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-            aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <!-- Inneholder selve navigasjonsmenyen-->
-    <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto align-items-center">
-            <!-- You can add more navigation items here if needed -->
-            <li class="nav-item active">
-                <a class="nav-link" href="#">
-                    User List <span class="visually-hidden">(current)</span></a>
-            </li>
-        </ul>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
+        <a class="navbar-brand" href="#">User Management</a>
+        <!-- lager en hamburgermeny-->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- Inneholder selve navigasjonsmenyen-->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- You can add more navigation items here if needed -->
+                <li class="nav-item active">
+                    <a class="nav-link text-white" href="#">
+                        User List <span class="visually-hidden">(current)</span
+                    ></a>
+                </li>
+            </ul>
+        </div>
     </div>
 </nav>
 
@@ -41,13 +50,13 @@
         <div class="col">
             <h1 class="mb-4">User List</h1>
             <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="text-center mb-3" style="display: none;">
+            <div id="loadingIndicator" class="text-center mb-3">
                 <div class="spinner-border text-primary" role="status">
                     <!-- Ment for skjermlesere -->
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <!-- Dette er den ordentlige teksten som skal vises -->
-                <p>Fetching users...</p>
+                <p class="mt-2 small text-muted">Fetching users...</p>
             </div>
             <!-- oppretter en toast-->
             <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
@@ -93,6 +102,11 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
+    /**
+     *
+     * @param message
+     * @param isSuccess
+     */
     const showToast = (message, isSuccess = true) => {
         const toastElement = document.getElementById('toast');
         const toastBody = toastElement.querySelector('.toast-body');
@@ -105,14 +119,10 @@
 
     class LoadingIndicator {
         // Definerer attributer
-        static VALID_DISPLAY_TYPES = ['style', 'class'];
         static DEFAULT_OPTIONS = {
             indicatorId: 'loadingIndicator',
-            displayType: 'style',
             loadingClass: 'loading-active',
-            hiddenClass: 'loading-hidden',
-            hideNoUsersDisplay: true,
-            targetElement: null
+            hiddenClass: 'loading-hidden'
         }
         #indicatorElement
         #options // lagres internt
@@ -120,7 +130,7 @@
         constructor(options = {}) {
             // 1. Validering og sammenslåing av konfigurasjon
             this.#options = this.#validateAndMergeOptions(options);
-            this.#indicatorElement = null;
+            this.#indicatorElement = document.getElementById(this.#options.indicatorId); // initialiser før kall
             this.#initializeIndicatorElement();
         }
         /*
@@ -132,15 +142,12 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             const mergedOptions = {
                 ...LoadingIndicator.DEFAULT_OPTIONS,
                 ...options};
-            // sjekker om mergedoptions inneholder VALID_DISPLAY_TYPES
-            if (!LoadingIndicator.VALID_DISPLAY_TYPES.includes(mergedOptions.displayType)) {
-                throw new Error(`Invalid displayType: ${mergedOptions.displayType}. Must
-                be one of: ${LoadingIndicator.VALID_DISPLAY_TYPES.join(', ')}`);
-            }
-            // Sjekker om targetElement finnes og er et gyldig HTML-element, kaster feil hvis ikke
-            if (mergedOptions.targetElement && !(mergedOptions.targetElement instanceof HTMLElement)) {
-                throw new TypeError("TargetElement must be an HTMLElement.")
-            }
+            // Valider string-options:
+            ['indicatorId', 'loadingClass', 'hiddenClass'].forEach(key => {
+                if (typeof mergedOptions[key] !== 'string' || mergedOptions[key].trim() === "") {
+                    throw new Error(`${key} must be a non-empty string.`);
+                }
+            });
             // Valider timeout, og at den er et tall
             if (mergedOptions.timeout && (typeof mergedOptions.timeout !== 'number' || mergedOptions.timeout < 0)) {
                 throw new TypeError("timeout must be a non-negative number.")
@@ -153,8 +160,9 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#indicatorElement = document.getElementById(this.#options.indicatorId);
 
             if (!this.#indicatorElement) {
-                console.error(`Loading indicator element with ID '${this.#options.indicatorId}' not found in the DOM. The loading indicator will not be displayed.`);
-                return; // Avslutter funksjonen tidlig
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
             }
             // sjekker at det faktisk er et HTMLElement
             if (!(this.#indicatorElement instanceof HTMLElement)) {
@@ -162,52 +170,39 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             }
         }
 
-        show() {
+        #setDisplay(show) {
             if (!this.#indicatorElement) {
-                console.error("Loading indicator element not initialized.");
-                return;
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
             }
 
-            if (this.#options.displayType === 'class') {
-                this.#indicatorElement.classList.add(LoadingIndicator.DEFAULT_OPTIONS.loadingClass);
-                this.#indicatorElement.classList.remove(LoadingIndicator.DEFAULT_OPTIONS.hiddenClass);
-            } else {
-                this.#indicatorElement.style.display = 'block';
-            }
-
-            if (this.#options.hideNoUsersDisplay) {
-                if (this.#options.hideNoUsersDisplay) {
-                    messageHandler.hideNoUsersMessage(); // antar at hideNoUsersMessage() er definert eller tilgjengelig
+                if (show) {
+                    this.#indicatorElement.classList.add(this.#options.loadingClass);
+                    this.#indicatorElement.classList.remove(this.#options.hiddenClass);
                 } else {
-                    console.warn("hideNoUsersMessage function is not defined. ");
+                    this.#indicatorElement.classList.remove(this.#options.loadingClass);
+                    this.#indicatorElement.classList.add(this.#options.hiddenClass);
                 }
             }
+        show() {
+            this.#setDisplay(true);
+            this.#setAriaBusy(true);
             /*
             Hvis isBusy er true, blir aria-busy satt til 'true', og dette signaliserer til skjermlesere
             og andre tilgjengelighetsteknologier at noe på elementet er
             i ferd med å bli behandlet, som for eksempel at data blir lastet
              */
-            this.#setAriaBusy(true);
 
         }
 
         hide() {
-            if(!this.#indicatorElement) {
-                console.error("Loading indicator element not initialized."); //Bør aldri skje
-                return;
-            }
-
-            if (this.#options.displayType === 'class') {
-                this.#indicatorElement.classList.remove(LoadingIndicator.DEFAULT_OPTIONS.loadingClass);
-                this.#indicatorElement.classList.add(LoadingIndicator.DEFAULT_OPTIONS.hiddenClass);
-            } else { // Default: style.display
-                this.#indicatorElement.style.display = 'none';
-            }
+            this.#setDisplay(false);
+            this.#setAriaBusy(false);
             /*
             Hvis isBusy er false, blir aria-busy satt til 'false',
                 og dette signaliserer at prosessen er fullført, og elementet er ikke lenger opptatt.
             */
-            this.#setAriaBusy(false)
         }
         #setAriaBusy(isBusy) {
             if(this.#indicatorElement && this.#indicatorElement.setAttribute) {
@@ -280,7 +275,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
 
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
-    const loadingIndicator = new LoadingIndicator({ displayType: 'class' }); // Overstyrer både ID og displayType
+    const loadingIndicator = new LoadingIndicator({displayType: 'class'}); // Overstyrer både ID og displayType
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, backOffFactor = 2) => {
         loadingIndicator.show();
