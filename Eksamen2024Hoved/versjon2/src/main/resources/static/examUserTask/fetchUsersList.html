@@ -24,17 +24,17 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
     <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
         <a class="navbar-brand" href="#">User Management</a>
-        <!-- lager en hamburgermeny-->
+        <!-- Hamburger menu (mobile) -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                 aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <!-- Inneholder selve navigasjonsmenyen-->
+        <!-- Navigation links -->
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
                 <!-- You can add more navigation items here if needed -->
-                <li class="nav-item active">
+                <li class="nav-item">
                     <a class="nav-link text-white" href="#">
                         User List <span class="visually-hidden">(current)</span
                     ></a>
@@ -46,11 +46,12 @@
 
 <!-- Main Content Container -->
 <div class="container mt-4">
-    <div class="row">
-        <div class="col">
+    <main>
+        <section>
             <h1 class="mb-4">User List</h1>
             <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="text-center mb-3">
+            <!-- bruker loading hidden som standard før javascript er lastet inn-->
+            <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
                 <div class="spinner-border text-primary" role="status">
                     <!-- Ment for skjermlesere -->
                     <span class="visually-hidden">Loading...</span>
@@ -75,25 +76,25 @@
             <div class="table-responsive">
                 <table class="table table-striped table bordered">
                     <thead> <!-- Table head -->
-                        <tr>
-                            <th>ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Date of Birth</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                        </tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Date of Birth</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                    </tr>
                     </thead>
                     <tbody id="userTableBody">
-                        <!-- Brukere vil bli satt inn her -->
+                    <!-- Brukere vil bli satt inn her -->
                     </tbody>
                 </table>
             </div>
             <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
                 No users found in the database
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 </div>
 <!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -148,10 +149,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                     throw new Error(`${key} must be a non-empty string.`);
                 }
             });
-            // Valider timeout, og at den er et tall
-            if (mergedOptions.timeout && (typeof mergedOptions.timeout !== 'number' || mergedOptions.timeout < 0)) {
-                throw new TypeError("timeout must be a non-negative number.")
-            }
             console.debug(mergedOptions);
             return mergedOptions;
         }
@@ -185,6 +182,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                     this.#indicatorElement.classList.add(this.#options.hiddenClass);
                 }
             }
+
         show() {
             this.#setDisplay(true);
             this.#setAriaBusy(true);
@@ -193,7 +191,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             og andre tilgjengelighetsteknologier at noe på elementet er
             i ferd med å bli behandlet, som for eksempel at data blir lastet
              */
-
         }
 
         hide() {
@@ -220,48 +217,56 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         #noUsersMessageElement
         #options
         #timeoutId
-        #timeoutDuration
 
         constructor(options = {}) {
             this.#options = {
                 ...MessageHandler.DEFAULT_OPTIONS,
                 ...options
             };
+            // Valider options *før* du bruker dem!
+            this.#validateOptions();
             this.#timeoutId = null;
             this.#noUsersMessageElement = document.getElementById(this.#options.noUsersMessageId);
-            this.#timeoutDuration = this.#options.timeoutDuration; // Hent fra options
             this.validateElements();
         }
-
         validateElements() {
             if (!this.#noUsersMessageElement) {
                 throw new Error(`Element with ID '${this.#options.noUsersMessageId}' not found.`);
             }
         }
 
+        #validateOptions() {
+            if (typeof this.#options.noUsersMessageId !== 'string' || this.#options.noUsersMessageId.trim() === "") {
+                throw new TypeError("options.noUsersMessageId must be a non-empty string.");
+            }
+            if (typeof this.#options.timeoutDuration !== 'number' || this.#options.timeoutDuration < 0) {
+                throw new TypeError("options.timeoutDuration must be a non-negative number.");
+            }
+        }
+
         displayNoUserMessage = (message = "No users found.") => {
             this.#clearExistingTimeout(); // Slett eksisterende timeout
-            this.showMessage(this.#noUsersMessageElement, message);
+            this.showMessage(message);
             this.hideNoUsersMessage(); // Start alltid timeout
         }
 
-        showMessage(element, message) {
-            if (element) {
-                element.textContent = message;
-                element.style.display = 'block';
+        showMessage(message) { // Forenklet
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.textContent = message;
+                this.#noUsersMessageElement.style.display = 'block';
             }
         }
 
         hideNoUsersMessage() {
             this.#clearExistingTimeout(); // Slett eksisterende timeout
             this.#timeoutId = setTimeout(() => {
-                this.hideMessage(this.#noUsersMessageElement);
-            }, this.#timeoutDuration); // Bruk den faste timeout-verdien
+                this.hideMessage();
+            }, this.#options.timeoutDuration); // Bruk den faste timeout-verdien
         }
 
-        hideMessage(element) {
-            if (element) {
-                element.style.display = 'none';
+        hideMessage() {
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.style.display = 'none';
             }
         }
 
@@ -275,7 +280,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
 
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
-    const loadingIndicator = new LoadingIndicator({displayType: 'class'}); // Overstyrer både ID og displayType
+    const loadingIndicator = new LoadingIndicator();
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, backOffFactor = 2) => {
         loadingIndicator.show();

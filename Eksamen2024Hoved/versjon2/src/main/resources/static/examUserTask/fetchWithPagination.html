@@ -11,100 +11,112 @@
         .navbar-brand {
             padding-left: 0.8rem;
         }
+        .loading-active {
+            display: block;
+        }
+        .loading-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-<!-- Navbar (Bootstrap 5) -->
-<header class="mb-3">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
-        <div class="container">
-            <a class="navbar-brand" href="#">User Management</a>
-            <!-- Oppretter en hamburger meny -->
-            <!-- Data-bs-toggle fortelelr at den skal åpne lukke et element-->
-            <!-- Elementet som skal åpnes og lukker er id=navbarNav som er i data-bs-target-->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav" aria-controls="navbarNav"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span> <!-- LEgger til hamburger ikon-->
-            </button>
-            <!-- Inneholder selve navigasjonsmenyen i hamburgeren-->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">
-                            User List <span class="visually-hidden">(current)</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
+        <a class="navbar-brand" href="#">User Management</a>
+        <!-- Hamburger menu (mobile) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- Navigation links -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- You can add more navigation items here if needed -->
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">
+                        User List <span class="visually-hidden">(current)</span
+                    ></a>
+                </li>
+            </ul>
         </div>
-    </nav>
-</header>
+    </div>
+</nav>
 
 <!-- Main container -->
 <div class="container">
     <main>
-        <h1>Users</h1>
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Date of Birth</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                </tr>
-                </thead>
-                <tbody>
-                <!-- User data will be isnerted here by javascript -->
-                </tbody>
-            </table>
-        </div>
-
-        <div class="spinner-container text-center" role="alert" aria-busy="false" style="display: block">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span> <!-- Info til skjermlesere -->
-            </div>
-            <p class="loading-text mt-2 small text-muted">Please wait...</p>
-        </div>
-
-        <!-- oppretter en toast-->
-        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                <div class="toast-header">
-                    <strong class="me-auto">Recipe submission</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
-                    </button>
+        <section>
+            <h1>Users</h1>
+            <!-- Loading Indicator -->
+            <!-- bruker loading hidden som standard før javascript er lastet inn-->
+            <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
+                <div class="spinner-border text-primary" role="status">
+                    <!-- Ment for skjermlesere -->
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-                <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+                <!-- Dette er den ordentlige teksten som skal vises -->
+                <p class="mt-2 small text-muted">Fetching users...</p>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Date of Birth</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- User data will be isnerted here by javascript -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- No users message -->
+            <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
+                No users found in the database
+            </div>
+            <!-- oppretter en toast-->
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+                <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                    <div class="toast-header">
+                        <strong class="me-auto">Recipe submission</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+                        </button>
+                    </div>
+                    <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <nav aria-label="Page navigation example">
-            <ul class="pagination justify-content-center">
-                <!-- Previos Button -->
-                <li class="page-item" id="previous-page">
-                    <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">«</span>
-                        <span class="visually-hidden">Previous</span>
-                    </a>
-                </li>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <!-- Previos Button -->
+                    <li class="page-item" id="previous-page">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">«</span>
+                            <span class="visually-hidden">Previous</span>
+                        </a>
+                    </li>
 
-                <!-- DETTE ER "FELTET" I MIDTEN -->
-                <!-- Her setter JavaScript inn de dynamiske <li>-elementene -->
+                    <!-- DETTE ER "FELTET" I MIDTEN -->
+                    <!-- Her setter JavaScript inn de dynamiske <li>-elementene -->
 
-                <!-- Next Button -->
-                <li class="page-item" id="next-page">
-                    <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">»</span>
-                        <span class="visually-hidden">Next</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+                    <!-- Next Button -->
+                    <li class="page-item" id="next-page">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">»</span>
+                            <span class="visually-hidden">Next</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </section>
     </main>
 </div>
 
@@ -133,7 +145,166 @@
         toast.show();
     }
 
+    class LoadingIndicator {
+        // Definerer attributer
+        static DEFAULT_OPTIONS = {
+            indicatorId: 'loadingIndicator',
+            loadingClass: 'loading-active',
+            hiddenClass: 'loading-hidden'
+        }
+        #indicatorElement
+        #options // lagres internt
 
+        constructor(options = {}) {
+            // 1. Validering og sammenslåing av konfigurasjon
+            this.#options = this.#validateAndMergeOptions(options);
+            this.#indicatorElement = document.getElementById(this.#options.indicatorId); // initialiser før kall
+            this.#initializeIndicatorElement();
+        }
+        /*
+Når du bruker { ...objekt1, ...objekt2 }, vil:
+Alle verdiene fra objekt1 kopieres først.
+Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle duplikater.
+         */
+        #validateAndMergeOptions(options) {
+            const mergedOptions = {
+                ...LoadingIndicator.DEFAULT_OPTIONS,
+                ...options};
+            // Valider string-options:
+            ['indicatorId', 'loadingClass', 'hiddenClass'].forEach(key => {
+                if (typeof mergedOptions[key] !== 'string' || mergedOptions[key].trim() === "") {
+                    throw new Error(`${key} must be a non-empty string.`);
+                }
+            });
+            console.debug(mergedOptions);
+            return mergedOptions;
+        }
+
+        #initializeIndicatorElement() {
+            this.#indicatorElement = document.getElementById(this.#options.indicatorId);
+
+            if (!this.#indicatorElement) {
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
+            }
+            // sjekker at det faktisk er et HTMLElement
+            if (!(this.#indicatorElement instanceof HTMLElement)) {
+                throw new Error(`Element with ID '${this.#options.indicatorId}' is not an HTMLElement.`)
+            }
+        }
+
+        #setDisplay(show) {
+            if (!this.#indicatorElement) {
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
+            }
+
+            if (show) {
+                this.#indicatorElement.classList.add(this.#options.loadingClass);
+                this.#indicatorElement.classList.remove(this.#options.hiddenClass);
+            } else {
+                this.#indicatorElement.classList.remove(this.#options.loadingClass);
+                this.#indicatorElement.classList.add(this.#options.hiddenClass);
+            }
+        }
+
+        show() {
+            this.#setDisplay(true);
+            this.#setAriaBusy(true);
+            /*
+            Hvis isBusy er true, blir aria-busy satt til 'true', og dette signaliserer til skjermlesere
+            og andre tilgjengelighetsteknologier at noe på elementet er
+            i ferd med å bli behandlet, som for eksempel at data blir lastet
+             */
+        }
+
+        hide() {
+            this.#setDisplay(false);
+            this.#setAriaBusy(false);
+            /*
+            Hvis isBusy er false, blir aria-busy satt til 'false',
+                og dette signaliserer at prosessen er fullført, og elementet er ikke lenger opptatt.
+            */
+        }
+        #setAriaBusy(isBusy) {
+            if(this.#indicatorElement && this.#indicatorElement.setAttribute) {
+                this.#indicatorElement.setAttribute('aria-busy', isBusy.toString());
+            }
+        }
+    }
+
+    class MessageHandler {
+        static DEFAULT_OPTIONS = {
+            noUsersMessageId: 'noUserMessage',
+            timeoutDuration: 5000 // Standardverdi hvis ikke spesifisert på 5 sekunder
+        }
+
+        #noUsersMessageElement
+        #options
+        #timeoutId
+        //#timeoutDuration
+
+        constructor(options = {}) {
+            this.#options = {
+                ...MessageHandler.DEFAULT_OPTIONS,
+                ...options
+            };
+            // Valider options *før* du bruker dem!
+            this.#validateOptions();
+            this.#timeoutId = null;
+            this.#noUsersMessageElement = document.getElementById(this.#options.noUsersMessageId);
+            this.validateElements();
+        }
+        validateElements() {
+            if (!this.#noUsersMessageElement) {
+                throw new Error(`Element with ID '${this.#options.noUsersMessageId}' not found.`);
+            }
+        }
+
+        #validateOptions() {
+            if (typeof this.#options.noUsersMessageId !== 'string' || this.#options.noUsersMessageId.trim() === "") {
+                throw new TypeError("options.noUsersMessageId must be a non-empty string.");
+            }
+            if (typeof this.#options.timeoutDuration !== 'number' || this.#options.timeoutDuration < 0) {
+                throw new TypeError("options.timeoutDuration must be a non-negative number.");
+            }
+        }
+
+        displayNoUserMessage = (message = "No users found.") => {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.showMessage(message);
+            this.hideNoUsersMessage(); // Start alltid timeout
+        }
+
+        showMessage(message) { // Forenklet
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.textContent = message;
+                this.#noUsersMessageElement.style.display = 'block';
+            }
+        }
+
+        hideNoUsersMessage() {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.#timeoutId = setTimeout(() => {
+                this.hideMessage();
+            }, this.#options.timeoutDuration); // Bruk den faste timeout-verdien
+        }
+
+        hideMessage() {
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.style.display = 'none';
+            }
+        }
+
+        #clearExistingTimeout() {
+            if (this.#timeoutId) {
+                clearTimeout(this.#timeoutId);
+                this.#timeoutId = null;
+            }
+        }
+    }
 
 
 </script>

@@ -1,4 +1,4 @@
-INSERT INTO users (first_name, last_name, dob, phone, email)
+/*INSERT INTO users (first_name, last_name, dob, phone, email)
 VALUES
     ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'),
     ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'),
@@ -14,6 +14,8 @@ VALUES
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
 
+
+ */
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),
