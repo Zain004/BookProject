@@ -103,6 +103,7 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
+    import * as yup from 'yup'; // Hvis du bruker moduler (anbefalt)
     /**
      *
      * @param message
@@ -338,12 +339,13 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
         catch (error) {
             let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
+
             if (axios.isAxiosError(error)) {
                 if(!error.response) {
                     console.error("Network Error: ", error)
                     userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
                 } else {
-                    const statusCode = error.response.status;
                     console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
                     // Bruker en map for feilmeldinger, fordi det er nyere måte
                     const errorMessages = {
@@ -400,16 +402,31 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const tableBody = document.getElementById('userTableBody');
         let htmlRows = ''; // Bygg HTML - stren for alle rader
 
-        if(!users?.length) {
-            tableBody.innerHTML = ''; // Tøm tabellen selv om ingen brukere
-            return;
+        // 1. sjekker om tablebody elementet eksisterer
+        if (!tableBody) {
+            console.error("Error: 'userTableBody' element not found.");
+            return; // Avslutt tidlig hvis elementet ikke finnes
         }
+        // 2. tøm tabellen på en sikker måte
+        tableBody.innerHTML = '';
+        // 3. håndter tom eller ugyldig input *før* løkken
+        if (!users || !Array.isArray(users)) {
+            const message = "Warning: 'users' is null, undefined, or not an array."
+            console.warn(message);
+            showToast(message, false);
+            messageHandler.displayNoUserMessage();
+            return; // Avslutt tidlig
+        }
+        if (users.length === 0) {
+            messageHandler.displayNoUserMessage()
+        }
+        // 4.Bruk .map for å bygge HTML-strengene
         users.forEach(user => {
             console.debug("User: " + JSON.stringify(user))
 
             // Objekt destrukturering for å direkte hente ut attributer med en gang
             const {id, firstname, lastname, dob, phone, email} = user;
-
+            // en lead utvikler ville også validert alle felter
             // Bruk template literals for å bygge HTML-raden mer lesbart
             htmlRows += `
                 <tr>

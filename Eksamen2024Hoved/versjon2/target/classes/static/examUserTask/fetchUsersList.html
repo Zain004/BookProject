@@ -217,7 +217,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         #noUsersMessageElement
         #options
         #timeoutId
-        //#timeoutDuration
 
         constructor(options = {}) {
             this.#options = {
@@ -283,7 +282,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
     const loadingIndicator = new LoadingIndicator();
 
-    const fetchUsers = async (retryCount = 0, maxRetries = 3, backOffFactor = 2) => {
+    // V2
+    const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
         const API_BASE_URL = '/api/users';
         const API_ENDPOINT = '/list';
@@ -301,31 +301,50 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
             if (response.status >= 200 && response.status < 300) { // Mer robust sjekk for suksess
                 const apiResponse = response.data; // antar at APIResponse returnerer APIResponse<List<UsersDTO>>
-                if (apiResponse.success) {
-                    const users = apiResponse.data; // henter ut brukere
-                    if (users?.length > 0) {
-                        console.debug(users)
-                        populateUsersTable(users);
-                    } else {
-                        // Dette skal *aldri* skje hvis serveren er korrekt (204 er riktig),
-                        // men vi legger til en sikkerhetsmekanisme:
-                        console.warn("Server returned success with empty data, but not 204 status.");
-                        messageHandler.displayNoUserMessage()
-                        return;
-                    }
-                } else // håndterer errors fra global som returnerer false
-                    showToast(`API Error: ${apiResponse.message || 'Failed to fetch users'}`, false); // vis API error message
-            } else
-                showToast(`Unexpected HTTP status: ${response.status}`, false); // behandle andre uforventede statuser
+
+                if (!apiResponse.success) {
+                    // kallet til axios ble fullført uten problemer,
+                    // derfor skal den ikke fortsette nedover
+                    const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
+                    showToast(errorMessage, false); // vis API error message
+                    console.warn(`API Error (success=false): ${errorMessage}`)
+                    return;
+                }
+                // ved suksess fortsett nedover
+                const users = apiResponse.data; // henter ut brukere
+                // robust type sjekk - sjekker om det virkelig er et array
+                if (!Array.isArray(users)) {
+                    console.error("API returned non-array data:", apiResponse);
+                    showToast("An unexpected error occurred: Invalid data format received.", false);
+                    return; // avslutt
+                }
+                // sjekker om det er noen til stede
+                if (users.length > 0) {
+                    console.debug(users)
+                    populateUsersTable(users);
+                } else {
+                    // Dette skal *aldri* skje hvis serveren er korrekt (204 er riktig),
+                    // men vi legger til en sikkerhetsmekanisme:
+                    console.warn("Server returned success with empty data, but not 204 status.");
+                    messageHandler.displayNoUserMessage()
+                    return;
+                }
+                return; // returnerer ekslpisitt etter vellykket prosessering
+            }
+
+            // ---  Unexpected HTTP Status (not 2xx) ---
+            console.warn(`Unexpected HTTP Status: ${response.status}`);
+            showToast(`Unexpected HTTP status: ${response.status}`, false);
         }
         catch (error) {
             let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
+
             if (axios.isAxiosError(error)) {
                 if(!error.response) {
                     console.error("Network Error: ", error)
                     userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
                 } else {
-                    const statusCode = error.response.status;
                     console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
                     // Bruker en map for feilmeldinger, fordi det er nyere måte
                     const errorMessages = {
@@ -347,41 +366,49 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             } else {
                 // Non-Axios related errors (e.g., JSON parsing, code errors)
                 console.error("Unexpected Error:", error); // Log full error object
+                showToast("An unexpected error occurred. Please try again later.", false);
             }
 // Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
 // ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
 // error.code settes av nettverket og ikke av backend
-            if (axios.isAxiosError(error) && (error.code === 'ECONNREFUSED' || error.code === 'ECCONNABORTED' ||
-                error.response?.status >= 500 || error?.response?.stats === 429)) {
-                if (retryCount < maxRetries) {
-                    console.warn(`Retry attempt ${retryCount + 1} of ${maxRetries} after error:`, error);
-                    const delay = backOffFactor ** retryCount * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    return fetchUsers(retryCount + 1, maxRetries, backOffFactor);
-                } else {
+            const isRetryableError =
+                error.code === 'ECONNREFUSED' ||
+                error.code === 'ECONNABORTED' ||
+                statusCode === 429 || // Rate limiting
+                statusCode >= 500;      // Serverfeil
 
-                    console.error("Max retries reached. Error: ", error);
-                    userFriendlyErrorMessage = "Failed to fetch users after multiple attempts. " +
-                        "Please check your network and try again later.";
-                }
-                showToast(userFriendlyErrorMessage, false);
+            if (isRetryableError && retryCount < maxRetries) {
+                const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
+                console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
             }
+
+            if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
+                console.error("Max retries reached. Error: ", error);
+                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+            }
+
+            showToast(userFriendlyErrorMessage, false);
         }
         finally {
             loadingIndicator.hide();
         }
     }
 
+
     const populateUsersTable = (users) => {
         const tableBody = document.getElementById('userTableBody');
         let htmlRows = ''; // Bygg HTML - stren for alle rader
-        if(!users || users.length === 0) {
+
+        if(!users?.length) {
             tableBody.innerHTML = ''; // Tøm tabellen selv om ingen brukere
             return;
         }
         users.forEach(user => {
-            console.log("User: " + JSON.stringify(user))
-            // Objekt destrukturering for å hente ur attributer
+            console.debug("User: " + JSON.stringify(user))
+
+            // Objekt destrukturering for å direkte hente ut attributer med en gang
             const {id, firstname, lastname, dob, phone, email} = user;
 
             // Bruk template literals for å bygge HTML-raden mer lesbart
@@ -400,7 +427,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        fetchUsers();
+        fetchUsers().catch(error => {
+            console.error("Error during initial user fetch: ", error);
+            showToast(error.message, false);
+        })
     })
 </script>
 </body>
