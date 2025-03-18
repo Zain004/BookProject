@@ -312,6 +312,50 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
     }
 
+    const populateUsersTable = (users) => {
+        const tableBody = document.getElementById('userTableBody');
+        let htmlRows = ''; // Bygg HTML - stren for alle rader
+
+        // 1. sjekker om tablebody elementet eksisterer
+        if (!tableBody) {
+            console.error("Error: 'userTableBody' element not found.");
+            return; // Avslutt tidlig hvis elementet ikke finnes
+        }
+        // 2. tøm tabellen på en sikker måte
+        tableBody.innerHTML = '';
+        // 3. håndter tom eller ugyldig input *før* løkken
+        if (!users || !Array.isArray(users)) {
+            const message = "Warning: 'users' is null, undefined, or not an array."
+            console.warn(message);
+            showToast(message, false);
+            messageHandler.displayNoUserMessage();
+            return; // Avslutt tidlig
+        }
+        if (users.length === 0) {
+            messageHandler.displayNoUserMessage()
+        }
+        // 4.Bruk .map for å bygge HTML-strengene
+        users.forEach(user => {
+            console.debug("User: " + JSON.stringify(user))
+
+            // Objekt destrukturering for å direkte hente ut attributer med en gang
+            const {id, firstname, lastname, dob, phone, email} = user;
+            // en lead utvikler ville også validert alle felter
+            // Bruk template literals for å bygge HTML-raden mer lesbart
+            htmlRows += `
+                <tr>
+                    <td>${id}</td>
+                    <td>${firstname}</td>
+                    <td>${lastname}</td>
+                    <td>${dob}</td>
+                    <td>${phone}</td>
+                    <td>${email}</td>
+                </tr>
+            `;
+        })
+        tableBody.innerHTML = htmlRows;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
