@@ -295,7 +295,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             if (response.status === 204) {  // Enklest og mest lesbart
                 messageHandler.displayNoUserMessage();
                 console.log(response)
-                console.log("No USers found in DB");
+                console.log("No Users found in DB");
                 return;
             }
 
@@ -442,6 +442,9 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("ready")
+        const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
+        console.log(currentTime);
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
             showToast(error.message, false);

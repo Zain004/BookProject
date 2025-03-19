@@ -305,12 +305,164 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             }
         }
     }
-    const messageHandler = new MessageHandler({timeoutDuration : 2000});
-    const LoadingIndicator = new LoadingIndicator()
 
-    const fetchUsers = async (page, size) => {
+    class Pagination {
+        static DEFAULT_OPTIONS = {
+            DEFAULT_INITIAL_PAGE: 0,
+            DEFAULT_MAX_PAGES_TO_SHOW: 5,
+            DEFAULT_PREV_BUTTON_ID: 'previous-page',
+            DEFAULT_NEXT_BUTTON_ID: 'next-page'
+        }
+        #options
+        #previousPageButton
+        #nextPageButton
+        #isFirst
+        #isLast
 
+
+        constructor(options = {}) {
+            // sjekk og lagre argumenter
+            this.#options = {
+                ...Pagination.DEFAULT_OPTIONS,
+                ...options
+            };
+            this.#isFirst = true; // Anta første side til å begynne med
+            this.#isLast = false; // Anta *ikke* siste side til å begynne med
+
+            this.#previousPageButton = document.getElementById(this.#options.DEFAULT_PREV_BUTTON_ID);
+            this.#nextPageButton = document.getElementById(this.#options.DEFAULT_NEXT_BUTTON_ID);
+            // initialiser
+            this.init();
+        }
+        init() {
+            // sett opp event listeners for Previos og next knappene
+            this.#previousPageButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!this.#isFirst) {
+                    this.#handlePageChange(-1); // Bruk -1 for "forrige"
+                }
+            });
+            this.#nextPageButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if(!this.#isLast) {
+                    this.#handlePageChange(1); // bruk 1 for neste
+                }
+            })
+        }
+        #handlePageChange() {
+
+        }
     }
+    const messageHandler = new MessageHandler({timeoutDuration : 2000});
+    const loadingIndicator = new LoadingIndicator()
+
+    const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
+        loadingIndicator.show();
+        const API_BASE_URL = '/api/users';
+        const API_ENDPOINT = '/paged';
+        const PAGE = `?page=${page}`;
+        const SIZE = `&size=${size}`;
+        const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}`;
+        try {
+            const response = await axios.get(url);
+            console.log("Fetching users: ");
+
+            if (response.status >= 200 && response.status < 300) {
+                // 1. Sjekk om response.data eksisterer
+                if (!response.data) {
+                    console.warn("Empty or invalid response recieved: response.data is missing", response);
+                    showToast("Recieved an unexpected response from the server.");
+                    return;
+                }
+                const pagedResponse = response.data.data; // hent ut listen med users
+                // 2. sjekk om response.data.data er gyldig, om det inneholder noe content
+                if (!pagedResponse) {
+                    console.warn("Invalid response recieved: data is invalid.", data);
+                    showToast("No users were found for this request.")
+                    return;
+                }
+                const users = pagedResponse.content;
+                // 3. valider om det er ert array
+                if (!Array.isArray(users)) {
+                    console.error("API returned non-array data:", data);
+                    showToast("An unexpected error occurred: Invalid data format received.", false);
+                    return; // avslutt
+                }
+                // 4. Oppdater paginering (Nå er vi sikre på gyldige data)
+                updatepaginations(response.data?.isFirst, response.data?.isLast);
+                // 5. sjekk om det er noen til stede
+                if (users.length > 0) {
+                    console.debug(users);
+                    populateUsersTable(users);
+                } else {
+                    // servereen returnerte ingen elementer
+                    console.log("Server returned success with empty data with 200 ok status.")
+                    messageHandler.displayNoUserMessage();
+                }
+                return;
+            }
+            const errorMessage = `API Error: ${response.message || 'Failed to fetch users (no message provided)'}`;
+            showToast(errorMessage, false);
+        } catch (error) {
+                let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+                const statusCode = error.response?.status;
+
+                if (axios.isAxiosError(error)) {
+                    if (!error.response) {
+                        console.error("Network Error: ", error)
+                        userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                    } else {
+                        console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                        // Bruker en map for feilmeldinger, fordi det er nyere måte
+                        const errorMessages = {
+                            400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
+                            401: "You are not authorized to view user list.", // UNAUTHORIZED
+                            403: "You do not have permission to view user list.", // FORBIDDEN
+                            404: "User list resource not found. Please contact support if this issue persists.", // NOT FOUND
+                            429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
+                            500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
+                        };
+
+                        userFriendlyErrorMessage = errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                        /*
+                        if (statusCode === 401 || statusCode === 403) {
+                            // ekstra håndtering
+                        }
+                        */
+                    }
+                } else {
+                    // Non-Axios related errors (e.g., JSON parsing, code errors)
+                    console.error("Unexpected Error:", error); // Log full error object
+                    showToast("An unexpected error occurred. Please try again later.", false);
+                }
+// Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
+// ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
+// error.code settes av nettverket og ikke av backend
+                const isRetryableError =
+                    error.code === 'ECONNREFUSED' ||
+                    error.code === 'ECONNABORTED' ||
+                    statusCode === 429 || // Rate limiting
+                    statusCode >= 500;      // Serverfeil
+
+                if (isRetryableError && retryCount < maxRetries) {
+                    const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
+                    console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                    return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
+                }
+
+                if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
+                    console.error("Max retries reached. Error: ", error);
+                    showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+                }
+
+                showToast(userFriendlyErrorMessage, false);
+            }
+        finally
+            {
+                loadingIndicator.hide();
+            }
+        }
 
     const populateUsersTable = (users) => {
         const tableBody = document.getElementById('userTableBody');
@@ -357,6 +509,9 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("ready")
+        const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
+        console.log(currentTime);
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
             showToast(error.message, false);
