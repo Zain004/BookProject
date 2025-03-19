@@ -68,7 +68,7 @@ public class UsersController {
     }
 
     /**
-     *
+     * Bruk alltid queryparametre for paginaering
      * @param pageable
      * @return
      */
