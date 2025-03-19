@@ -128,7 +128,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-
+<!-- Axios CDN lenke -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
     /**
      *
@@ -306,29 +307,37 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
     }
 
+    let currentPage = 0;
+    let size = 5;
+
     class Pagination {
         static DEFAULT_OPTIONS = {
-            DEFAULT_INITIAL_PAGE: 0,
-            DEFAULT_MAX_PAGES_TO_SHOW: 5,
+            DEFAULT_INITIAL_PAGE: currentPage,
+            DEFAULT_SIZE: size,
             DEFAULT_PREV_BUTTON_ID: 'previous-page',
             DEFAULT_NEXT_BUTTON_ID: 'next-page'
         }
         #options
         #previousPageButton
         #nextPageButton
+        #currentPage
+        #size
         #isFirst
         #isLast
+        #objectsPerPage
+// husk å hente ut fra response.data.data !!!!!!!!!!!!!!!!
 
-
-        constructor(options = {}) {
+        constructor(options = {}, pagedResponse) {
             // sjekk og lagre argumenter
             this.#options = {
                 ...Pagination.DEFAULT_OPTIONS,
                 ...options
             };
-            this.#isFirst = true; // Anta første side til å begynne med
-            this.#isLast = false; // Anta *ikke* siste side til å begynne med
-
+            currentPage = pagedResponse.pageNumber;
+            this.#size = Pagination.DEFAULT_OPTIONS.DEFAULT_SIZE;
+            this.#isFirst = pagedResponse.isFirst;
+            this.#isLast = pagedResponse.isLast;
+            this.#objectsPerPage = Pagination.DEFAULT_OPTIONS.DEFAULT_OBJECTS_PER_PAGE;
             this.#previousPageButton = document.getElementById(this.#options.DEFAULT_PREV_BUTTON_ID);
             this.#nextPageButton = document.getElementById(this.#options.DEFAULT_NEXT_BUTTON_ID);
             // initialiser
@@ -339,18 +348,20 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#previousPageButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (!this.#isFirst) {
-                    this.#handlePageChange(-1); // Bruk -1 for "forrige"
+                    currentPage = currentPage - 1;
+                    this.#handlePageChange(currentPage); // Bruk -1 for "forrige"
                 }
             });
             this.#nextPageButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 if(!this.#isLast) {
-                    this.#handlePageChange(1); // bruk 1 for neste
+                    currentPage = currentPage + 1;
+                    this.#handlePageChange(currentPage); // bruk 1 for neste
                 }
             })
         }
         #handlePageChange() {
-
+            fetchUsers();
         }
     }
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
@@ -360,7 +371,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         loadingIndicator.show();
         const API_BASE_URL = '/api/users';
         const API_ENDPOINT = '/paged';
-        const PAGE = `?page=${page}`;
+        const PAGE = `?page=${currentPage}`;
         const SIZE = `&size=${size}`;
         const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}`;
         try {
