@@ -313,7 +313,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             pageSize: 5,             // Antall elementer per side
             prevButtonId: 'previous-page',  // ID for forrige-knapp
             nextButtonId: 'next-page',    // ID for neste-knapp
-            onPageChange: () => {}   // Callback-funksjon for sideendringer!  VIKTIG
+            onPageChange(currentPage, pageSize) {
+                console.log("onPageChange method called in Pagination class. Current page:", currentPage, "Page size:", pageSize);
+                fetchUsers();
+            }
         };
 
         #options;
@@ -327,7 +330,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         #nextPageButton;
 // husk å hente ut fra response.data.data !!!!!!!!!!!!!!!!
 
-        constructor(options = {}, pagedResponse) {
+        constructor(options = {}) {
             // sjekk og lagre argumenter
             this.#options = {
                 ...Pagination.DEFAULT_OPTIONS,
@@ -353,13 +356,16 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
 
         #handlePreviousPageClick(event) { // RIKTIG: Metodedefinisjon utenfor andre metoder
+            console.log("Previous button clicked!");
             event.preventDefault();
             if (!this.#isFirstPage) {
                 this.#gotoPage(this.#currentPage - 1);
             }
         }
 
+
         #handleNextPageClick(event) { // RIKTIG: Metodedefinisjon utenfor andre metoder
+            console.log("Next button clicked!");
             event.preventDefault();
             if (!this.#isLastPage) {
                 this.#gotoPage(this.#currentPage + 1);
@@ -390,6 +396,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
 
         #updateButtonStates() {
+            console.log("updateButtonStates called. isFirstPage:", this.#isFirstPage, "isLastPage:", this.#isLastPage);
             // Deaktiver forrige knappen hvis vi er på første side
             if (this.#previousPageButton) {
                 this.#previousPageButton.disabled = this.#isFirstPage;
