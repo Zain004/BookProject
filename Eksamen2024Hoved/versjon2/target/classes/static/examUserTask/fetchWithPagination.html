@@ -104,8 +104,11 @@
                         </a>
                     </li>
 
-                    <!-- DETTE ER "FELTET" I MIDTEN -->
-                    <!-- Her setter JavaScript inn de dynamiske <li>-elementene -->
+                    <li class="page-item" id="current-page-display">
+                        <span class="page-link">
+                            <span id="current-page-number">1</span>
+                        </span>
+                    </li>
 
                     <!-- Next Button -->
                     <li class="page-item" id="next-page">
@@ -313,6 +316,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             pageSize: 5,             // Antall elementer per side
             prevButtonId: 'previous-page',  // ID for forrige-knapp
             nextButtonId: 'next-page',    // ID for neste-knapp
+            currentPageNumberDisplayId: 'current-page-number', // Id for sidetall visning
             onPageChange(currentPage, pageSize) {
                 console.log("onPageChange method called in Pagination class. Current page:", currentPage, "Page size:", pageSize);
                 fetchUsers();
@@ -328,7 +332,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         #totalPages;
         #previousPageButton;
         #nextPageButton;
-// husk å hente ut fra response.data.data !!!!!!!!!!!!!!!!
+        #currentPageNumberDisplay;
 
         constructor(options = {}) {
             // sjekk og lagre argumenter
@@ -344,7 +348,9 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#totalPages = 0;
             this.#previousPageButton = document.getElementById(this.#options.prevButtonId);
             this.#nextPageButton = document.getElementById(this.#options.nextButtonId);
+            this.#currentPageNumberDisplay = document.getElementById(this.#options.currentPageNumberDisplayId); // Finn visningselement
             this.#setupEventHandlers();
+            this.#updateCurrentPageDisplay(); // oppdater sidetall ved initialisering
         }
         #setupEventHandlers() {
             if (this.#previousPageButton) {
@@ -391,19 +397,28 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#isLastPage = pagedResponse.isLast;        // Bruk .last
             this.#totalElements = pagedResponse.totalElements; //  Viktig!
             this.#totalPages = pagedResponse.totalPages;      //  Viktig!
-
-            this.#updateButtonStates();
+            this.#setupEventHandlers()
+            this.#updateCurrentPageDisplay();
         }
 
         #updateButtonStates() {
             console.log("updateButtonStates called. isFirstPage:", this.#isFirstPage, "isLastPage:", this.#isLastPage);
             // Deaktiver forrige knappen hvis vi er på første side
             if (this.#previousPageButton) {
+                // previous button skal være disabled hvis isFirstPage er sann
                 this.#previousPageButton.disabled = this.#isFirstPage;
             }
             // Deaktiver "Neste" - knappen hvis vi er på siste side.
             if (this.#nextPageButton) {
+                // nextpage button skal være disabled hvis isLastPAge er sann
                 this.#nextPageButton.disabled = this.#isLastPage;
+            }
+        }
+        #updateCurrentPageDisplay() {
+            if (this.#currentPageNumberDisplay) {
+                this.#currentPageNumberDisplay.textContent = this.#currentPage + 1;
+            } else {
+                console.warn("Current page number display element not found!");
             }
         }
         getCurrentPage() {
