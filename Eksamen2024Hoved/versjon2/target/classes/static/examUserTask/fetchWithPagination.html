@@ -72,7 +72,7 @@
                         <th>Email</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="userTableBody">
                     <!-- User data will be isnerted here by javascript -->
                     </tbody>
                 </table>
@@ -307,24 +307,24 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
     }
 
-    let currentPage = 0;
-    let size = 5;
-
     class Pagination {
         static DEFAULT_OPTIONS = {
-            DEFAULT_INITIAL_PAGE: currentPage,
-            DEFAULT_SIZE: size,
-            DEFAULT_PREV_BUTTON_ID: 'previous-page',
-            DEFAULT_NEXT_BUTTON_ID: 'next-page'
-        }
-        #options
-        #previousPageButton
-        #nextPageButton
-        #currentPage
-        #size
-        #isFirst
-        #isLast
-        #objectsPerPage
+            initialPage: 0,          // Startside
+            pageSize: 5,             // Antall elementer per side
+            prevButtonId: 'previous-page',  // ID for forrige-knapp
+            nextButtonId: 'next-page',    // ID for neste-knapp
+            onPageChange: () => {}   // Callback-funksjon for sideendringer!  VIKTIG
+        };
+
+        #options;
+        #currentPage;
+        #pageSize;
+        #isFirstPage;
+        #isLastPage;
+        #totalElements; // Viktig for robust pagineringslogikk
+        #totalPages;
+        #previousPageButton;
+        #nextPageButton;
 // husk å hente ut fra response.data.data !!!!!!!!!!!!!!!!
 
         constructor(options = {}, pagedResponse) {
@@ -333,46 +333,91 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 ...Pagination.DEFAULT_OPTIONS,
                 ...options
             };
-            currentPage = pagedResponse.pageNumber;
-            this.#size = Pagination.DEFAULT_OPTIONS.DEFAULT_SIZE;
-            this.#isFirst = pagedResponse.isFirst;
-            this.#isLast = pagedResponse.isLast;
-            this.#objectsPerPage = Pagination.DEFAULT_OPTIONS.DEFAULT_OBJECTS_PER_PAGE;
-            this.#previousPageButton = document.getElementById(this.#options.DEFAULT_PREV_BUTTON_ID);
-            this.#nextPageButton = document.getElementById(this.#options.DEFAULT_NEXT_BUTTON_ID);
-            // initialiser
-            this.init();
+            this.#currentPage = this.#options.initialPage;
+            this.#pageSize = this.#options.pageSize;
+            this.#isFirstPage = true;
+            this.#isLastPage = false;
+            this.#totalElements = 0;
+            this.#totalPages = 0;
+            this.#previousPageButton = document.getElementById(this.#options.prevButtonId);
+            this.#nextPageButton = document.getElementById(this.#options.nextButtonId);
+            this.#setupEventHandlers();
         }
-        init() {
-            // sett opp event listeners for Previos og next knappene
-            this.#previousPageButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (!this.#isFirst) {
-                    currentPage = currentPage - 1;
-                    this.#handlePageChange(currentPage); // Bruk -1 for "forrige"
-                }
-            });
-            this.#nextPageButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                if(!this.#isLast) {
-                    currentPage = currentPage + 1;
-                    this.#handlePageChange(currentPage); // bruk 1 for neste
-                }
-            })
+        #setupEventHandlers() {
+            if (this.#previousPageButton) {
+                this.#previousPageButton.addEventListener('click', this.#handlePreviousPageClick.bind(this));
+            }
+            if (this.#nextPageButton) {
+                this.#nextPageButton.addEventListener('click', this.#handleNextPageClick.bind(this));
+            }
         }
-        #handlePageChange() {
-            fetchUsers();
+
+        #handlePreviousPageClick(event) { // RIKTIG: Metodedefinisjon utenfor andre metoder
+            event.preventDefault();
+            if (!this.#isFirstPage) {
+                this.#gotoPage(this.#currentPage - 1);
+            }
+        }
+
+        #handleNextPageClick(event) { // RIKTIG: Metodedefinisjon utenfor andre metoder
+            event.preventDefault();
+            if (!this.#isLastPage) {
+                this.#gotoPage(this.#currentPage + 1);
+            }
+        }
+
+        #gotoPage(newPageNumber) {
+            if (newPageNumber >= 0 && (this.#totalPages === 0 || newPageNumber < this.#totalPages)) {
+                this.#currentPage = newPageNumber;
+                this.#options.onPageChange(this.#currentPage, this.#pageSize); // callback
+            }
+        }
+
+        updatePagination(pagedResponse) {
+            if (!pagedResponse || typeof pagedResponse !== 'object') {
+                console.warn("Invalid pagedResponse received:", pagedResponse);
+                showToast("Invalid pagedResponse received!", false);
+                return; // Viktig: Avslutt tidlig hvis responsen er ugyldig.
+            }
+            this.#currentPage = pagedResponse.pageNumber;  // Bruker pageNumber
+            this.#pageSize = pagedResponse.pageSize;          // Bruker size
+            this.#isFirstPage = pagedResponse.isFirst;       // Bruk .first (mer standard navn)
+            this.#isLastPage = pagedResponse.isLast;        // Bruk .last
+            this.#totalElements = pagedResponse.totalElements; //  Viktig!
+            this.#totalPages = pagedResponse.totalPages;      //  Viktig!
+
+            this.#updateButtonStates();
+        }
+
+        #updateButtonStates() {
+            // Deaktiver forrige knappen hvis vi er på første side
+            if (this.#previousPageButton) {
+                this.#previousPageButton.disabled = this.#isFirstPage;
+            }
+            // Deaktiver "Neste" - knappen hvis vi er på siste side.
+            if (this.#nextPageButton) {
+                this.#nextPageButton.disabled = this.#isLastPage;
+            }
+        }
+        getCurrentPage() {
+            return this.#currentPage;
+        }
+        getPageSize() {
+            return this.#pageSize;
         }
     }
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
     const loadingIndicator = new LoadingIndicator()
+    const pagination = new Pagination();
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
+        const currentPage = pagination.getCurrentPage();
+        const pageSize = pagination.getPageSize();
         const API_BASE_URL = '/api/users';
         const API_ENDPOINT = '/paged';
         const PAGE = `?page=${currentPage}`;
-        const SIZE = `&size=${size}`;
+        const SIZE = `&size=${pageSize}`;
         const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}`;
         try {
             const response = await axios.get(url);
@@ -400,7 +445,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                     return; // avslutt
                 }
                 // 4. Oppdater paginering (Nå er vi sikre på gyldige data)
-                updatepaginations(response.data?.isFirst, response.data?.isLast);
+                pagination.updatePagination(pagedResponse);
                 // 5. sjekk om det er noen til stede
                 if (users.length > 0) {
                     console.debug(users);
@@ -468,9 +513,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 }
 
                 showToast(userFriendlyErrorMessage, false);
-            }
-        finally
-            {
+            } finally {
                 loadingIndicator.hide();
             }
         }

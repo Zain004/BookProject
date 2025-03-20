@@ -72,7 +72,7 @@ public class UsersController {
      * @param pageable
      * @return
      */
-    @GetMapping("/users/paged")
+    @GetMapping("/paged")
     public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
         logger.info("Recieved request to fetch all users with pageable: {}", pageable);
         Page<UsersDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
