@@ -440,7 +440,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const API_ENDPOINT = '/paged';
         const PAGE = `?page=${currentPage}`;
         const SIZE = `&size=${pageSize}`;
-        const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}`;
+        const SORT = '&sort=firstName';
+        // SORT = '&sort='', ikke fyll inn noe hvis du ikke vil bruke den
+        // SORT = '&sort=firstName' sorter etter fornavn
+        // SORT = '&sort=firstName,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
+        // SORT = '&sort=firstName,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
+        // de har annerledes bokstav på email, sorteres de på email også
+        // vanlig sort returnerer i asc
+        const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}${SORT}`;
         try {
             const response = await axios.get(url);
             console.log("Fetching users: ");

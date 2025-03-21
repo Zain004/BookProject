@@ -50,7 +50,7 @@ public class UsersService {
     }
 
     /**
-     *
+     * denne tar også inn sort
      * @param pageable
      * @return
      */
@@ -69,6 +69,11 @@ public class UsersService {
 
     // Metode for å lagre en bruker
 
+    /**
+     *
+     * @param user
+     * @return
+     */
     public Users saveUser(Users user) {
         if(user == null) {
             logger.error("Attempted to save user with null user object.");

@@ -1,7 +1,7 @@
 INSERT INTO users (first_name, last_name, dob, phone, email)
 VALUES
-    ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'),
-    ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'),
+    ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'), -- Ola 1
+    ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'), -- Kari 1
     ('Per', 'Hansen', '1992-11-22', '34567890', 'per.hansen@example.com'),
     ('Lise', 'Johansen', '1980-07-10', '45678901', 'lise.johansen@example.com'),
 
@@ -10,9 +10,10 @@ VALUES
     ('Natalie', 'Knudsen', '1983-06-24', '66778899', 'natalie.knudsen@example.com'),
     ('Filip', 'Eriksen', '1997-03-03', '77889900', 'filip.eriksen@example.com'),
     ('Isabella', 'Berg', '1979-09-10', '88990011', 'isabella.berg@example.com'),
-    ('Oliver', 'Strand', '1990-12-16', '99001122', 'oliver.strand@example.com'),
-    ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
+    ('Ola', 'Jensen', '1995-08-20', '98765432', 'ola.jensen@example.com'),  -- Ola 2 (samme fornavn som Ola 1, men annen email)
+    ('Kari', 'Pettersen', '1978-02-10', '87654321', 'kari.iettersen@example.com'), -- Kari 2 (samme fornavn som Kari 1, men annen email)
+    ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),

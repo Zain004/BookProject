@@ -67,11 +67,7 @@ public class UsersController {
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }
 
-    /**
-     * Bruk alltid queryparametre for paginaering
-     * @param pageable
-     * @return
-     */
+
     @GetMapping("/paged")
     public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
         logger.info("Recieved request to fetch all users with pageable: {}", pageable);
@@ -82,6 +78,7 @@ public class UsersController {
         if (usersPage.isEmpty()) {
             logger.info("No users found for requsted page - Page: {}, Size: {}",
                     pageable.getPageNumber(), pageable.getPageSize());
+            // tar inn page objekt og gjlr om til et PagedResponseDTO
             pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
             return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
         }
