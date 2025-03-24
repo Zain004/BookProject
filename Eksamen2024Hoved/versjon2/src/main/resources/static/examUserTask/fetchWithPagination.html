@@ -401,19 +401,6 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#updateCurrentPageDisplay();
         }
 
-        #updateButtonStates() {
-            console.log("updateButtonStates called. isFirstPage:", this.#isFirstPage, "isLastPage:", this.#isLastPage);
-            // Deaktiver forrige knappen hvis vi er på første side
-            if (this.#previousPageButton) {
-                // previous button skal være disabled hvis isFirstPage er sann
-                this.#previousPageButton.disabled = this.#isFirstPage;
-            }
-            // Deaktiver "Neste" - knappen hvis vi er på siste side.
-            if (this.#nextPageButton) {
-                // nextpage button skal være disabled hvis isLastPAge er sann
-                this.#nextPageButton.disabled = this.#isLastPage;
-            }
-        }
         #updateCurrentPageDisplay() {
             if (this.#currentPageNumberDisplay) {
                 this.#currentPageNumberDisplay.textContent = this.#currentPage + 1;

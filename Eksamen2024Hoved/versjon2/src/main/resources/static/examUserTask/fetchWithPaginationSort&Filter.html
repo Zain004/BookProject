@@ -48,7 +48,7 @@
 <div class="container">
     <main>
         <section>
-            <h1>Users</h1>
+            <h1>Users - Volunteer Opportunities</h1>
             <!-- Loading Indicator -->
             <!-- bruker loading hidden som standard før javascript er lastet inn-->
             <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
@@ -59,6 +59,19 @@
                 <!-- Dette er den ordentlige teksten som skal vises -->
                 <p class="mt-2 small text-muted">Fetching users...</p>
             </div>
+            <!-- skjema for filtrering og sortering -->
+            <form id="filterForm">
+                <!-- Firstname sortering -->
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" aria-label="First name"/>
+                    <label for="firstName" class="form-label">First Name:</label>
+                </div>
+                <!-- Date og Birth - Filtrering -->
+                <div class="form-floating mb-3">
+                    <input type="Date" class="form-control" id="dob" name="dob" placeholder="YYYY-MM-DD" aria-label="Date of Birth">
+                    <label for="dob" class="form-label">Date of Birth:</label>
+                </div>
+            </form>
 
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -416,26 +429,89 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
     }
 
+
+    class FilterFormHandler {
+        static DEFAULT_OPTIONS = {
+            formId: 'filterForm',
+            firstNameId: 'firstName',
+            dobId: 'dob',
+            onInputChange: (firstName, dob) => {
+                console.log("onInputchange Firstname: ", firstName, " AND Date of Birth: ", dob);
+                fetchUsers();
+            }
+        };
+        #options;
+        #form;
+        #firstNameInput;
+        #dobInput
+
+        constructor(options = {}) {
+            this.#options = {
+                ...FilterFormHandler.DEFAULT_OPTIONS,
+                ...options
+            };
+            this.#form = document.getElementById(this.#options.formId);
+            this.#firstNameInput = document.getElementById(this.#options.firstNameId);
+            this.#dobInput = document.getElementById(this.#options.dobId);
+
+            this.#validateElements();
+            this.#setupEventListeners();
+        }
+        #validateElements() {
+            if (!this.#form) {
+                throw new Error(`Form with Id '${this.#options.formId}' not found.`);
+            }
+
+            if (!this.#firstNameInput) {
+                throw new Error(`First Name input with ID '${this.#options.firstNameId}' not found.`);
+            }
+
+            if (!this.#dobInput) {
+                throw new Error(`Date of Birth input with ID '${this.#options.dobId}' not found.`);
+            }
+        }
+
+        #setupEventListeners() {
+            this.#firstNameInput.addEventListener('input', this.#handleInputChange.bind(this));
+            this.#dobInput.addEventListener('input', this.#handleInputChange.bind(this));
+        }
+
+        #handleInputChange() {
+            const firstName = this.#firstNameInput.value;
+            const dob = this.#dobInput.value;
+            this.#options.onInputChange(firstName, dob);
+        }
+
+        getFirstName() {
+            return this.#firstNameInput.value;
+        }
+
+        getDobInput() {
+            return this.#dobInput.value;
+        }
+    }
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
     const loadingIndicator = new LoadingIndicator()
     const pagination = new Pagination();
+    const filterFormhandler = new FilterFormHandler();
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
         const currentPage = pagination.getCurrentPage();
         const pageSize = pagination.getPageSize();
         const API_BASE_URL = '/api/users';
-        const API_ENDPOINT = '/standardSort';
-        const PAGE = `?page=${currentPage}`;
+        const API_ENDPOINT = '/volunteer-opportunities/sort-and-filter';
+
+        const FIRSTNAME = filterFormhandler.getFirstName();
+        const DOB = filterFormhandler.getDobInput();
+
+        // Bygg URL med 
+
+
+        const PAGE = `&page=${currentPage}`;
         const SIZE = `&size=${pageSize}`;
-        const SORT = '&sort=';
-        // SORT = '&sort='', ikke fyll inn noe hvis du ikke vil bruke den
-        // SORT = '&sort=firstName' sorter etter fornavn
-        // SORT = '&sort=firstName,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
-        // SORT = '&sort=firstName,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
-        // de har annerledes bokstav på email, sorteres de på email også
-        // vanlig sort returnerer i asc
-        const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}${SORT}`;
+        const url = `${API_BASE_URL}${API_ENDPOINT}${FIRSTNAME}${DOB}${PAGE}${SIZE}`;
+
         try {
             const response = await axios.get(url);
             console.log("Fetching users: ");
@@ -477,63 +553,63 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             const errorMessage = `API Error: ${response.message || 'Failed to fetch users (no message provided)'}`;
             showToast(errorMessage, false);
         } catch (error) {
-                let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
-                const statusCode = error.response?.status;
+            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
 
-                if (axios.isAxiosError(error)) {
-                    if (!error.response) {
-                        console.error("Network Error: ", error)
-                        userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
-                    } else {
-                        console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
-                        // Bruker en map for feilmeldinger, fordi det er nyere måte
-                        const errorMessages = {
-                            400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
-                            401: "You are not authorized to view user list.", // UNAUTHORIZED
-                            403: "You do not have permission to view user list.", // FORBIDDEN
-                            404: "User list resource not found. Please contact support if this issue persists.", // NOT FOUND
-                            429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
-                            500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
-                        };
-
-                        userFriendlyErrorMessage = errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
-                        /*
-                        if (statusCode === 401 || statusCode === 403) {
-                            // ekstra håndtering
-                        }
-                        */
-                    }
+            if (axios.isAxiosError(error)) {
+                if (!error.response) {
+                    console.error("Network Error: ", error)
+                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
                 } else {
-                    // Non-Axios related errors (e.g., JSON parsing, code errors)
-                    console.error("Unexpected Error:", error); // Log full error object
-                    showToast("An unexpected error occurred. Please try again later.", false);
+                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                    // Bruker en map for feilmeldinger, fordi det er nyere måte
+                    const errorMessages = {
+                        400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
+                        401: "You are not authorized to view user list.", // UNAUTHORIZED
+                        403: "You do not have permission to view user list.", // FORBIDDEN
+                        404: "User list resource not found. Please contact support if this issue persists.", // NOT FOUND
+                        429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
+                        500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
+                    };
+
+                    userFriendlyErrorMessage = errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                    /*
+                    if (statusCode === 401 || statusCode === 403) {
+                        // ekstra håndtering
+                    }
+                    */
                 }
+            } else {
+                // Non-Axios related errors (e.g., JSON parsing, code errors)
+                console.error("Unexpected Error:", error); // Log full error object
+                showToast("An unexpected error occurred. Please try again later.", false);
+            }
 // Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
 // ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
 // error.code settes av nettverket og ikke av backend
-                const isRetryableError =
-                    error.code === 'ECONNREFUSED' ||
-                    error.code === 'ECONNABORTED' ||
-                    statusCode === 429 || // Rate limiting
-                    statusCode >= 500;      // Serverfeil
+            const isRetryableError =
+                error.code === 'ECONNREFUSED' ||
+                error.code === 'ECONNABORTED' ||
+                statusCode === 429 || // Rate limiting
+                statusCode >= 500;      // Serverfeil
 
-                if (isRetryableError && retryCount < maxRetries) {
-                    const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
-                    console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
-                    await new Promise(resolve => setTimeout(resolve, delayMs));
-                    return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
-                }
-
-                if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
-                    console.error("Max retries reached. Error: ", error);
-                    showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
-                }
-
-                showToast(userFriendlyErrorMessage, false);
-            } finally {
-                loadingIndicator.hide();
+            if (isRetryableError && retryCount < maxRetries) {
+                const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
+                console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
             }
+
+            if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
+                console.error("Max retries reached. Error: ", error);
+                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+            }
+
+            showToast(userFriendlyErrorMessage, false);
+        } finally {
+            loadingIndicator.hide();
         }
+    }
 
     const populateUsersTable = (users) => {
         const tableBody = document.getElementById('userTableBody');
@@ -583,10 +659,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         console.log("ready")
         const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
         console.log(currentTime);
+        console.log(document.getElementById('filterForm') || 'not found'); // Sjekk om
+
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
             showToast(error.message, false);
         })
+
+
     })
 </script>
 </body>
