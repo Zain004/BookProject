@@ -119,9 +119,7 @@ public class UsersService {
             }
             // AND
             if (dob != null) {
-                // dob = '1990-01-01'
-                predicates.add(criteriaBuilder.equal(root.get("dob")
-                , dob));
+                predicates.add(criteriaBuilder.equal(root.get("dob"), dob));
             }
             // ORDER BY firstName ASC - Sorter basert på bruker input
             query.orderBy(criteriaBuilder.asc(root.get("firstName")));

@@ -425,7 +425,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const currentPage = pagination.getCurrentPage();
         const pageSize = pagination.getPageSize();
         const API_BASE_URL = '/api/users';
-        const API_ENDPOINT = '/standardSort';
+        const API_ENDPOINT = '/paged';
         const PAGE = `?page=${currentPage}`;
         const SIZE = `&size=${pageSize}`;
         const SORT = '&sort=';

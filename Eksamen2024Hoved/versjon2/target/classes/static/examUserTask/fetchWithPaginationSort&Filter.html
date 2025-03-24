@@ -68,7 +68,7 @@
                 </div>
                 <!-- Date og Birth - Filtrering -->
                 <div class="form-floating mb-3">
-                    <input type="Date" class="form-control" id="dob" name="dob" placeholder="YYYY-MM-DD" aria-label="Date of Birth">
+                    <input type="text" class="form-control" id="dob" name="dob" placeholder="YYYY-MM-DD" aria-label="Date of Birth">
                     <label for="dob" class="form-label">Date of Birth:</label>
                 </div>
             </form>
@@ -497,20 +497,24 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
-        const currentPage = pagination.getCurrentPage();
-        const pageSize = pagination.getPageSize();
+        // bygg api url med variabler
         const API_BASE_URL = '/api/users';
         const API_ENDPOINT = '/volunteer-opportunities/sort-and-filter';
 
         const FIRSTNAME = filterFormhandler.getFirstName();
         const DOB = filterFormhandler.getDobInput();
 
-        // Bygg URL med 
+        const currentPage = pagination.getCurrentPage();
+        const pageSize = pagination.getPageSize();
 
+        // Bygg kun query delen med URL - SearchParams
+        const params = new URLSearchParams();
+        if (FIRSTNAME) params.append('firstName', FIRSTNAME);
+        if (DOB) params.append('dob', DOB);
+        params.append('page', currentPage);
+        params.append('size', pageSize);
 
-        const PAGE = `&page=${currentPage}`;
-        const SIZE = `&size=${pageSize}`;
-        const url = `${API_BASE_URL}${API_ENDPOINT}${FIRSTNAME}${DOB}${PAGE}${SIZE}`;
+        const url = `${API_BASE_URL}${API_ENDPOINT}?${params.toString()}`;
 
         try {
             const response = await axios.get(url);
