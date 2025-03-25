@@ -95,10 +95,10 @@ public class UsersService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UsersDTO> fetchAllUsersFilteredAndSortedPaginated(String firstname, LocalDate dob, Pageable pageable) {
+    public Page<UsersDTO> fetchAllUsersFilteredAndSortedPaginated(String firstname, LocalDate dobFrom, LocalDate dobTo, Pageable pageable) {
         logger.info("Service Request: Fetching filtered and sorted paginated users from DB - firstname: {}," +
-                "dob: {}, Page: {}, Size: {}", firstname, dob, pageable.getPageNumber() + 1, pageable.getPageSize());
-        Specification<Users> spec = createSpecification(firstname, dob);
+                "dobFrom: {}, dobTo: {}, Page: {}, Size: {}", firstname, dobFrom, dobTo, pageable.getPageNumber() + 1, pageable.getPageSize());
+        Specification<Users> spec = createSpecification(firstname, dobFrom, dobTo);
 
         Page<Users> usersPage = usersRepository.findAll(spec, pageable);
         logger.debug("Fetched {} Users entities from DB for page {} of {}",
@@ -107,7 +107,7 @@ public class UsersService {
         return usersPage.map(UsersDTO::convertToDTO);
     }
 
-    private Specification<Users> createSpecification(String firstname, LocalDate dob) {
+    private Specification<Users> createSpecification(String firstname, LocalDate dobFrom, LocalDate dobTo) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             // Null-sjekk og Tom streng-sjekk
@@ -118,8 +118,15 @@ public class UsersService {
                         ,searchTerm)); // vil søke etter %firstName%
             }
             // AND
-            if (dob != null) {
-                predicates.add(criteriaBuilder.equal(root.get("dob"), dob));
+            if (dobTo != null && dobFrom != null) {
+                if (dobFrom.isAfter(dobTo)) {
+                 throw new IllegalArgumentException("dobFrom cannot be after dobTo"); // tidlig feilhåndteirng
+                }
+                predicates.add(criteriaBuilder.between(root.get("dob"), dobFrom, dobTo));
+            } else if (dobFrom != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dob"), dobFrom));
+            } else if (dobTo != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dob"), dobTo));
             }
             // ORDER BY firstName ASC - Sorter basert på bruker input
             query.orderBy(criteriaBuilder.asc(root.get("firstName")));

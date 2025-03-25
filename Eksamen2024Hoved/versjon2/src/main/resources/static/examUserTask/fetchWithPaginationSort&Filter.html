@@ -21,7 +21,7 @@
 </head>
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
     <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
         <a class="navbar-brand" href="#">User Management</a>
         <!-- Hamburger menu (mobile) -->
@@ -66,10 +66,15 @@
                     <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" aria-label="First name"/>
                     <label for="firstName" class="form-label">First Name:</label>
                 </div>
-                <!-- Date og Birth - Filtrering -->
+                <!-- Date of Birth From intervall - Filtrering -->
                 <div class="form-floating mb-3">
-                    <input type="Date" class="form-control" id="dob" name="dob" placeholder="YYYY-MM-DD" aria-label="Date of Birth">
-                    <label for="dob" class="form-label">Date of Birth:</label>
+                    <input type="Date" class="form-control" id="dobFrom" name="dobFrom" placeholder="YYYY-MM-DD" aria-label="Date of Birth From">
+                    <label for="dobFrom" class="form-label">Date of Birth (From):</label>
+                </div>
+                <!-- Date of Birth to end intervall-->
+                <div class="form-floating mb-3">
+                    <input type="Date" class="form-control" id="dobTo" name="dobTo" placeholder="YYYY-MM-DD" aria-label="Date of Birth To">
+                    <label for="dobTo" class="form-label">Date of Birth (To):</label>
                 </div>
             </form>
 
@@ -434,16 +439,18 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         static DEFAULT_OPTIONS = {
             formId: 'filterForm',
             firstNameId: 'firstName',
-            dobId: 'dob',
-            onInputChange: (firstName, dob) => {
-                console.log("onInputchange Firstname: ", firstName, " AND Date of Birth: ", dob);
+            dobFromId: 'dobFrom',
+            dobToId: 'dobTo',
+            onInputChange: (firstName, dobFromId, dobToId) => {
+                console.log("onInputchange Firstname: ", firstName, " AND Date of Birth (From): ", dobFromId, " And Date of Birth (TO): ", dobToId);
                 fetchUsers();
             }
         };
         #options;
         #form;
         #firstNameInput;
-        #dobInput
+        #dobFromInput
+        #dobToInput
 
         constructor(options = {}) {
             this.#options = {
@@ -452,7 +459,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             };
             this.#form = document.getElementById(this.#options.formId);
             this.#firstNameInput = document.getElementById(this.#options.firstNameId);
-            this.#dobInput = document.getElementById(this.#options.dobId);
+            this.#dobFromInput = document.getElementById(this.#options.dobFromId);
+            this.#dobToInput = document.getElementById(this.#options.dobToId);
 
             this.#validateElements();
             this.#setupEventListeners();
@@ -466,28 +474,37 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 throw new Error(`First Name input with ID '${this.#options.firstNameId}' not found.`);
             }
 
-            if (!this.#dobInput) {
-                throw new Error(`Date of Birth input with ID '${this.#options.dobId}' not found.`);
+            if (!this.#dobToInput) {
+                throw new Error(`Date of Birth TO input with ID '${this.#options.dobToId}' not found.`);
+            }
+
+            if (!this.#dobFromInput) {
+                throw new Error(`Date of Birth TO input with ID '${this.#options.dobFromId}' not found.`);
             }
         }
 
         #setupEventListeners() {
             this.#firstNameInput.addEventListener('input', this.#handleInputChange.bind(this));
-            this.#dobInput.addEventListener('input', this.#handleInputChange.bind(this));
+            this.#dobFromInput.addEventListener('input', this.#handleInputChange.bind(this));
+            this.#dobToInput.addEventListener('input', this.#handleInputChange.bind(this));
         }
 
         #handleInputChange() {
             const firstName = this.#firstNameInput.value;
-            const dob = this.#dobInput.value;
-            this.#options.onInputChange(firstName, dob);
+            const dobFrom = this.#dobFromInput.value;
+            const dobTo = this.#dobToInput.value;
+            this.#options.onInputChange(firstName, dobFrom, dobTo);
         }
 
         getFirstName() {
             return this.#firstNameInput.value;
         }
 
-        getDobInput() {
-            return this.#dobInput.value;
+        getDobFromInput() {
+            return this.#dobFromInput.value;
+        }
+        getDobToInput() {
+            return this.#dobToInput.value;
         }
     }
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
@@ -502,7 +519,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const API_ENDPOINT = '/volunteer-opportunities/sort-and-filter';
 
         const FIRSTNAME = filterFormhandler.getFirstName();
-        const DOB = filterFormhandler.getDobInput();
+        const DOBFROM = filterFormhandler.getDobFromInput();
+        const DOBTO = filterFormhandler.getDobToInput();
 
         const currentPage = pagination.getCurrentPage();
         const pageSize = pagination.getPageSize();
@@ -510,7 +528,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         // Bygg kun query delen med URL - SearchParams
         const params = new URLSearchParams();
         if (FIRSTNAME) params.append('firstName', FIRSTNAME);
-        if (DOB) params.append('dob', DOB);
+        if (DOBFROM) params.append('dobFrom', DOBFROM);
+        if (DOBTO) params.append('dobTo', DOBTO);
         params.append('page', currentPage);
         params.append('size', pageSize);
 

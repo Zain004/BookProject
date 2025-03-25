@@ -135,11 +135,12 @@ public class UsersController {
     @GetMapping("/volunteer-opportunities/sort-and-filter")
     public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(
             @RequestParam(name="firstName", required = false) String firstName,
-            @RequestParam(name="dob", required = false) LocalDate dob,
+            @RequestParam(name="dobFrom", required = false) LocalDate dobFrom,
+            @RequestParam(name="dobTo", required = false) LocalDate dobTo,
             Pageable pageable) {
-        logger.info("Recieved request to fetch all users with filters - firstName: {}, dob: {}, pageable: {}",
-                firstName, dob, pageable);
-        Page<UsersDTO> usersPage = usersService.fetchAllUsersFilteredAndSortedPaginated(firstName, dob, pageable);
+        logger.info("Recieved request to fetch all users with filters - firstName: {}, dobFrom: {}, dobTo: {}, pageable: {}",
+                firstName, dobFrom, dobTo, pageable);
+        Page<UsersDTO> usersPage = usersService.fetchAllUsersFilteredAndSortedPaginated(firstName, dobFrom, dobTo, pageable);
 
         PagedResponseDTO<UsersDTO> pagedResponseDTO;
 
