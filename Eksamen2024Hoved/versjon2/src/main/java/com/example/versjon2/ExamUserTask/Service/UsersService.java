@@ -26,28 +26,34 @@ public class UsersService {
     private final UsersRepository usersRepository;
     private final Logger logger = LoggerFactory.getLogger(UsersService.class);
 
-
     /**
      * metode for å lagre en bruker
      * @param user
      * @return
      */
+    @Transactional
     public Users saveUser(Users user) {
-        if(user == null) {
-            logger.error("Attempted to save user with null user object.");
-            throw new IllegalArgumentException("User Object cannot be null.");
-        }
-        // sjekker om brukeren allerede finnes (GLobalExceptionHandler håndterer unntaket)
-        usersRepository.findByEmail(user.getEmail()).ifPresent(existingUser -> {
-            logger.error("Attempted to a user that already exists in DB.");
-            throw new IllegalArgumentException("User with email " + user.getEmail() +" already exists in DB.");
-        });
+        validateUserObject(user);
+        ensureUserDoesnotExist(user);
 
         Users savedUser = usersRepository.save(user);
         logger.info("User with email {} successfully saved.", savedUser.getEmail());
         return savedUser;
     }
 
+    private void validateUserObject(Users user) {
+        if(user == null) {
+            logger.error("Attempted to save user with null user object.");
+            throw new IllegalArgumentException("User Object cannot be null.");
+        }
+    }
+
+    private void ensureUserDoesnotExist(Users user) {
+        usersRepository.findByEmail(user.getEmail()).ifPresent(existingUser -> {
+            logger.error("Attempted to save a user that already exists in DB.");
+            throw new IllegalArgumentException("User with email " + user.getEmail() +" already exists in DB.");
+        });
+    }
     @Transactional(readOnly = true)
     public List<Users> fetchAllUsers() {
         logger.info("Fetching all users from DB");

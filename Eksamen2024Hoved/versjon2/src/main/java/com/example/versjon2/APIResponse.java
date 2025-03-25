@@ -37,6 +37,30 @@ public class APIResponse<T> {
                 .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
+
+    public static <T> ResponseEntity<APIResponse<T>> buildResponse(HttpStatus status, String message, T data) {
+        APIResponse<T> response = APIResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .status(status)
+                .data(data)
+                .build();
+        return ResponseEntity.status(status)
+                .headers(SecurityConfig.createSecurityHeaders())
+                .body(response);
+    }
+
+    public static <T> ResponseEntity<APIResponse<T>> buildResponseError(HttpStatus status, String message, T data) {
+        APIResponse<T> response = APIResponse.<T>builder()
+                .success(false) // setter til false for feilmelding
+                .message(message)
+                .status(status)
+                .data(data)
+                .build();
+        return ResponseEntity.status(status)
+                .headers(SecurityConfig.createSecurityHeaders())
+                .body(response);
+    }
     // funker kun med en tom liste, ikke fornuftig å bruke med paginering, da det kan skape forvirring
     public static <T> ResponseEntity<APIResponse<List<UsersDTO>>> noContentResponse(String message) {
         APIResponse<List<UsersDTO>> response = APIResponse.<List<UsersDTO>>builder()

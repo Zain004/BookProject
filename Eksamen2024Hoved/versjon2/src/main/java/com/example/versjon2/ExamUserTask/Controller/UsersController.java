@@ -5,10 +5,10 @@ import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.Users;
 import com.example.versjon2.ExamUserTask.Service.UsersService;
 import com.example.versjon2.PagedResponseDTO;
-import com.example.versjon2.SecurityConfig;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,10 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
@@ -32,13 +30,20 @@ public class UsersController {
 
     private final Logger logger = LoggerFactory.getLogger(UsersController.class);
 
-    @PostMapping("/saveUser")
-    public ResponseEntity<?> saveUser(@RequestBody @Valid Users users) {
-        usersService.saveUser(users);
-        logger.info("Users saved successfully");
-        return ResponseEntity.ok(Map.of(
-                "success", "Users saved successfully"));
+    @PostMapping
+    public ResponseEntity<APIResponse<UsersDTO>> saveUser(@RequestBody @Valid Users users) {
+        String requestId = UUID.randomUUID().toString(); // legger til en unik id for sporbarhet
+        MDC.put("requestId", requestId);
 
+        logger.info("Received request to save user: {}", users.getEmail()); // Logg kun relevant info
+        Users savedUser = usersService.saveUser(users);
+
+        UsersDTO usersDTO = UsersDTO.convertToDTO(savedUser);
+
+        logger.info("User saved successfully with ID: {}", savedUser.getId());
+        MDC.remove("requestId");
+
+        return APIResponse.buildResponse(HttpStatus.CREATED, "User successfully created!", usersDTO);
     }
 
     @GetMapping("/list")

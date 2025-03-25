@@ -19,19 +19,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private <T> ResponseEntity<APIResponse<T>> buildResponse(HttpStatus status, String message, T data) {
-        APIResponse<T> response = APIResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .status(status)
-                .data(data)
-                .build();
-        return ResponseEntity.status(status)
-                .headers(SecurityConfig.createSecurityHeaders())
-                .body(response);
-    }
+    private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ConstraintViolationException.class)
     protected ResponseEntity<APIResponse<List<String>>> handleConstraintViolationException(ConstraintViolationException ex) {
@@ -39,7 +28,7 @@ public class GlobalExceptionHandler {
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.toList());
         logger.warn("ConstraintViolationException: {}", errors, ex); // Enkel logging
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+        return APIResponse.buildResponseError(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,7 +37,7 @@ public class GlobalExceptionHandler {
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.toList());
         logger.warn("MethodArgumentNotValidException: {}", errors, ex); // Enkel logging
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+        return APIResponse.buildResponseError(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
 
     @ExceptionHandler(Exception.class)
@@ -56,7 +45,7 @@ public class GlobalExceptionHandler {
         logger.error("Unexpected error: {}", ex.getMessage(), ex);
         ErrorInfo errorInfo = new ErrorInfo("Internal Server Error", "An unexpected error occured.",
                 ex.getClass().getSimpleName());
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occured.", errorInfo);
+        return APIResponse.buildResponseError(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occured.", errorInfo);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -64,7 +53,7 @@ public class GlobalExceptionHandler {
         logger.warn("IllegalArgumentException: {}", ex.getMessage(), ex);
         ErrorInfo errorInfo = new ErrorInfo("Invalid argument", "The provided argument is invalid",
                 ex.getClass().getSimpleName());
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), errorInfo);
+        return APIResponse.buildResponseError(HttpStatus.BAD_REQUEST, ex.getMessage(), errorInfo);
     }
 
     @ExceptionHandler(DataAccessException.class)
@@ -72,7 +61,7 @@ public class GlobalExceptionHandler {
         logger.error("DataAccessException: {}", ex.getMessage(), ex);
         ErrorInfo errorInfo = new ErrorInfo("Database Error", "An error occurred while accessing the database.",
                 ex.getClass().getSimpleName());
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Database error", errorInfo);
+        return APIResponse.buildResponseError(HttpStatus.INTERNAL_SERVER_ERROR, "Database error", errorInfo);
     }
 
     @ExceptionHandler(EmptyResultDataAccessException.class)
@@ -80,7 +69,7 @@ public class GlobalExceptionHandler {
         logger.info("EmptyResultDataAccessException: {}", ex.getMessage(), ex);
         ErrorInfo errorInfo = new ErrorInfo("Data Not Found", ex.getMessage(),
                 ex.getClass().getSimpleName());
-        return buildResponse(HttpStatus.NOT_FOUND, "Invalid argument", errorInfo);
+        return APIResponse.buildResponseError(HttpStatus.NOT_FOUND, "Invalid argument", errorInfo);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
@@ -92,6 +81,6 @@ public class GlobalExceptionHandler {
             logger.warn("ResponseStatusException: {}, Status: {}", ex.getMessage(), status, ex); // WARN
         }
         ErrorInfo errorInfo = new ErrorInfo(status.getReasonPhrase(), ex.getMessage(), ex.getClass().getSimpleName()); // Bruk status.getReasonPhrase()
-        return buildResponse(status, ex.getMessage(), errorInfo);
+        return APIResponse.buildResponseError(status, ex.getMessage(), errorInfo);
     }
 }
