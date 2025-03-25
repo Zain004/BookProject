@@ -76,6 +76,7 @@
                     <input type="Date" class="form-control" id="dobTo" name="dobTo" placeholder="YYYY-MM-DD" aria-label="Date of Birth To">
                     <label for="dobTo" class="form-label">Date of Birth (To):</label>
                 </div>
+                <button type="button" id="resetButton" class="btn btn-danger mb-3">Reset</button>
             </form>
 
             <div class="table-responsive">
@@ -441,6 +442,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             firstNameId: 'firstName',
             dobFromId: 'dobFrom',
             dobToId: 'dobTo',
+            resetButton: 'resetButton',
             onInputChange: (firstName, dobFromId, dobToId) => {
                 console.log("onInputchange Firstname: ", firstName, " AND Date of Birth (From): ", dobFromId, " And Date of Birth (TO): ", dobToId);
                 fetchUsers();
@@ -451,6 +453,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         #firstNameInput;
         #dobFromInput
         #dobToInput
+        #resetButton
 
         constructor(options = {}) {
             this.#options = {
@@ -461,6 +464,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             this.#firstNameInput = document.getElementById(this.#options.firstNameId);
             this.#dobFromInput = document.getElementById(this.#options.dobFromId);
             this.#dobToInput = document.getElementById(this.#options.dobToId);
+            this.#resetButton = document.getElementById(this.#options.resetButton);
 
             this.#validateElements();
             this.#setupEventListeners();
@@ -481,12 +485,22 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             if (!this.#dobFromInput) {
                 throw new Error(`Date of Birth TO input with ID '${this.#options.dobFromId}' not found.`);
             }
+
+            if (!this.#resetButton) {
+                throw new Error(`ResetButton '${this.#options.resetButton}' not found.`);
+            }
         }
 
         #setupEventListeners() {
             this.#firstNameInput.addEventListener('input', this.#handleInputChange.bind(this));
             this.#dobFromInput.addEventListener('input', this.#handleInputChange.bind(this));
             this.#dobToInput.addEventListener('input', this.#handleInputChange.bind(this));
+            this.#resetButton.addEventListener('click', this.#resetForm.bind(this))
+        }
+
+        #resetForm() {
+            this.#form.reset();
+            this.#handleInputChange(); // trigger fetch ettter reset
         }
 
         #handleInputChange() {

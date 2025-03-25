@@ -129,7 +129,10 @@ public class UsersService {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dob"), dobTo));
             }
             // ORDER BY firstName ASC - Sorter basert på bruker input
-            query.orderBy(criteriaBuilder.asc(root.get("firstName")));
+            // kun sorter etter fornavn hvis den er fylt ut
+            if (firstname != null && !firstname.isEmpty()) {
+                query.orderBy(criteriaBuilder.asc(root.get("firstName")));
+            }
 // SELECT * FROM users WHERE LOWER(firstName) LIKE '%john%' AND dob = '1990-01-01' ORDER BY firstName ASC;
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
