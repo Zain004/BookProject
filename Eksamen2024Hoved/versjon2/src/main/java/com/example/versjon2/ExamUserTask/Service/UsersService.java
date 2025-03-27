@@ -38,6 +38,7 @@ public class UsersService {
 
         Users savedUser = usersRepository.save(user);
         logger.info("User with email {} successfully saved.", savedUser.getEmail());
+
         return savedUser;
     }
 

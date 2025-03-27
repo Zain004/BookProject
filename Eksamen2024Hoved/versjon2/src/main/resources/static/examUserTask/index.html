@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">User Management</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">
+                        User List <span class="visually-hidden">(current)</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container mt-5">
+    <section class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5"> <!-- Innvendig mellomrom på 5 enheter -->
+                    <h1 class="text-center mb-4">Register User</h1>
+                    <p>Register an account right now here by filling this form!</p>
+                    <form id="registrationForm">
+                        <!-- First Name Field -->
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
+                            <label for="firstname">Firstname: </label>
+                            <div id="firstnameFeedback" class="invalid-feedback">First Name must be between 2 and 50 characters.</div>
+                        </div>
+                        <!-- Last name Field -->
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last name" aria-required="true" aria-invalid="false" aria-describedby="lastnameFeedback" equired>
+                            <label for="lastName" >Lastname : </label>
+                            <div id="lastnameFeedback" class="invalid-feedback">Last Name must be between 2 and 50 characters.</div>
+                        </div>
+                        <!-- Date of Birth Field -->
+                        <div class="form-floating mb-3">
+                            <input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" aria-required="true" aria-invalid="false" aria-describedby="dobFeedback" required>
+                            <label for="dob">Date of Birth</label>
+                            <div id="dobFeedback" class="invalid-feedback">Must be over 18 years of age.</div>
+                        </div>
+                        <!-- Phone number Field-->
+                        <div class="form-floating mb-3">
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone number" aria-required="true" aria-invalid="false" aria-describedby="phoneFeedback" required>
+                            <label for="phone">Phone number: </label>
+                            <div id="phoneFeedback" class="invalid-feedback">Phone number must be 8 digits.</div>
+                        </div>
+                        <!-- Email Field-->
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" aria-required="true" aria-invalid="false" aria-describedby="emailFeedback" required>
+                            <label for="email">Email: </label>
+                            <div id="emailFeedback" class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+
+            <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+                <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                    <div class="toast-header">
+                        <strong class="me-auto">Recipe submission</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+                        </button>
+                    </div>
+                    <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+</main>
+<!-- Bootstarp for å vise kunder -->
+<div id="errorInTable" class="alert alert-danger" style="display: none;"></div>
+<!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<!-- Axios CDN lenke -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script defer>
+    const showToast = (message, isSuccess = true) => {
+        const toastElement = document.getElementById('toast');
+        const toastBody = toastElement.querySelector('.toast-body');
+        toastBody.classList.remove('bg-danger', 'bg-success');
+        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+        toastBody.textContent = message; // Sett meldingsteksten i toast-body
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+
+    class FormValidator {
+        static DEFAULT_OPTIONS = {
+            nameRegex : '/^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/;',
+            phoneRegex: '/^(?!\s)[0-9]{8}(?<!\s)$/;',
+            emailRegex: '/^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
+            firstNameId: 'firstname',
+            lastNameId: 'lastName',
+            dobId: 'dob',
+            phoneId: 'phone',
+            emailId: 'email'
+        }
+        #nameRegex
+        #phoneRegex
+        #emailRegex
+        #firstNameId
+        #lastNameId
+        #dobId
+        #phoneId
+        #emailId
+        #options
+
+        constructor(options = {}) {
+            this.#options = {
+                ...FormValidator.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#nameRegex = this.#options.nameRegex;
+            this.#phoneRegex = this.#options.phoneRegex;
+            this.#emailRegex = this.#options.emailRegex;
+            this.#firstNameId = document.getElementById(this.#options.firstNameId);
+            this.#lastNameId = document.getElementById(this.#options.lastNameId);
+            this.#dobId = document.getElementById(this.#options.dobId);
+            this.#phoneId = document.getElementById(this.#options.dobId);
+            this.#emailId = document.getElementById(this.#options.emailId);
+        }
+
+        #getElement(id) {
+            const element = document.getElementById(id);
+            return element ? element.value : null;
+        }
+
+        validateFirstname() {
+            const firstNameElementValue = this.#getElement(this.#firstNameId).value;
+            if (firstNameElementValue) {
+                console.log("Validating firstName: ", firstNameElementValue);
+                if (this.#nameRegex.test(firstNameElementValue)) {
+
+                }
+            }
+        }
+    }
+
+        // Dette gjør jeg hvis de id'ene endres så sjekker den emd change funksjon
+        // istedenfor å bruke en onchange, er nyere metode
+        function validatePhone() {
+            let phone = $("#inPhone").val();
+            let regex = /^(?!\s)[0-9]{8}(?<!\s)$/;
+            if(regex.test(phone)) {
+                $("#errorPhone").text("");
+                return true;
+            } else {
+                $("#errorPhone").text("Error in phone, must be 8 digits");
+                return false;
+            }
+        }
+
+        function validateDob() {
+            const dobInput = $("#inDob").val();
+            const errorSpan = $("#errorDob");
+
+            if(!dobInput) {
+                errorSpan.text("Please enter your date of birth.");
+                return false;
+            }
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDifference = today.getMonth() - dob.getMonth();
+            if(monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if(age < 18) {
+                errorSpan.text("You must be at least 18 years old to create an account.");
+                return false;
+            } else {
+                errorSpan.text(""); //Clear any previous error messages
+                return true;
+            }
+        }
+        function validateEmail() {
+            let email = $("#inEmail").val();
+            let regex = /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+            if(regex.test(email)) {
+                $("#errorEmail").text("");
+                return true;
+            } else {
+                $("#errorEmail").text("Please enter a valid email address.");
+                return false;
+            }
+        }
+        function validateFirstname() {
+            let firstname = $("#inFirstname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(firstname)) {
+                $("#errorFirstname").text("");
+                return true;
+            } else {
+                $("#errorFirstname").text("Firstname must be between 2 and 50 chacters. ");
+                return false;
+            }
+        }
+        function validateLastname() {
+            let lastname = $("#inLastname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(lastname)) {
+                $("#errorLastname").text("");
+                return true;
+            } else {
+                $("#errorLastname").text("Lastname must be between 2 and 50 characters. ");
+                return false;
+            }
+        }
+
+        $("#saveUser").click(saveUser);
+
+
+
+        async function saveUser() {
+            const firstName = $("#inFirstname").val();
+            const lastName = $("#inLastname").val();
+            const dob = $("#inDob").val();
+            const phone = $("#inPhone").val();
+            const email = $("#inEmail").val().trim();
+            //sjekk om alle feltene er fylt ut
+            if(!firstName || !lastName || !dob || !phone || !email){
+                $("#errorInForm").text("One or more fields are empty. ");
+                return;
+            }// valider feltene
+            if(validateFirstname() && validateLastname() && validateDob() && validatePhone() && validateEmail()) {
+                const users = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    dob: dob,
+                    phone: phone,
+                    email: email
+                };
+                console.log("User to be saved: ", users);
+                try {
+                    const response = await fetch("/saveUser", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(users)
+                    });
+
+                    // Denne koden kjøres når API-kallet er fullført
+                    if (response.ok) {
+                        alert("User saved successfully!");
+                        $("#errorInForm").text("");
+                        $("input").val(""); // Tøm inputfeltene etter lagring
+                        fetchBooks(); // Kjør funksjonen for å hente bøker (hvis nødvendig)
+                    } else {
+                        // Hvis responsen ikke er vellykket, kast en feil
+                        const errorMessage = await response.text();
+                        throw new Error(errorMessage);
+                    }
+                } catch (error) {
+                    // Kjøres hvis noe går galt i fetch eller i response-check
+                    $("#errorInForm").text("Error saving users: " + error.message);
+                    console.error("Error saving users: ", error);
+                }
+
+            } else {
+                $("#errorInForm").text("One or more fields are inncorrectly formatted.")
+            }
+        }
+
+
+</script>
+</body>
+</html>

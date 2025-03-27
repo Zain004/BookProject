@@ -17,6 +17,7 @@
         .loading-hidden {
             display: none;
         }
+
     </style>
 </head>
 <body>
@@ -36,8 +37,8 @@
                 <!-- You can add more navigation items here if needed -->
                 <li class="nav-item">
                     <a class="nav-link text-white" href="#">
-                        User List <span class="visually-hidden">(current)</span
-                    ></a>
+                        User List <span class="visually-hidden">(current)</span>
+                    </a>
                 </li>
             </ul>
         </div>
@@ -45,57 +46,55 @@
 </nav>
 
 <!-- Main Content Container -->
-<div class="container mt-4">
-    <main>
-        <section>
-            <h1 class="mb-4">User List</h1>
-            <!-- Loading Indicator -->
-            <!-- bruker loading hidden som standard før javascript er lastet inn-->
-            <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
-                <div class="spinner-border text-primary" role="status">
-                    <!-- Ment for skjermlesere -->
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <!-- Dette er den ordentlige teksten som skal vises -->
-                <p class="mt-2 small text-muted">Fetching users...</p>
+<main class="container mt-4">
+    <section>
+        <h1 class="mb-4">User List</h1>
+        <!-- Loading Indicator -->
+        <!-- bruker loading hidden som standard før javascript er lastet inn-->
+        <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
+            <div class="spinner-border text-primary" role="status">
+                <!-- Ment for skjermlesere -->
+                <span class="visually-hidden">Loading...</span>
             </div>
-            <!-- oppretter en toast-->
-            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-                <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                    <div class="toast-header">
-                        <strong class="me-auto">Recipe submission</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
-                        </button>
-                    </div>
-                    <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
-                    </div>
+            <!-- Dette er den ordentlige teksten som skal vises -->
+            <p class="mt-2 small text-muted">Fetching users...</p>
+        </div>
+        <!-- oppretter en toast-->
+        <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="toast-header">
+                    <strong class="me-auto">Recipe submission</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+                    </button>
+                </div>
+                <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
                 </div>
             </div>
+        </aside>
 
-            <!-- User Table-->
-            <div class="table-responsive">
-                <table class="table table-striped table bordered">
-                    <thead> <!-- Table head -->
-                    <tr>
-                        <th>ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Date of Birth</th>
-                        <th>Phone</th>
-                        <th>Email</th>
-                    </tr>
-                    </thead>
-                    <tbody id="userTableBody">
-                    <!-- Brukere vil bli satt inn her -->
-                    </tbody>
-                </table>
-            </div>
-            <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
-                No users found in the database
-            </div>
-        </section>
-    </main>
-</div>
+        <!-- User Table-->
+        <div class="table-responsive">
+            <table class="table table-striped table bordered">
+                <thead> <!-- Table head -->
+                <tr>
+                    <th>ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Date of Birth</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                </tr>
+                </thead>
+                <tbody id="userTableBody">
+                <!-- Brukere vil bli satt inn her -->
+                </tbody>
+            </table>
+        </div>
+        <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
+            No users found in the database
+        </div>
+    </section>
+</main>
 <!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"

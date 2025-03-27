@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">User Management</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">
+                        User List <span class="visually-hidden">(current)</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h1>Register</h1>
+            <br>
+
+            <label for="inFirstname">Firstname : </label>
+            <input type="text" id="inFirstname" name="firstname" class="form-control" required>
+            <span id="errorFirstname" style="color: red" aria-live="polite"></span> <!-- aria-live="polite" brukes for at feilmeldingen skal bli lest opp etter hverandre-->
+            <br>
+            <label for="inLastname">Lastname : </label>
+            <input type="text" id="inLastname" name="lastname" class="form-control" required>
+            <span id="errorLastname" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <label for="inDob">Date of Birth</label>
+            <input type="date" id="inDob" name="dob" class="form-control" required>
+            <span id="errorDob" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <label for="inPhone">Phone number : </label>
+            <input type="tel" id="inPhone" name="phone" class="form-control" required>
+            <span id="errorPhone" style="color: red" aria-live="polite"></span>
+            <br>
+
+
+            <label for="inEmail">Email: </label>
+            <input type="email" id="inEmail" name="email" class="form-control" required>
+            <span id="errorEmail" style="color: red" aria-live="polite"></span>
+            <br>
+
+            <button type="button" id="saveUser" class="btn-primary">Send</button>
+
+            <div id="errorInForm"></div>
+
+        </div>
+    </div>
+</div>
+<!-- Bootstarp for å vise kunder -->
+<div id="errorInTable" class="alert alert-danger" style="display: none;"></div>
+
+<script>
+    $(document).ready(function () { //Hele javascriptet må være inne denne hvis du bruker jquery
+        $("#inFirstname").change(validateFirstname);
+        $("#inLastname").change(validateLastname);
+        //oppgaven spør om å kun validere 3 stk
+        $("#inDob").change(validateDob);
+        $("#inPhone").change(validatePhone);
+        $("#inEmail").change(validateEmail);
+        // Dette gjør jeg hvis de id'ene endres så sjekker den emd change funksjon
+        // istedenfor å bruke en onchange, er nyere metode
+        function validatePhone() {
+            let phone = $("#inPhone").val();
+            let regex = /^(?!\s)[0-9]{8}(?<!\s)$/;
+            if(regex.test(phone)) {
+                $("#errorPhone").text("");
+                return true;
+            } else {
+                $("#errorPhone").text("Error in phone, must be 8 digits");
+                return false;
+            }
+        }
+
+        function validateDob() {
+            const dobInput = $("#inDob").val();
+            const errorSpan = $("#errorDob");
+
+            if(!dobInput) {
+                errorSpan.text("Please enter your date of birth.");
+                return false;
+            }
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDifference = today.getMonth() - dob.getMonth();
+            if(monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if(age < 18) {
+                errorSpan.text("You must be at least 18 years old to create an account.");
+                return false;
+            } else {
+                errorSpan.text(""); //Clear any previous error messages
+                return true;
+            }
+        }
+        function validateEmail() {
+            let email = $("#inEmail").val();
+            let regex = /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+            if(regex.test(email)) {
+                $("#errorEmail").text("");
+                return true;
+            } else {
+                $("#errorEmail").text("Please enter a valid email address.");
+                return false;
+            }
+        }
+        function validateFirstname() {
+            let firstname = $("#inFirstname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(firstname)) {
+                $("#errorFirstname").text("");
+                return true;
+            } else {
+                $("#errorFirstname").text("Firstname must be between 2 and 50 chacters. ");
+                return false;
+            }
+        }
+        function validateLastname() {
+            let lastname = $("#inLastname").val();
+            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
+            if(regex.test(lastname)) {
+                $("#errorLastname").text("");
+                return true;
+            } else {
+                $("#errorLastname").text("Lastname must be between 2 and 50 characters. ");
+                return false;
+            }
+        }
+
+        $("#saveUser").click(saveUser);
+
+
+
+        async function saveUser() {
+            const firstName = $("#inFirstname").val();
+            const lastName = $("#inLastname").val();
+            const dob = $("#inDob").val();
+            const phone = $("#inPhone").val();
+            const email = $("#inEmail").val().trim();
+            //sjekk om alle feltene er fylt ut
+            if(!firstName || !lastName || !dob || !phone || !email){
+                $("#errorInForm").text("One or more fields are empty. ");
+                return;
+            }// valider feltene
+            if(validateFirstname() && validateLastname() && validateDob() && validatePhone() && validateEmail()) {
+                const users = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    dob: dob,
+                    phone: phone,
+                    email: email
+                };
+                console.log("User to be saved: ", users);
+                try {
+                    const response = await fetch("/saveUser", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(users)
+                    });
+
+                    // Denne koden kjøres når API-kallet er fullført
+                    if (response.ok) {
+                        alert("User saved successfully!");
+                        $("#errorInForm").text("");
+                        $("input").val(""); // Tøm inputfeltene etter lagring
+                        fetchBooks(); // Kjør funksjonen for å hente bøker (hvis nødvendig)
+                    } else {
+                        // Hvis responsen ikke er vellykket, kast en feil
+                        const errorMessage = await response.text();
+                        throw new Error(errorMessage);
+                    }
+                } catch (error) {
+                    // Kjøres hvis noe går galt i fetch eller i response-check
+                    $("#errorInForm").text("Error saving users: " + error.message);
+                    console.error("Error saving users: ", error);
+                }
+
+            } else {
+                $("#errorInForm").text("One or more fields are inncorrectly formatted.")
+            }
+        }
+
+
+    })
+</script>
+</body>
+</html>
