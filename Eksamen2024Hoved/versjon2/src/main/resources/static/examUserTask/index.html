@@ -94,6 +94,8 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
+    import {validateDob, validateEmail, validateFirstname, validateLastname, validatePhone} from "../script";
+
     const showToast = (message, isSuccess = true) => {
         const toastElement = document.getElementById('toast');
         const toastBody = toastElement.querySelector('.toast-body');
@@ -107,9 +109,9 @@
 
     class FormValidator {
         static DEFAULT_OPTIONS = {
-            nameRegex : '/^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/;',
-            phoneRegex: '/^(?!\s)[0-9]{8}(?<!\s)$/;',
-            emailRegex: '/^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
+            nameRegex : /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/,
+            phoneRegex: /^(?!\s)[0-9]{8}(?<!\s)$/,
+            emailRegex: /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
             firstNameId: 'firstname',
             lastNameId: 'lastName',
             dobId: 'dob',
@@ -141,145 +143,200 @@
             this.#emailId = document.getElementById(this.#options.emailId);
         }
 
+        validateForm() {
+            const isFirstNameValid = this.validateFirstname();
+            const isLastNameValid = this.validateLastname();
+            const isPhoneValid = this.validatephone();
+            const isEmailValid = this.validateEmail();
+            const isDobValid = this.validatedob();
+
+            return isFirstNameValid && isLastNameValid && isPhoneValid && isEmailValid && isDobValid;
+        }
+
         #getElement(id) {
+            const element = document.getElementById(id);
+            return element;
+        }
+
+        #getElementValue(id) {
             const element = document.getElementById(id);
             return element ? element.value : null;
         }
 
+        #addinvalidClass(element) {
+            element.classList.add('is-invalid');
+        }
+
+        #removeInvalidClass(element) {
+            element.classList.remove('is-invalid');
+        }
+
+        #validateField(fieldid, regex, fieldName) {
+            const element = this.#getElement(fieldid);
+            const fieldValue = this.#getElementValue(fieldid);
+
+            if(!fieldValue) {
+                console.warn(`Warning: Could not find element with ID '${fieldid}' for ${fieldName} validation.`);
+                return false; // Indicates error
+            }
+            // eksplisitt sjekk for tomme felter
+            if (fieldValue.trim() == "") {
+                console.error(`Error: ${fieldName} må fylles ut.`);
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            console.log(`Validating ${fieldName}: ${fieldValue}`);
+
+            if (!regex.test(fieldValue)) {
+                console.error(`Error: Invalid ${fieldName} - format`);
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            this.#removeInvalidClass(element);
+            console.log(`${fieldName} is valid`);
+            return true;
+        }
+
         validateFirstname() {
-            const firstNameElementValue = this.#getElement(this.#firstNameId).value;
-            if (firstNameElementValue) {
-                console.log("Validating firstName: ", firstNameElementValue);
-                if (this.#nameRegex.test(firstNameElementValue)) {
-
-                }
-            }
-        }
-    }
-
-        // Dette gjør jeg hvis de id'ene endres så sjekker den emd change funksjon
-        // istedenfor å bruke en onchange, er nyere metode
-        function validatePhone() {
-            let phone = $("#inPhone").val();
-            let regex = /^(?!\s)[0-9]{8}(?<!\s)$/;
-            if(regex.test(phone)) {
-                $("#errorPhone").text("");
-                return true;
-            } else {
-                $("#errorPhone").text("Error in phone, must be 8 digits");
-                return false;
-            }
+            return this.#validateField(this.#firstNameId, this.#nameRegex, "First Name");
         }
 
-        function validateDob() {
-            const dobInput = $("#inDob").val();
-            const errorSpan = $("#errorDob");
+        validateLastname() {
+            return this.#validateField(this.#lastNameId, this.#nameRegex, "Last name");
+        }
 
-            if(!dobInput) {
-                errorSpan.text("Please enter your date of birth.");
+        validatephone() {
+            return this.#validateField(this.#phoneId, this.#phoneRegex, "Phone");
+        }
+
+        validateEmail() {
+            return this.#validateField(this.#emailId, this.#emailRegex, "E-mail");
+        }
+
+        validatedob() {
+            this.#validateDob(this.#dobId, 18);
+        }
+
+        #validateDob(elementId, minimumAge = 18) {
+            const element = this.#getElement(elementId);
+
+            if(!element) {
+                console.error(`Element with id ${elementId} not found.`);
                 return false;
             }
-            const dob = new Date(dobInput);
+
+            const dobid = element.value;
+
+            if (!dobid) {
+                console.log("Date of Birth is not valid. Must be over 18 years.")
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            const dob = this.#parseDate(dobid);
+            // Check for invalid date BEFORE isOldEnough
+            if (!this.#isValidDate(dob)) {
+                console.error(`Error: Date of Birth is not valid ${dob}`);
+                this.#addinvalidClass(element);
+                return false;
+            }
+            // sjekk om bruker er eldre enn 18
+            if (!this.#isOldEnough(dob, minimumAge)) {
+                console.log('Youre not old enough.');
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            this.#removeInvalidClass(element);
+            return true;
+        }
+
+        #parseDate(dobInputValue) {
+            try {
+                return new Date(dobInputValue);
+            } catch (error) {
+                console.error(`Error: Error occured while parsing date:`, error);
+                return null;
+            }
+        }
+
+        #isValidDate(date) {
+            return date instanceof Date && !isNaN(date);
+        }
+
+        #isOldEnough(dob, minAge) {
             const today = new Date();
             let age = today.getFullYear() - dob.getFullYear();
             const monthDifference = today.getMonth() - dob.getMonth();
-            if(monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+
+            if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
                 age--;
             }
-            if(age < 18) {
-                errorSpan.text("You must be at least 18 years old to create an account.");
-                return false;
-            } else {
-                errorSpan.text(""); //Clear any previous error messages
-                return true;
-            }
+
+            return age >= minAge;
         }
-        function validateEmail() {
-            let email = $("#inEmail").val();
-            let regex = /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-            if(regex.test(email)) {
-                $("#errorEmail").text("");
-                return true;
-            } else {
-                $("#errorEmail").text("Please enter a valid email address.");
-                return false;
-            }
-        }
-        function validateFirstname() {
-            let firstname = $("#inFirstname").val();
-            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
-            if(regex.test(firstname)) {
-                $("#errorFirstname").text("");
-                return true;
-            } else {
-                $("#errorFirstname").text("Firstname must be between 2 and 50 chacters. ");
-                return false;
-            }
-        }
-        function validateLastname() {
-            let lastname = $("#inLastname").val();
-            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
-            if(regex.test(lastname)) {
-                $("#errorLastname").text("");
-                return true;
-            } else {
-                $("#errorLastname").text("Lastname must be between 2 and 50 characters. ");
-                return false;
-            }
+    }
+
+    const regForm = document.getElementById('registrationForm');
+    const validator = new FormValidator();
+
+    const validations = {
+        firstName: validator.validateFirstname.bind(validator),
+        lastName: validator.validateLastname.bind(validator),
+        dob: validator.validateDob.bind(validator),
+        phone: validator.validatePhone.bind(validator),
+        email: validator.validateEmail.bind(validator)
+    };
+
+    regForm.addEventListener('input', (event) => {
+        const fieldName = event.target.name;
+        validations[fieldName] ? validations[fieldName]() :
+            console.warn(`No validation defined for field: ${fieldId}`);
+    })
+
+    const saveUser = async () => {
+        const API_BASE_URL = '/api/users';
+        const url = `${API_BASE_URL}`;
+
+        if (!validator.validateForm()) {
+            showToast('Please fill in all fields correctly.', false);
+            return; // Cancel submission if validation fails
         }
 
-        $("#saveUser").click(saveUser);
+        try {
+            const response = await axios.post(url, formData);
+            console.log(`Submitting form with Formdata: ${JSON.stringify(formData)}`);
 
-
-
-        async function saveUser() {
-            const firstName = $("#inFirstname").val();
-            const lastName = $("#inLastname").val();
-            const dob = $("#inDob").val();
-            const phone = $("#inPhone").val();
-            const email = $("#inEmail").val().trim();
-            //sjekk om alle feltene er fylt ut
-            if(!firstName || !lastName || !dob || !phone || !email){
-                $("#errorInForm").text("One or more fields are empty. ");
+            if (response.status === 201) {
+                showToast('Registration successful and user created!', false);
+                console.log(`Registration successful and created USER: ${response.data}`);
+                // reset funksjon
                 return;
-            }// valider feltene
-            if(validateFirstname() && validateLastname() && validateDob() && validatePhone() && validateEmail()) {
-                const users = {
-                    firstName: firstName,
-                    lastName: lastName,
-                    dob: dob,
-                    phone: phone,
-                    email: email
-                };
-                console.log("User to be saved: ", users);
-                try {
-                    const response = await fetch("/saveUser", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(users)
-                    });
-
-                    // Denne koden kjøres når API-kallet er fullført
-                    if (response.ok) {
-                        alert("User saved successfully!");
-                        $("#errorInForm").text("");
-                        $("input").val(""); // Tøm inputfeltene etter lagring
-                        fetchBooks(); // Kjør funksjonen for å hente bøker (hvis nødvendig)
-                    } else {
-                        // Hvis responsen ikke er vellykket, kast en feil
-                        const errorMessage = await response.text();
-                        throw new Error(errorMessage);
-                    }
-                } catch (error) {
-                    // Kjøres hvis noe går galt i fetch eller i response-check
-                    $("#errorInForm").text("Error saving users: " + error.message);
-                    console.error("Error saving users: ", error);
-                }
-
-            } else {
-                $("#errorInForm").text("One or more fields are inncorrectly formatted.")
             }
+
+            if (response.status >= 200 && response.status < 300) {
+                if (response.status === 204) {
+                    showToast('Registration successful, but no content returned (check API)!', true);
+                    console.warn("Registration returned 204 No Content. Check API documentation.");
+                    return;
+                }
+                // Håndteirng av vellykket status koder som ikke er forventet
+                showToast(`Registration successful (status ${response.status}), but unexpected. Check the logs.`, true);
+                console.warn(`Unexpected successful status code: ${response.status}`);
+            }
+            // Håndtering av ikke 2xx koder
+            showToast(`Registrering returnerte en uventet statuskode: ${response.status}.`, false);
+            console.warn(`Uventet statuskode: ${response.status}`);
+        } catch (error) {
+
         }
+    }
+
+
+
+
 
 
 </script>
