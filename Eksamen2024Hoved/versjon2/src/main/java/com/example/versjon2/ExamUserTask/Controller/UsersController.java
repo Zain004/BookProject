@@ -30,6 +30,11 @@ public class UsersController {
 
     private final Logger logger = LoggerFactory.getLogger(UsersController.class);
 
+    /**
+     *  lagrer en bruker
+     * @param users
+     * @return
+     */
     @PostMapping
     public ResponseEntity<APIResponse<UsersDTO>> saveUser(@RequestBody @Valid Users users) {
         String requestId = UUID.randomUUID().toString(); // legger til en unik id for sporbarhet
@@ -46,6 +51,11 @@ public class UsersController {
         return APIResponse.buildResponse(HttpStatus.CREATED, "User successfully created!", usersDTO);
     }
 
+    /**
+     *
+     * @return list
+     */
+
     @GetMapping("/list")
     public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsers() {
         logger.info("Fetching all users from DB.");
@@ -59,7 +69,11 @@ public class UsersController {
         return APIResponse.okResponse(userDTOs, "Users successfully retrieved from DB");
     }
 
-    // returnerer en liste som sorterer i databasen istedenfor på server
+    /**
+     * returnerer en liste som blir sortert med databasespørring i repository
+     * @param sortByFirstName
+     * @return
+     */
     @GetMapping("/list/sortedByFirstname")
     public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsersSortedByFirstName(
             @RequestParam(value = "sortByFirstname", required = false, defaultValue = "false") boolean sortByFirstName) {
@@ -75,6 +89,12 @@ public class UsersController {
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }
 
+    /**
+     * denne er standard, returner en page med objekter
+     * den kan også ta inn sort via javascript
+     * @param pageable
+     * @return
+     */
     @GetMapping("/paged")
     public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
         logger.info("Recieved request to fetch all users with pageable: {}", pageable);
@@ -101,7 +121,7 @@ public class UsersController {
      * Denne metoden sorterer som standard på serversiden
      * du må opprette et Sort objekt og inkludere det i pageable uansett
      * om du skal bruke sorteringsretning som ASC eller DESC eller ikke
-     * da må du velge en av disse som srandard hvis du ikke bruker paramater,
+     * da må du velge en av disse som standard hvis du ikke bruker paramater,
      * men det beste er å bruke paramater
      * @param page
      * @param size
@@ -136,7 +156,15 @@ public class UsersController {
         return APIResponse.okResponse(pagedResponseDTO, "Users successfully retrieved from DB.");
     }
 
-
+    /**
+     * DENNE METODEN SORTERER OG FILTRERER VALGFRITT MED PARAMETRE
+     * sorter etter fornavn, filter mellom 2 datoer
+     * @param firstName
+     * @param dobFrom
+     * @param dobTo
+     * @param pageable
+     * @return
+     */
     @GetMapping("/volunteer-opportunities/sort-and-filter")
     public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(
             @RequestParam(name="firstName", required = false) String firstName,
