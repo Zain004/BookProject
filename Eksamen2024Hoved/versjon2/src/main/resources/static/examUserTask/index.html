@@ -296,7 +296,12 @@
             console.warn(`No validation defined for field: ${fieldId}`);
     })
 
-    const saveUser = async () => {
+    document.addEventListener('submit', async (event) => {
+        event.preventDefault(); // viktig! Forhindrer side-reload
+        await saveUser(event); // vent på at saveUser fullfører
+    })
+
+    const saveUser = async (event) => {
         const API_BASE_URL = '/api/users';
         const url = `${API_BASE_URL}`;
 
@@ -304,6 +309,9 @@
             showToast('Please fill in all fields correctly.', false);
             return; // Cancel submission if validation fails
         }
+
+        const form = event.target;
+        const formData = new FormData(form);
 
         try {
             const response = await axios.post(url, formData);
@@ -330,7 +338,59 @@
             showToast(`Registrering returnerte en uventet statuskode: ${response.status}.`, false);
             console.warn(`Uventet statuskode: ${response.status}`);
         } catch (error) {
+            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
 
+            if (axios.isAxiosError(error)) {
+                if(!error.response) {
+                    console.error("Network Error: ", error)
+                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                } else {
+                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                    // Bruker en map for feilmeldinger, fordi det er nyere måte
+                    const errorMessages = {
+                        400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
+                        401: "You are not authorized to view user list.", // UNAUTHORIZED
+                        403: "You do not have permission to view user list.", // FORBIDDEN
+                        404: "User list resource not found. Please contact support if this issue persists.", // NOT FOUND
+                        429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
+                        500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
+                    };
+
+                    userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                    /*
+                    if (statusCode === 401 || statusCode === 403) {
+                        // ekstra håndtering
+                    }
+                    */
+                }
+            } else {
+                // Non-Axios related errors (e.g., JSON parsing, code errors)
+                console.error("Unexpected Error:", error); // Log full error object
+                showToast("An unexpected error occurred. Please try again later.", false);
+            }
+// Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
+// ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
+// error.code settes av nettverket og ikke av backend
+            const isRetryableError =
+                error.code === 'ECONNREFUSED' ||
+                error.code === 'ECONNABORTED' ||
+                statusCode === 429 || // Rate limiting
+                statusCode >= 500;      // Serverfeil
+
+            if (isRetryableError && retryCount < maxRetries) {
+                const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
+                console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
+            }
+
+            if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
+                console.error("Max retries reached. Error: ", error);
+                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+            }
+
+            showToast(userFriendlyErrorMessage, false);
         }
     }
 
