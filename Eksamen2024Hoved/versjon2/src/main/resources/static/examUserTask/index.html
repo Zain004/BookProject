@@ -35,7 +35,7 @@
                 <div class="card-body p-5"> <!-- Innvendig mellomrom på 5 enheter -->
                     <h1 class="text-center mb-4">Register User</h1>
                     <p>Register an account right now here by filling this form!</p>
-                    <form id="registrationForm">
+                    <form id="registrationForm" novalidate>
                         <!-- First Name Field -->
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
@@ -94,7 +94,6 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
-    import {validateDob, validateEmail, validateFirstname, validateLastname, validatePhone} from "../script";
 
     const showToast = (message, isSuccess = true) => {
         const toastElement = document.getElementById('toast');
@@ -136,20 +135,29 @@
             this.#nameRegex = this.#options.nameRegex;
             this.#phoneRegex = this.#options.phoneRegex;
             this.#emailRegex = this.#options.emailRegex;
-            this.#firstNameId = document.getElementById(this.#options.firstNameId);
-            this.#lastNameId = document.getElementById(this.#options.lastNameId);
-            this.#dobId = document.getElementById(this.#options.dobId);
-            this.#phoneId = document.getElementById(this.#options.dobId);
-            this.#emailId = document.getElementById(this.#options.emailId);
+            this.#firstNameId = this.#options.firstNameId;
+            this.#lastNameId = this.#options.lastNameId;
+            this.#dobId = this.#options.dobId;
+            this.#phoneId = this.#options.phoneId;
+            this.#emailId = this.#options.emailId;
         }
 
         validateForm() {
             const isFirstNameValid = this.validateFirstname();
-            const isLastNameValid = this.validateLastname();
-            const isPhoneValid = this.validatephone();
-            const isEmailValid = this.validateEmail();
-            const isDobValid = this.validatedob();
+            console.log("First Name Valid:", isFirstNameValid);
 
+            const isLastNameValid = this.validateLastname();
+            console.log("Last Name Valid:", isLastNameValid);
+
+            const isPhoneValid = this.validatephone();
+            console.log("Phone Valid:", isPhoneValid);
+
+            const isEmailValid = this.validateEmail();
+            console.log("Email Valid:", isEmailValid);
+
+            const isDobValid = this.validatedob();
+            console.log("Date of Birth Valid:", isDobValid);
+            console.log("Overall Form Validation:", isFirstNameValid && isLastNameValid && isPhoneValid && isEmailValid && isDobValid); // Added line
             return isFirstNameValid && isLastNameValid && isPhoneValid && isEmailValid && isDobValid;
         }
 
@@ -175,13 +183,13 @@
             const element = this.#getElement(fieldid);
             const fieldValue = this.#getElementValue(fieldid);
 
-            if(!fieldValue) {
+            if(!element) {
                 console.warn(`Warning: Could not find element with ID '${fieldid}' for ${fieldName} validation.`);
                 return false; // Indicates error
             }
             // eksplisitt sjekk for tomme felter
-            if (fieldValue.trim() == "") {
-                console.error(`Error: ${fieldName} må fylles ut.`);
+            if (!fieldValue || fieldValue.trim() == "") {
+                console.error(`Error: ${fieldName} must fill out the field`);
                 this.#addinvalidClass(element);
                 return false;
             }
@@ -216,7 +224,7 @@
         }
 
         validatedob() {
-            this.#validateDob(this.#dobId, 18);
+            return this.#validateDob(this.#dobId, 18);
         }
 
         #validateDob(elementId, minimumAge = 18) {
@@ -228,6 +236,7 @@
             }
 
             const dobid = element.value;
+            console.log(`Date of Birth Value: ${dobid}`);
 
             if (!dobid) {
                 console.log("Date of Birth is not valid. Must be over 18 years.")
@@ -283,10 +292,10 @@
     const validator = new FormValidator();
 
     const validations = {
-        firstName: validator.validateFirstname.bind(validator),
+        firstname: validator.validateFirstname.bind(validator),
         lastName: validator.validateLastname.bind(validator),
-        dob: validator.validateDob.bind(validator),
-        phone: validator.validatePhone.bind(validator),
+        dob: validator.validatedob.bind(validator),
+        phone: validator.validatephone.bind(validator),
         email: validator.validateEmail.bind(validator)
     };
 
@@ -296,14 +305,15 @@
             console.warn(`No validation defined for field: ${fieldId}`);
     })
 
-    document.addEventListener('submit', async (event) => {
+    regForm.addEventListener('submit', async (event) => {
         event.preventDefault(); // viktig! Forhindrer side-reload
         await saveUser(event); // vent på at saveUser fullfører
     })
 
     const saveUser = async (event) => {
         const API_BASE_URL = '/api/users';
-        const url = `${API_BASE_URL}`;
+        const API_ENDPOINT = '/saveUser';
+        const url = `${API_BASE_URL}${API_ENDPOINT}`;
 
         if (!validator.validateForm()) {
             showToast('Please fill in all fields correctly.', false);
@@ -314,7 +324,11 @@
         const formData = new FormData(form);
 
         try {
-            const response = await axios.post(url, formData);
+            const response = await axios.post(url, formData, {
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
             console.log(`Submitting form with Formdata: ${JSON.stringify(formData)}`);
 
             if (response.status === 201) {
@@ -342,6 +356,7 @@
             const statusCode = error.response?.status;
 
             if (axios.isAxiosError(error)) {
+                // Sjekk om det er netwerksproblem (ingen respons fra server)
                 if(!error.response) {
                     console.error("Network Error: ", error)
                     userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
@@ -349,45 +364,25 @@
                     console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
                     // Bruker en map for feilmeldinger, fordi det er nyere måte
                     const errorMessages = {
-                        400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
-                        401: "You are not authorized to view user list.", // UNAUTHORIZED
-                        403: "You do not have permission to view user list.", // FORBIDDEN
-                        404: "User list resource not found. Please contact support if this issue persists.", // NOT FOUND
-                        429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
-                        500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
+                        400: "Invalid request. Please check the fields and try again.", // BAD-REQUEST
+                        401: "You are not authorized to perform this action.", // UNAUTHORIZED
+                        403: "You do not have permission to perform this action.", // FORBIDDEN
+                        404: "Resource not found.", // NOT FOUND
+                        422: "Validation error: Please check that all fields are correctly filled in.",
+                        429: "Too many requests. Please wait a few minutes and try again.",
+                        500: "The server encountered an error. Please try again later.",
+                        503: "Service unavailable. Please try again later."
                     };
 
                     userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
                     /*
-                    if (statusCode === 401 || statusCode === 403) {
-                        // ekstra håndtering
-                    }
+                    if (statusCode === 401 || statusCode === 403) {// ekstra håndtering}
                     */
                 }
             } else {
                 // Non-Axios related errors (e.g., JSON parsing, code errors)
                 console.error("Unexpected Error:", error); // Log full error object
                 showToast("An unexpected error occurred. Please try again later.", false);
-            }
-// Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
-// ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
-// error.code settes av nettverket og ikke av backend
-            const isRetryableError =
-                error.code === 'ECONNREFUSED' ||
-                error.code === 'ECONNABORTED' ||
-                statusCode === 429 || // Rate limiting
-                statusCode >= 500;      // Serverfeil
-
-            if (isRetryableError && retryCount < maxRetries) {
-                const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
-                console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-                return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
-            }
-
-            if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
-                console.error("Max retries reached. Error: ", error);
-                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
             }
 
             showToast(userFriendlyErrorMessage, false);

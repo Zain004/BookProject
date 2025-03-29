@@ -28,181 +28,372 @@
     </div>
 </nav>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <h1>Register</h1>
-            <br>
+<main class="container mt-5">
+    <section class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5"> <!-- Innvendig mellomrom på 5 enheter -->
+                    <h1 class="text-center mb-4">Register User</h1>
+                    <p>Register an account right now here by filling this form!</p>
+                    <form id="registrationForm" novalidate>
+                        <!-- First Name Field -->
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
+                            <label for="firstname">Firstname: </label>
+                            <div id="firstnameFeedback" class="invalid-feedback">First Name must be between 2 and 50 characters.</div>
+                        </div>
+                        <!-- Last name Field -->
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last name" aria-required="true" aria-invalid="false" aria-describedby="lastnameFeedback" equired>
+                            <label for="lastName" >Lastname : </label>
+                            <div id="lastnameFeedback" class="invalid-feedback">Last Name must be between 2 and 50 characters.</div>
+                        </div>
+                        <!-- Date of Birth Field -->
+                        <div class="form-floating mb-3">
+                            <input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" aria-required="true" aria-invalid="false" aria-describedby="dobFeedback" required>
+                            <label for="dob">Date of Birth</label>
+                            <div id="dobFeedback" class="invalid-feedback">Must be over 18 years of age.</div>
+                        </div>
+                        <!-- Phone number Field-->
+                        <div class="form-floating mb-3">
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone number" aria-required="true" aria-invalid="false" aria-describedby="phoneFeedback" required>
+                            <label for="phone">Phone number: </label>
+                            <div id="phoneFeedback" class="invalid-feedback">Phone number must be 8 digits.</div>
+                        </div>
+                        <!-- Email Field-->
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" aria-required="true" aria-invalid="false" aria-describedby="emailFeedback" required>
+                            <label for="email">Email: </label>
+                            <div id="emailFeedback" class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
 
-            <label for="inFirstname">Firstname : </label>
-            <input type="text" id="inFirstname" name="firstname" class="form-control" required>
-            <span id="errorFirstname" style="color: red" aria-live="polite"></span> <!-- aria-live="polite" brukes for at feilmeldingen skal bli lest opp etter hverandre-->
-            <br>
-            <label for="inLastname">Lastname : </label>
-            <input type="text" id="inLastname" name="lastname" class="form-control" required>
-            <span id="errorLastname" style="color: red" aria-live="polite"></span>
-            <br>
-
-            <label for="inDob">Date of Birth</label>
-            <input type="date" id="inDob" name="dob" class="form-control" required>
-            <span id="errorDob" style="color: red" aria-live="polite"></span>
-            <br>
-
-            <label for="inPhone">Phone number : </label>
-            <input type="tel" id="inPhone" name="phone" class="form-control" required>
-            <span id="errorPhone" style="color: red" aria-live="polite"></span>
-            <br>
-
-
-            <label for="inEmail">Email: </label>
-            <input type="email" id="inEmail" name="email" class="form-control" required>
-            <span id="errorEmail" style="color: red" aria-live="polite"></span>
-            <br>
-
-            <button type="button" id="saveUser" class="btn-primary">Send</button>
-
-            <div id="errorInForm"></div>
-
+            <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+                <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                    <div class="toast-header">
+                        <strong class="me-auto">Recipe submission</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+                        </button>
+                    </div>
+                    <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+                    </div>
+                </div>
+            </aside>
         </div>
-    </div>
-</div>
+    </section>
+</main>
 <!-- Bootstarp for å vise kunder -->
 <div id="errorInTable" class="alert alert-danger" style="display: none;"></div>
+<!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<!-- Axios CDN lenke -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script defer>
 
-<script>
-    $(document).ready(function () { //Hele javascriptet må være inne denne hvis du bruker jquery
-        $("#inFirstname").change(validateFirstname);
-        $("#inLastname").change(validateLastname);
-        //oppgaven spør om å kun validere 3 stk
-        $("#inDob").change(validateDob);
-        $("#inPhone").change(validatePhone);
-        $("#inEmail").change(validateEmail);
-        // Dette gjør jeg hvis de id'ene endres så sjekker den emd change funksjon
-        // istedenfor å bruke en onchange, er nyere metode
-        function validatePhone() {
-            let phone = $("#inPhone").val();
-            let regex = /^(?!\s)[0-9]{8}(?<!\s)$/;
-            if(regex.test(phone)) {
-                $("#errorPhone").text("");
-                return true;
-            } else {
-                $("#errorPhone").text("Error in phone, must be 8 digits");
+    const showToast = (message, isSuccess = true) => {
+        const toastElement = document.getElementById('toast');
+        const toastBody = toastElement.querySelector('.toast-body');
+        toastBody.classList.remove('bg-danger', 'bg-success');
+        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+        toastBody.textContent = message; // Sett meldingsteksten i toast-body
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+
+    class FormValidator {
+        static DEFAULT_OPTIONS = {
+            nameRegex : /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/,
+            phoneRegex: /^(?!\s)[0-9]{8}(?<!\s)$/,
+            emailRegex: /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+            firstNameId: 'firstname',
+            lastNameId: 'lastName',
+            dobId: 'dob',
+            phoneId: 'phone',
+            emailId: 'email'
+        }
+        #nameRegex
+        #phoneRegex
+        #emailRegex
+        #firstNameId
+        #lastNameId
+        #dobId
+        #phoneId
+        #emailId
+        #options
+
+        constructor(options = {}) {
+            this.#options = {
+                ...FormValidator.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#nameRegex = this.#options.nameRegex;
+            this.#phoneRegex = this.#options.phoneRegex;
+            this.#emailRegex = this.#options.emailRegex;
+            this.#firstNameId = this.#options.firstNameId;
+            this.#lastNameId = this.#options.lastNameId;
+            this.#dobId = this.#options.dobId;
+            this.#phoneId = this.#options.phoneId;
+            this.#emailId = this.#options.emailId;
+        }
+
+        validateForm() {
+            const isFirstNameValid = this.validateFirstname();
+            console.log("First Name Valid:", isFirstNameValid);
+
+            const isLastNameValid = this.validateLastname();
+            console.log("Last Name Valid:", isLastNameValid);
+
+            const isPhoneValid = this.validatephone();
+            console.log("Phone Valid:", isPhoneValid);
+
+            const isEmailValid = this.validateEmail();
+            console.log("Email Valid:", isEmailValid);
+
+            const isDobValid = this.validatedob();
+            console.log("Date of Birth Valid:", isDobValid);
+            console.log("Overall Form Validation:", isFirstNameValid && isLastNameValid && isPhoneValid && isEmailValid && isDobValid); // Added line
+            return isFirstNameValid && isLastNameValid && isPhoneValid && isEmailValid && isDobValid;
+        }
+
+        #getElement(id) {
+            const element = document.getElementById(id);
+            return element;
+        }
+
+        #getElementValue(id) {
+            const element = document.getElementById(id);
+            return element ? element.value : null;
+        }
+
+        #addinvalidClass(element) {
+            element.classList.add('is-invalid');
+        }
+
+        #removeInvalidClass(element) {
+            element.classList.remove('is-invalid');
+        }
+
+        #validateField(fieldid, regex, fieldName) {
+            const element = this.#getElement(fieldid);
+            const fieldValue = this.#getElementValue(fieldid);
+
+            if(!element) {
+                console.warn(`Warning: Could not find element with ID '${fieldid}' for ${fieldName} validation.`);
+                return false; // Indicates error
+            }
+            // eksplisitt sjekk for tomme felter
+            if (!fieldValue || fieldValue.trim() == "") {
+                console.error(`Error: ${fieldName} must fill out the field`);
+                this.#addinvalidClass(element);
                 return false;
+            }
+
+            console.log(`Validating ${fieldName}: ${fieldValue}`);
+
+            if (!regex.test(fieldValue)) {
+                console.error(`Error: Invalid ${fieldName} - format`);
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            this.#removeInvalidClass(element);
+            console.log(`${fieldName} is valid`);
+            return true;
+        }
+
+        validateFirstname() {
+            return this.#validateField(this.#firstNameId, this.#nameRegex, "First Name");
+        }
+
+        validateLastname() {
+            return this.#validateField(this.#lastNameId, this.#nameRegex, "Last name");
+        }
+
+        validatephone() {
+            return this.#validateField(this.#phoneId, this.#phoneRegex, "Phone");
+        }
+
+        validateEmail() {
+            return this.#validateField(this.#emailId, this.#emailRegex, "E-mail");
+        }
+
+        validatedob() {
+            return this.#validateDob(this.#dobId, 18);
+        }
+
+        #validateDob(elementId, minimumAge = 18) {
+            const element = this.#getElement(elementId);
+
+            if(!element) {
+                console.error(`Element with id ${elementId} not found.`);
+                return false;
+            }
+
+            const dobid = element.value;
+            console.log(`Date of Birth Value: ${dobid}`);
+
+            if (!dobid) {
+                console.log("Date of Birth is not valid. Must be over 18 years.")
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            const dob = this.#parseDate(dobid);
+            // Check for invalid date BEFORE isOldEnough
+            if (!this.#isValidDate(dob)) {
+                console.error(`Error: Date of Birth is not valid ${dob}`);
+                this.#addinvalidClass(element);
+                return false;
+            }
+            // sjekk om bruker er eldre enn 18
+            if (!this.#isOldEnough(dob, minimumAge)) {
+                console.log('Youre not old enough.');
+                this.#addinvalidClass(element);
+                return false;
+            }
+
+            this.#removeInvalidClass(element);
+            return true;
+        }
+
+        #parseDate(dobInputValue) {
+            try {
+                return new Date(dobInputValue);
+            } catch (error) {
+                console.error(`Error: Error occured while parsing date:`, error);
+                return null;
             }
         }
 
-        function validateDob() {
-            const dobInput = $("#inDob").val();
-            const errorSpan = $("#errorDob");
+        #isValidDate(date) {
+            return date instanceof Date && !isNaN(date);
+        }
 
-            if(!dobInput) {
-                errorSpan.text("Please enter your date of birth.");
-                return false;
-            }
-            const dob = new Date(dobInput);
+        #isOldEnough(dob, minAge) {
             const today = new Date();
             let age = today.getFullYear() - dob.getFullYear();
             const monthDifference = today.getMonth() - dob.getMonth();
-            if(monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+
+            if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
                 age--;
             }
-            if(age < 18) {
-                errorSpan.text("You must be at least 18 years old to create an account.");
-                return false;
-            } else {
-                errorSpan.text(""); //Clear any previous error messages
-                return true;
-            }
+
+            return age >= minAge;
         }
-        function validateEmail() {
-            let email = $("#inEmail").val();
-            let regex = /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-            if(regex.test(email)) {
-                $("#errorEmail").text("");
-                return true;
-            } else {
-                $("#errorEmail").text("Please enter a valid email address.");
-                return false;
-            }
-        }
-        function validateFirstname() {
-            let firstname = $("#inFirstname").val();
-            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
-            if(regex.test(firstname)) {
-                $("#errorFirstname").text("");
-                return true;
-            } else {
-                $("#errorFirstname").text("Firstname must be between 2 and 50 chacters. ");
-                return false;
-            }
-        }
-        function validateLastname() {
-            let lastname = $("#inLastname").val();
-            let regex = /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/; // Oppdatert regex
-            if(regex.test(lastname)) {
-                $("#errorLastname").text("");
-                return true;
-            } else {
-                $("#errorLastname").text("Lastname must be between 2 and 50 characters. ");
-                return false;
-            }
-        }
+    }
 
-        $("#saveUser").click(saveUser);
+    const regForm = document.getElementById('registrationForm');
+    const validator = new FormValidator();
 
+    const validations = {
+        firstname: validator.validateFirstname.bind(validator),
+        lastName: validator.validateLastname.bind(validator),
+        dob: validator.validatedob.bind(validator),
+        phone: validator.validatephone.bind(validator),
+        email: validator.validateEmail.bind(validator)
+    };
 
-
-        async function saveUser() {
-            const firstName = $("#inFirstname").val();
-            const lastName = $("#inLastname").val();
-            const dob = $("#inDob").val();
-            const phone = $("#inPhone").val();
-            const email = $("#inEmail").val().trim();
-            //sjekk om alle feltene er fylt ut
-            if(!firstName || !lastName || !dob || !phone || !email){
-                $("#errorInForm").text("One or more fields are empty. ");
-                return;
-            }// valider feltene
-            if(validateFirstname() && validateLastname() && validateDob() && validatePhone() && validateEmail()) {
-                const users = {
-                    firstName: firstName,
-                    lastName: lastName,
-                    dob: dob,
-                    phone: phone,
-                    email: email
-                };
-                console.log("User to be saved: ", users);
-                try {
-                    const response = await fetch("/saveUser", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(users)
-                    });
-
-                    // Denne koden kjøres når API-kallet er fullført
-                    if (response.ok) {
-                        alert("User saved successfully!");
-                        $("#errorInForm").text("");
-                        $("input").val(""); // Tøm inputfeltene etter lagring
-                        fetchBooks(); // Kjør funksjonen for å hente bøker (hvis nødvendig)
-                    } else {
-                        // Hvis responsen ikke er vellykket, kast en feil
-                        const errorMessage = await response.text();
-                        throw new Error(errorMessage);
-                    }
-                } catch (error) {
-                    // Kjøres hvis noe går galt i fetch eller i response-check
-                    $("#errorInForm").text("Error saving users: " + error.message);
-                    console.error("Error saving users: ", error);
-                }
-
-            } else {
-                $("#errorInForm").text("One or more fields are inncorrectly formatted.")
-            }
-        }
-
-
+    regForm.addEventListener('input', (event) => {
+        const fieldName = event.target.name;
+        validations[fieldName] ? validations[fieldName]() :
+            console.warn(`No validation defined for field: ${fieldId}`);
     })
+
+    regForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // viktig! Forhindrer side-reload
+        await saveUser(event); // vent på at saveUser fullfører
+    })
+
+    const saveUser = async (event) => {
+        const API_BASE_URL = '/api/users';
+        const API_ENDPOINT = '/saveUser';
+        const url = `${API_BASE_URL}${API_ENDPOINT}`;
+
+        if (!validator.validateForm()) {
+            showToast('Please fill in all fields correctly.', false);
+            return; // Cancel submission if validation fails
+        }
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await axios.post(url, formData, {
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
+            console.log(`Submitting form with Formdata: ${JSON.stringify(formData)}`);
+
+            if (response.status === 201) {
+                showToast('Registration successful and user created!', false);
+                console.log(`Registration successful and created USER: ${response.data}`);
+                // reset funksjon
+                return;
+            }
+
+            if (response.status >= 200 && response.status < 300) {
+                if (response.status === 204) {
+                    showToast('Registration successful, but no content returned (check API)!', true);
+                    console.warn("Registration returned 204 No Content. Check API documentation.");
+                    return;
+                }
+                // Håndteirng av vellykket status koder som ikke er forventet
+                showToast(`Registration successful (status ${response.status}), but unexpected. Check the logs.`, true);
+                console.warn(`Unexpected successful status code: ${response.status}`);
+            }
+            // Håndtering av ikke 2xx koder
+            showToast(`Registrering returnerte en uventet statuskode: ${response.status}.`, false);
+            console.warn(`Uventet statuskode: ${response.status}`);
+        } catch (error) {
+            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
+
+            if (axios.isAxiosError(error)) {
+                // Sjekk om det er netwerksproblem (ingen respons fra server)
+                if(!error.response) {
+                    console.error("Network Error: ", error)
+                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                } else {
+                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                    // Bruker en map for feilmeldinger, fordi det er nyere måte
+                    const errorMessages = {
+                        400: "Invalid request. Please check the fields and try again.", // BAD-REQUEST
+                        401: "You are not authorized to perform this action.", // UNAUTHORIZED
+                        403: "You do not have permission to perform this action.", // FORBIDDEN
+                        404: "Resource not found.", // NOT FOUND
+                        422: "Validation error: Please check that all fields are correctly filled in.",
+                        429: "Too many requests. Please wait a few minutes and try again.",
+                        500: "The server encountered an error. Please try again later.",
+                        503: "Service unavailable. Please try again later."
+                    };
+
+                    userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                    /*
+                    if (statusCode === 401 || statusCode === 403) {// ekstra håndtering}
+                    */
+                }
+            } else {
+                // Non-Axios related errors (e.g., JSON parsing, code errors)
+                console.error("Unexpected Error:", error); // Log full error object
+                showToast("An unexpected error occurred. Please try again later.", false);
+            }
+
+            showToast(userFriendlyErrorMessage, false);
+        }
+    }
+
+
+
+
+
+
 </script>
 </body>
 </html>

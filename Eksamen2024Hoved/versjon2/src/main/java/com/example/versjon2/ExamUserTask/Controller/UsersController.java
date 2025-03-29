@@ -35,7 +35,7 @@ public class UsersController {
      * @param users
      * @return
      */
-    @PostMapping
+    @PostMapping("/saveUser")
     public ResponseEntity<APIResponse<UsersDTO>> saveUser(@RequestBody @Valid Users users) {
         String requestId = UUID.randomUUID().toString(); // legger til en unik id for sporbarhet
         MDC.put("requestId", requestId);

@@ -4,6 +4,7 @@ import com.example.versjon2.Book.Valid.ValidAge;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.validator.constraints.CodePointLength;
 import org.hibernate.validator.constraints.Email;
@@ -41,12 +42,14 @@ public class Users {
     @NotBlank(message="Firstname cannot be blank.")
     @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.\\- ]{2,50}(?<!\\s)$",
             message = "Firstname name must contain only letters, spaces, dots, and dashes, and no leading or trailing spaces.")
+    @Size(min = 2, max = 50, message = "Firstname must be between 2 and 50 characters")
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
 
     @NotBlank(message="Lastname cannot be blank.")
     @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.\\- ]{2,50}(?<!\\s)$",
             message = "Lastname name must contain only letters, spaces, dots, and dashes, and no leading or trailing spaces.")
+    @Size(min = 2, max = 50, message = "Lastname must be between 2 and 50 characters")
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 

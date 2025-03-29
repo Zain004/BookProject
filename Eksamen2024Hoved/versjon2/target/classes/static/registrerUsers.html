@@ -97,7 +97,7 @@
 
 <script>
 
-    const validateField = (value, regex, inputElement) => {
+    /*const validateField = (value, regex, inputElement) => {
         if(!regex.test(value)) {
             inputElement.classList.add('is-invalid');
             return false;
@@ -167,6 +167,7 @@
             email
         );
     };
+     */
     const showToast = (message, isSuccess = true) => {
         const toastElement = document.getElementById('toastMessage');
         const toastBody = toastElement.querySelector('.toast-body');
