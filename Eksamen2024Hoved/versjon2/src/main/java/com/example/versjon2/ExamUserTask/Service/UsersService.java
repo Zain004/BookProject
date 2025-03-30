@@ -33,6 +33,7 @@ public class UsersService {
      */
     @Transactional
     public Users saveUser(Users user) {
+        logger.info("Attempting saving user: {}", user);
         validateUserObject(user);
         ensureUserDoesnotExist(user);
 

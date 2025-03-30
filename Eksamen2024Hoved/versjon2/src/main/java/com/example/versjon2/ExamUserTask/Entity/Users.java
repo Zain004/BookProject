@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(force = true) // uten noargsconstructor vil ikke jpa kunne lage et objekt
 @AllArgsConstructor() // kan brukes sammen med builder
+@ToString
 @Table (name = "users",
         indexes = {
             @Index(name = "idx_firstname", columnList = "first_name"), // Indeksen idx_firstname blir lagt til på kolonnen firstname.

@@ -38,8 +38,8 @@
                     <form id="registrationForm" novalidate>
                         <!-- First Name Field -->
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
-                            <label for="firstname">Firstname: </label>
+                            <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
+                            <label for="firstName">Firstname: </label>
                             <div id="firstnameFeedback" class="invalid-feedback">First Name must be between 2 and 50 characters.</div>
                         </div>
                         <!-- Last name Field -->
@@ -111,7 +111,7 @@
             nameRegex : /^(?!\s)(?!.*\s{2})[A-Za-z.\- ]{2,50}(?<!\s)$/,
             phoneRegex: /^(?!\s)[0-9]{8}(?<!\s)$/,
             emailRegex: /^[A-Za-z0-9._%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-            firstNameId: 'firstname',
+            firstNameId: 'firstName',
             lastNameId: 'lastName',
             dobId: 'dob',
             phoneId: 'phone',
@@ -292,7 +292,7 @@
     const validator = new FormValidator();
 
     const validations = {
-        firstname: validator.validateFirstname.bind(validator),
+        firstName: validator.validateFirstname.bind(validator),
         lastName: validator.validateLastname.bind(validator),
         dob: validator.validatedob.bind(validator),
         phone: validator.validatephone.bind(validator),
@@ -320,8 +320,12 @@
             return; // Cancel submission if validation fails
         }
 
-        const form = event.target;
-        const formData = new FormData(form);
+        const formData = new FormData(event.target);
+
+        console.log("Submitting form with FormData:");
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
 
         try {
             const response = await axios.post(url, formData, {
@@ -329,11 +333,11 @@
                     'content-type': 'application/json'
                 }
             });
-            console.log(`Submitting form with Formdata: ${JSON.stringify(formData)}`);
+
 
             if (response.status === 201) {
-                showToast('Registration successful and user created!', false);
-                console.log(`Registration successful and created USER: ${response.data}`);
+                showToast('Registration successful and user created!', true);
+                console.log(`Registration successful and created USER: ${JSON.stringify(response.data.data)}`);
                 // reset funksjon
                 return;
             }

@@ -40,7 +40,7 @@ public class UsersController {
         String requestId = UUID.randomUUID().toString(); // legger til en unik id for sporbarhet
         MDC.put("requestId", requestId);
 
-        logger.info("Received request to save user: {}", users.getEmail()); // Logg kun relevant info
+        logger.info("Received request to save user: {}", users); // Logg kun relevant info
         Users savedUser = usersService.saveUser(users);
 
         UsersDTO usersDTO = UsersDTO.convertToDTO(savedUser);
