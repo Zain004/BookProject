@@ -95,16 +95,35 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
 
-    const showToast = (message, isSuccess = true) => {
-        const toastElement = document.getElementById('toast');
-        const toastBody = toastElement.querySelector('.toast-body');
-        toastBody.classList.remove('bg-danger', 'bg-success');
-        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
-        toastBody.textContent = message; // Sett meldingsteksten i toast-body
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-    }
 
+    class ToastService {
+        static DEFAULT_OPTIONS = {
+            toastElementId: 'toast',
+            toastBody: 'toast-body'
+        }
+
+        #options
+        #toastElementId
+        #toastBody
+        constructor(options = {}) {
+            this.#options = {
+                ...ToastService.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#toastElementId = document.getElementById(this.#options.toastElementId);
+            this.#toastBody = document.querySelector(`.${this.#options.toastBody}`);
+            if (!this.#toastElementId || !this.#toastBody) {
+                console.error("Toast element or body not found.")
+            }
+        }
+        showToast(message, isSuccess = true) {
+            this.#toastBody.classList.remove('bg-danger', 'bg-success');
+            this.#toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+            this.#toastBody.textContent = message; // Sett meldingsteksten i toast-body
+            const toast = new bootstrap.Toast(this.#toastElementId);
+            toast.show();
+        }
+    }
 
     class FormValidator {
         static DEFAULT_OPTIONS = {
@@ -287,9 +306,133 @@
             return age >= minAge;
         }
     }
+    class RegistrationHandler {
+        #options
+        #form
+        #toastService
+        #validator
 
-    const regForm = document.getElementById('registrationForm');
+        constructor(options = {}) {
+            console.log("Options received in constructor:", options);
+            this.#options = options;
+            this.#form = document.getElementById(this.#options.form);
+            this.#toastService = this.#options.toastService;
+            this.#validator = this.#options.validator;
+            // Sjekk at form-elementet ble funnet
+            if (!this.#form) {
+                console.error(`Could not find form with ID: ${this.#options.form}`);
+                return; // Avbryt hvis form ikke finnes
+            }
+            this.#intializer();
+        }
+
+        #intializer() {
+            this.#handleinputEvent();
+            this.#handleSubmit();
+        }
+
+        #handleinputEvent() {
+            this.#form.addEventListener('input', (event) => {
+                const fieldName = event.target.name;
+                validations[fieldName] ? validations[fieldName]() :
+                    console.warn(`No validation defined for field: ${fieldId}`);
+            })
+        }
+
+        #handleSubmit() {
+            this.#form.addEventListener('submit', async (event) => {
+                event.preventDefault(); // viktig! Forhindrer side-reload
+                await this.#saveUser(event); // vent på at saveUser fullfører
+            })
+        }
+
+        #saveUser = async (event) => {
+            const API_BASE_URL = '/api/users';
+            const url = `${API_BASE_URL}`;
+
+            if (!this.#validator.validateForm()) {
+                this.#toastService.showToast('Please fill in all fields correctly.', false);
+                return; // Cancel submission if validation fails
+            }
+
+            const formData = new FormData(event.target);
+
+            console.log("Submitting form with FormData:");
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
+            try {
+                const response = await axios.post(url, formData, {
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                });
+
+
+                if (response.status === 201) {
+                    this.#toastService.showToast('Registration successful and user created!', true);
+                    console.log(`Registration successful and created USER: ${JSON.stringify(response.data.data)}`);
+                    // reset funksjon
+                    return;
+                }
+
+                if (response.status >= 200 && response.status < 300) {
+                    if (response.status === 204) {
+                        this.#toastService.showToast('Registration successful, but no content returned (check API)!', true);
+                        console.warn("Registration returned 204 No Content. Check API documentation.");
+                        return;
+                    }
+                    // Håndteirng av vellykket status koder som ikke er forventet
+                    this.#toastService.showToast(`Registration successful (status ${response.status}), but unexpected. Check the logs.`, true);
+                    console.warn(`Unexpected successful status code: ${response.status}`);
+                }
+                // Håndtering av ikke 2xx koder
+                this.#toastService.showToast(`Registrering returnerte en uventet statuskode: ${response.status}.`, false);
+                console.warn(`Uventet statuskode: ${response.status}`);
+            } catch (error) {
+                let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+                const statusCode = error.response?.status;
+
+                if (axios.isAxiosError(error)) {
+                    // Sjekk om det er netwerksproblem (ingen respons fra server)
+                    if(!error.response) {
+                        console.error("Network Error: ", error)
+                        userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                    } else {
+                        console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                        // Bruker en map for feilmeldinger, fordi det er nyere måte
+                        const errorMessages = {
+                            400: "Invalid request. Please check the fields and try again.", // BAD-REQUEST
+                            401: "You are not authorized to perform this action.", // UNAUTHORIZED
+                            403: "You do not have permission to perform this action.", // FORBIDDEN
+                            404: "Resource not found.", // NOT FOUND
+                            422: "Validation error: Please check that all fields are correctly filled in.",
+                            429: "Too many requests. Please wait a few minutes and try again.",
+                            500: "The server encountered an error. Please try again later.",
+                            503: "Service unavailable. Please try again later."
+                        };
+
+                        userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                        /*
+                        if (statusCode === 401 || statusCode === 403) {// ekstra håndtering}
+                        */
+                    }
+                } else {
+                    // Non-Axios related errors (e.g., JSON parsing, code errors)
+                    console.error("Unexpected Error:", error); // Log full error object
+                    this.#toastService.showToast("An unexpected error occurred. Please try again later.", false);
+                }
+
+                this.#toastService.showToast(userFriendlyErrorMessage, false);
+            }
+        }
+    }
+
+    const toastService = new ToastService();
+    const regForm = 'registrationForm';
     const validator = new FormValidator();
+    const registration = new RegistrationHandler({form: regForm, toastService: toastService, validator: validator});
 
     const validations = {
         firstName: validator.validateFirstname.bind(validator),
@@ -298,103 +441,13 @@
         phone: validator.validatephone.bind(validator),
         email: validator.validateEmail.bind(validator)
     };
-
-    regForm.addEventListener('input', (event) => {
-        const fieldName = event.target.name;
-        validations[fieldName] ? validations[fieldName]() :
-            console.warn(`No validation defined for field: ${fieldId}`);
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("ready")
+        const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
+        console.log(currentTime);
+        console.log(document.getElementById('filterForm') || 'not found'); // Sjekk om
+        
     })
-
-    regForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // viktig! Forhindrer side-reload
-        await saveUser(event); // vent på at saveUser fullfører
-    })
-
-    const saveUser = async (event) => {
-        const API_BASE_URL = '/api/users';
-        const API_ENDPOINT = '/saveUser';
-        const url = `${API_BASE_URL}${API_ENDPOINT}`;
-
-        if (!validator.validateForm()) {
-            showToast('Please fill in all fields correctly.', false);
-            return; // Cancel submission if validation fails
-        }
-
-        const formData = new FormData(event.target);
-
-        console.log("Submitting form with FormData:");
-        for (const [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        try {
-            const response = await axios.post(url, formData, {
-                headers: {
-                    'content-type': 'application/json'
-                }
-            });
-
-
-            if (response.status === 201) {
-                showToast('Registration successful and user created!', true);
-                console.log(`Registration successful and created USER: ${JSON.stringify(response.data.data)}`);
-                // reset funksjon
-                return;
-            }
-
-            if (response.status >= 200 && response.status < 300) {
-                if (response.status === 204) {
-                    showToast('Registration successful, but no content returned (check API)!', true);
-                    console.warn("Registration returned 204 No Content. Check API documentation.");
-                    return;
-                }
-                // Håndteirng av vellykket status koder som ikke er forventet
-                showToast(`Registration successful (status ${response.status}), but unexpected. Check the logs.`, true);
-                console.warn(`Unexpected successful status code: ${response.status}`);
-            }
-            // Håndtering av ikke 2xx koder
-            showToast(`Registrering returnerte en uventet statuskode: ${response.status}.`, false);
-            console.warn(`Uventet statuskode: ${response.status}`);
-        } catch (error) {
-            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
-            const statusCode = error.response?.status;
-
-            if (axios.isAxiosError(error)) {
-                // Sjekk om det er netwerksproblem (ingen respons fra server)
-                if(!error.response) {
-                    console.error("Network Error: ", error)
-                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
-                } else {
-                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
-                    // Bruker en map for feilmeldinger, fordi det er nyere måte
-                    const errorMessages = {
-                        400: "Invalid request. Please check the fields and try again.", // BAD-REQUEST
-                        401: "You are not authorized to perform this action.", // UNAUTHORIZED
-                        403: "You do not have permission to perform this action.", // FORBIDDEN
-                        404: "Resource not found.", // NOT FOUND
-                        422: "Validation error: Please check that all fields are correctly filled in.",
-                        429: "Too many requests. Please wait a few minutes and try again.",
-                        500: "The server encountered an error. Please try again later.",
-                        503: "Service unavailable. Please try again later."
-                    };
-
-                    userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
-                    /*
-                    if (statusCode === 401 || statusCode === 403) {// ekstra håndtering}
-                    */
-                }
-            } else {
-                // Non-Axios related errors (e.g., JSON parsing, code errors)
-                console.error("Unexpected Error:", error); // Log full error object
-                showToast("An unexpected error occurred. Please try again later.", false);
-            }
-
-            showToast(userFriendlyErrorMessage, false);
-        }
-    }
-
-
-
 
 
 
