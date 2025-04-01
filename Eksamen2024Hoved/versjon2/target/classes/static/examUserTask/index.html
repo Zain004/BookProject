@@ -373,7 +373,7 @@
                 if (response.status === 201) {
                     this.#toastService.showToast('Registration successful and user created!', true);
                     console.log(`Registration successful and created USER: ${JSON.stringify(response.data.data)}`);
-                    // reset funksjon
+                    this.#form.reset();
                     return;
                 }
 
@@ -381,9 +381,11 @@
                     if (response.status === 204) {
                         this.#toastService.showToast('Registration successful, but no content returned (check API)!', true);
                         console.warn("Registration returned 204 No Content. Check API documentation.");
+                        this.#form.reset();
                         return;
                     }
                     // Håndteirng av vellykket status koder som ikke er forventet
+                    this.#form.reset();
                     this.#toastService.showToast(`Registration successful (status ${response.status}), but unexpected. Check the logs.`, true);
                     console.warn(`Unexpected successful status code: ${response.status}`);
                 }
@@ -446,7 +448,7 @@
         const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
         console.log(currentTime);
         console.log(document.getElementById('filterForm') || 'not found'); // Sjekk om
-        
+
     })
 
 
