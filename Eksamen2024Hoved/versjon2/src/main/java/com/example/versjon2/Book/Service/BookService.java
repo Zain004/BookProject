@@ -8,32 +8,41 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
 public class BookService {
     private final BookRepository bookRepository;
+
     private final Logger logger = LoggerFactory.getLogger(BookService.class);
+
     private final UserService userService;
-    public List<Book> getAllBooks() {
-        List<Book> books = bookRepository.findAll();
-        if(books.isEmpty()) {
-            throw new RuntimeException("No books found in the database.");
-        }
-        return books;
-    }
+
     public void saveBooks(List<Book> books) {
         if(books == null || books.isEmpty()) {
             throw new IllegalArgumentException("Book list cannot be null or empty.");
         }
         bookRepository.saveAll(books);
     }
+
+    @Transactional(readOnly = true)
+    public List<Book> getAllBooks() {
+        logger.info("Fetching all books from DB.");
+        List<Book> books = bookRepository.findAll();
+
+        if(books.isEmpty()) {
+            logger.info("No books found in DB.");
+            return Collections.emptyList();
+        }
+
+        logger.info("Retrieved {} books from DB.", books.size());
+        return books;
+    }
+
     public Book updateBookYear(Long id, int newYear) {
         // optional brukes for å se om boken er null eller ikke i kombinasjon med isPresent
         Optional<Book> optionalBook = bookRepository.findById(id);

@@ -1,5 +1,7 @@
 package com.example.versjon2.Book.Controller;
 
+import com.example.versjon2.APIResponse;
+import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Service.BookService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,23 +19,23 @@ import java.util.Map;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/BookController")
+@RequestMapping("/api/books")
 public class BookController {
     private final Logger logger = LoggerFactory.getLogger(BookController.class);
     private final BookService bookService;
 
-    @GetMapping("/getBooks")
-    public ResponseEntity<?> getBooks() {
-        try {
-            List<Book> books = bookService.getAllBooks();
-            return ResponseEntity.ok(books);
-        } catch (RuntimeException e) {
-            logger.error("Error fetching books: " + e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("Unexpected error occured: ", e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+    @GetMapping("/listBooks")
+    public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
+        logger.info("Fetching all books from DB.");
+        List<Book> books = bookService.getAllBooks();
+        List<BooksDTO> booksDTOs = List.of();
+        if (books.isEmpty()) {
+            logger.info("No books found in DB, returning 204 no Content.");
+            return APIResponse.noContentResponse("No books found.", booksDTOs);
         }
+        booksDTOs = BooksDTO.convertToDTOList(books);
+        logger.info("Returning list of books to client.");
+        return APIResponse.okResponse(booksDTOs, "Books successfully retrieved from DB");
     }
 
     @PostMapping("/saveBooks")

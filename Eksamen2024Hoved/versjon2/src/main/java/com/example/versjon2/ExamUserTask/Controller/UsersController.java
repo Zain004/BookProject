@@ -60,13 +60,14 @@ public class UsersController {
     public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsers() {
         logger.info("Fetching all users from DB.");
         List<Users> users = usersService.fetchAllUsers(); // 1. Hent Users (ikke DTO)
-        List<UsersDTO> userDTOs = UsersDTO.convertToDtoList(users);
+        List<UsersDTO> usersDTOs = List.of();
         if(users.isEmpty()) {
             logger.info("No users found, returning 204 No Content");
-            return APIResponse.noContentResponse("No users found");
+            return APIResponse.noContentResponse("No users found", usersDTOs);
         }
+        usersDTOs = UsersDTO.convertToDtoList(users);
         logger.info("Returning list of users to client.");
-        return APIResponse.okResponse(userDTOs, "Users successfully retrieved from DB");
+        return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }
 
     /**
@@ -79,12 +80,13 @@ public class UsersController {
             @RequestParam(value = "sortByFirstname", required = false, defaultValue = "false") boolean sortByFirstName) {
             logger.info("Fetching all users from DB, sortByFirstname = {}", sortByFirstName);
             List<Users> users = usersService.fetchAllUsersSortedByFirstNameAsc(sortByFirstName);
-            List<UsersDTO> usersDTOs = UsersDTO.convertToDtoList(users);
+            List<UsersDTO> usersDTOs = List.of();
 
             if(users.isEmpty()) {
                 logger.info("No users found, returning 204 No Content");
-                return APIResponse.noContentResponse("No users found");
+                return APIResponse.noContentResponse("No users found", usersDTOs);
             }
+            usersDTOs = UsersDTO.convertToDtoList(users);
             logger.info("Returning list of users to client.");
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }

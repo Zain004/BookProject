@@ -14,6 +14,7 @@ VALUES
     ('Ola', 'Jensen', '1995-08-20', '98765432', 'ola.jensen@example.com'),  -- Ola 2 (samme fornavn som Ola 1, men annen email)
     ('Kari', 'Pettersen', '1978-02-10', '87654321', 'kari.iettersen@example.com'), -- Kari 2 (samme fornavn som Kari 1, men annen email)
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
+
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),
@@ -34,6 +35,8 @@ INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('American Sonnets for My Past and Future Assassin', 'Terrance Hayes', 2018, 4.2, 'Poetry'),
 ('Hamlet', 'William Shakespeare', 1603, 4.7, 'Tragedy'),
 ('Macbeth', 'William Shakespeare', 1606, 4.6, 'Tragedy');
+
+
 
 
 

@@ -37,6 +37,19 @@ public class APIResponse<T> {
                 .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
+    // funker kun med en tom liste, ikke fornuftig å bruke med paginering, da det kan skape forvirring
+    public static <T> ResponseEntity<APIResponse<T>> noContentResponse(String message, T dto) {
+        APIResponse<T> response = APIResponse.<T>builder()
+                .success(true) // heller ikke denen
+                .data((T) Collections.emptyList())
+                .message(message) // message feltet vises ikke i en 204 no content
+                .status(HttpStatus.NO_CONTENT) // kun denne
+                .timestamp(LocalDateTime.now()) // heller ikke denne
+                .build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .headers(SecurityConfig.createSecurityHeaders())
+                .body(response);
+    }
 
     public static <T> ResponseEntity<APIResponse<T>> buildResponse(HttpStatus status, String message, T data) {
         APIResponse<T> response = APIResponse.<T>builder()
@@ -61,17 +74,5 @@ public class APIResponse<T> {
                 .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
-    // funker kun med en tom liste, ikke fornuftig å bruke med paginering, da det kan skape forvirring
-    public static <T> ResponseEntity<APIResponse<List<UsersDTO>>> noContentResponse(String message) {
-        APIResponse<List<UsersDTO>> response = APIResponse.<List<UsersDTO>>builder()
-                .success(true)
-                .message(message)
-                .status(HttpStatus.NO_CONTENT)
-                .data(Collections.emptyList())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .headers(SecurityConfig.createSecurityHeaders())
-                .body(response);
-    }
+
 }

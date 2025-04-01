@@ -110,11 +110,14 @@
     async function fetchbooks() {
         try {
             // Sender en GET-forespørsel til "/getBooks"
-            const response = await fetch("BookController/getBooks");
+            const response = await fetch("/api/books/listBooks")
+            console.log(response);
             // Sjekker om responsen er vellykket
-            if (!response.ok) {
+            /*if (!response.status) {
                 throw new Error('Network response was not ok ' + response.statusText);
             }
+
+             */
             // Konverterer JSON-data til JavaScript-objekter
             const books = await response.json();
             console.log(books); // Logger dataen for debugging
