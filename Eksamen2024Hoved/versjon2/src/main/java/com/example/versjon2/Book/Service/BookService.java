@@ -1,13 +1,19 @@
 package com.example.versjon2.Book.Service;
 
+import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
 import com.example.versjon2.Authentication.Service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -22,11 +28,19 @@ public class BookService {
 
     private final UserService userService;
 
-    public void saveBooks(List<Book> books) {
-        if(books == null || books.isEmpty()) {
-            throw new IllegalArgumentException("Book list cannot be null or empty.");
+    @Transactional
+    public List<Book> saveBooks(@NonNull List<Book> books) {
+        String requestId = MDC.get("requestId"); // Hent requestId fra MDC
+        logger.info("Request ID: {} - Recieved request to save books: {}", requestId, books);
+        Objects.requireNonNull(books, "Book list cannot be null.");
+
+        if (books.isEmpty()) {
+            logger.info("Request ID: {} - Recieved an empty book list. No books will be saved.", requestId);
+            throw new IllegalArgumentException("No books will be saved.");
         }
-        bookRepository.saveAll(books);
+
+        logger.info("RequestId - Attempting saving {} books.", requestId, books.size());
+        return bookRepository.saveAll(books);
     }
 
     @Transactional(readOnly = true)
@@ -43,17 +57,21 @@ public class BookService {
         return books;
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 10)
     public Book updateBookYear(Long id, int newYear) {
-        // optional brukes for å se om boken er null eller ikke i kombinasjon med isPresent
-        Optional<Book> optionalBook = bookRepository.findById(id);
-        if(optionalBook.isPresent()) {
-            Book book = optionalBook.get();
-            book.setPublishingYear(newYear);
-            return bookRepository.save(book);
-        } else {
-            throw new RuntimeException("Book with ID " + id + " not found");
-        }
+        String requestId = MDC.get("requestId"); // Hent requestId fra MDC
+        logger.debug("Request ID: {} - Attempting to update book with id: {} to newYear: {}", requestId, id, newYear);
+
+        return bookRepository.findById(id)
+                .map(book -> {
+                    book.setPublishingYear(newYear);
+                    return bookRepository.save(book);
+                }).orElseThrow(() -> {
+                    logger.warn("Request ID: {} - Book with id {} not found for updating year.", requestId, id);
+                    throw new EmptyResultDataAccessException("Book with id " + id + " not found for updating year.", 1);
+                });
     }
+
     public void deleteBookById(Long id) {
         if(bookRepository.existsById(id)) {
             bookRepository.deleteById(id);

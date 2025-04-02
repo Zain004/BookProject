@@ -8,6 +8,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,26 +34,30 @@ public class UsersService {
      */
     @Transactional
     public Users saveUser(Users user) {
-        logger.info("Attempting saving user: {}", user);
+        String requestId = MDC.get("requestId");
+
+        logger.info("Request ID: {} - Attempting saving user: {}", requestId, user);
         validateUserObject(user);
         ensureUserDoesnotExist(user);
 
         Users savedUser = usersRepository.save(user);
-        logger.info("User with email {} successfully saved.", savedUser.getEmail());
+        logger.info("Request ID: {} - User with email {} successfully saved.", savedUser.getEmail());
 
         return savedUser;
     }
 
     private void validateUserObject(Users user) {
+        String requestId = MDC.get("requestId");
         if(user == null) {
-            logger.error("Attempted to save user with null user object.");
+            logger.error("Request ID: {} - Attempted to save user with null user object.", requestId);
             throw new IllegalArgumentException("User Object cannot be null.");
         }
     }
 
     private void ensureUserDoesnotExist(Users user) {
+        String requestId = MDC.get("requestId");
         usersRepository.findByEmail(user.getEmail()).ifPresent(existingUser -> {
-            logger.error("Attempted to save a user that already exists in DB.");
+            logger.error("Request ID: {} - Attempted to save a user that already exists in DB.", requestId);
             throw new IllegalArgumentException("User with email " + user.getEmail() +" already exists in DB.");
         });
     }

@@ -37,16 +37,14 @@ public class UsersController {
      */
     @PostMapping()
     public ResponseEntity<APIResponse<UsersDTO>> saveUser(@RequestBody @Valid Users users) {
-        String requestId = UUID.randomUUID().toString(); // legger til en unik id for sporbarhet
-        MDC.put("requestId", requestId);
+        String requestId = MDC.get("requestId");
 
-        logger.info("Received request to save user: {}", users); // Logg kun relevant info
+        logger.info("Request ID: {} - Received request to save user: {}", requestId, users); // Logg kun relevant info
         Users savedUser = usersService.saveUser(users);
 
         UsersDTO usersDTO = UsersDTO.convertToDTO(savedUser);
 
-        logger.info("User saved successfully with ID: {}", savedUser.getId());
-        MDC.remove("requestId");
+        logger.info("Request ID: {} - User saved successfully with ID: {}", requestId, savedUser.getId());
 
         return APIResponse.buildResponse(HttpStatus.CREATED, "User successfully created!", usersDTO);
     }
