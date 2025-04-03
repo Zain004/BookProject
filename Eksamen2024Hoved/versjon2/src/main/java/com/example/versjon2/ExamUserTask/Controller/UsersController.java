@@ -58,12 +58,11 @@ public class UsersController {
     public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsers() {
         logger.info("Fetching all users from DB.");
         List<Users> users = usersService.fetchAllUsers(); // 1. Hent Users (ikke DTO)
-        List<UsersDTO> usersDTOs = List.of();
         if(users.isEmpty()) {
             logger.info("No users found, returning 204 No Content");
-            return APIResponse.noContentResponse("No users found", usersDTOs);
+            return ResponseEntity.noContent().build();
         }
-        usersDTOs = UsersDTO.convertToDtoList(users);
+        List<UsersDTO> usersDTOs = UsersDTO.convertToDtoList(users);
         logger.info("Returning list of users to client.");
         return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }

@@ -2,21 +2,19 @@ package com.example.versjon2;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.header.writers.ContentSecurityPolicyHeaderWriter;
-import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
+    @Bean(name = "authenticationSecurityFilterChain") // Endre bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         // Konfigurerer sikkerhetsfilterkjeden for applikasjonen.
@@ -29,19 +27,6 @@ public class SecurityConfig {
                 .headers((headers) -> headers
                         // Hindrer at applikasjonen blir innebygd i en iframe fra andre domener (Clickjacking beskyttelse).
                         .addHeaderWriter(new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.DENY))
-                        // Definerer en Content Security Policy (CSP) for å kontrollere hvilke ressurser nettleseren kan laste inn.
-                        // Dette reduserer risikoen for XSS-angrep.
-                        .addHeaderWriter(new ContentSecurityPolicyHeaderWriter(
-                                "default-src 'self'; " + // Tillater kun ressurser fra samme opprinnelse (domene, protokoll, port).
-                                        "script-src 'self' 'unsafe-inline' https://cdn.example.com; " + // Tillater skript fra samme opprinnelse, inline skript (med forsiktighet), og et spesifikt CDN.
-                                        "style-src 'self' https://fonts.googleapis.com; " + // Tillater stiler fra samme opprinnelse og Google Fonts.
-                                        "img-src 'self' data:; " + // Tillater bilder fra samme opprinnelse og data-URIer (base64-kodede bilder).
-                                        "font-src 'self' https://fonts.gstatic.com; " + // Tillater fonter fra samme opprinnelse og Google Fonts.
-                                        "connect-src 'self' https://api.example.com; frame-src 'self'; " + // Tillater API-forespørsler til samme opprinnelse og et spesifikt API-domene, og iframes fra samme opprinnelse.
-                                        "form-action 'self'; object-src 'none'; base-uri 'self'; " + // Begrenser hvor skjemaer kan sendes, tillater ikke plugins, og setter base-URI til samme opprinnelse.
-                                        "require-trusted-types-for 'script'; report-to csp-endpoint;" // Krever Trusted Types for skript og sender CSP-rapporter til et endepunkt.
-                        ))
-                        // Legger til flere sikkerhets-headere.
                         .addHeaderWriter((request, response) -> {
                             // Konfigurerer Report-To header for CSP-rapportering.
                             response.setHeader("Report-To", "{ \"group\": \"csp-endpoint\", \"max_age\": 10886400, \"endpoints\": [ { \"url\": \"/csp-report-endpoint\" } ] }");
@@ -58,5 +43,10 @@ public class SecurityConfig {
 
         // Bygger og returnerer sikkerhetsfilterkjeden.
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

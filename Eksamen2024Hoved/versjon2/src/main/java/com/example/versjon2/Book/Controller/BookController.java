@@ -99,7 +99,7 @@ public class BookController {
     }
 
     @DeleteMapping("/deleteBook/{id}")
-    public ResponseEntity<APIResponse<Void>> deleteBook(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to delete book with ID: {}", requestId, id);
 

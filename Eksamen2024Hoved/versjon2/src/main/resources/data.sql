@@ -15,6 +15,7 @@ VALUES
     ('Kari', 'Pettersen', '1978-02-10', '87654321', 'kari.iettersen@example.com'), -- Kari 2 (samme fornavn som Kari 1, men annen email)
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
+
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),
