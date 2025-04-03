@@ -4,9 +4,11 @@ import com.example.versjon2.APIResponse;
 import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Service.BookService;
+import com.example.versjon2.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Null;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -86,33 +88,27 @@ public class BookController {
 
     @PutMapping("/updateBookYear/{id}")
     public ResponseEntity<APIResponse<BooksDTO>> updateBookYear(@PathVariable Long id, @RequestParam int newYear) {
-        String requestId = UUID.randomUUID().toString();
-        MDC.put("requestId", requestId);
-        logger.info("Received request to update book with id : {} AND year: {}", id, newYear);
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Received request to update book with id : {} AND year: {}",requestId, id, newYear);
 
         Book updateBook = bookService.updateBookYear(id, newYear);
         BooksDTO booksDTO = BooksDTO.convertToDTO(updateBook);
 
         logger.info("RequestId: {} - Updated Successfully Book: " + updateBook);
-
         return APIResponse.okResponse(booksDTO, "Updated book ID: " + id + " with new year: " + newYear);
     }
 
-
-
     @DeleteMapping("/deleteBook/{id}")
-    public ResponseEntity<?> deleteBook(@PathVariable Long id) {
-        try {
-            logger.info("Recieved request to delete book with ID : " + id);
-            bookService.deleteBookById(id);
-            return ResponseEntity.ok(Map.of(
-                    "success","Book with ID " + id + " successfully deleted"));
-        } catch (RuntimeException e) {
-            logger.error("Error deletig book: " + e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message","Error: " + e.getMessage()));
-        }
+    public ResponseEntity<APIResponse<Void>> deleteBook(@PathVariable Long id) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to delete book with ID: {}", requestId, id);
+
+        bookService.deleteBookById(id);
+
+        logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
+        return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/bookStatistics")
     public ResponseEntity<String> getBookStatistics() {
         try {

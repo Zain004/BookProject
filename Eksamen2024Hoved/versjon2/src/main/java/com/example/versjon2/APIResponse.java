@@ -34,7 +34,7 @@ public class APIResponse<T> {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.OK)
-                .headers(SecurityConfig.createSecurityHeaders())
+                // har konfigurert http header bean
                 .body(response);
     }
     // funker kun med en tom liste, ikke fornuftig å bruke med paginering, da det kan skape forvirring
@@ -47,7 +47,6 @@ public class APIResponse<T> {
                 .timestamp(LocalDateTime.now()) // heller ikke denne
                 .build();
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
 
@@ -59,7 +58,6 @@ public class APIResponse<T> {
                 .data(data)
                 .build();
         return ResponseEntity.status(status)
-                .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
 
@@ -71,7 +69,6 @@ public class APIResponse<T> {
                 .data(data)
                 .build();
         return ResponseEntity.status(status)
-                .headers(SecurityConfig.createSecurityHeaders())
                 .body(response);
     }
 

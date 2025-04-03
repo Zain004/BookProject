@@ -15,6 +15,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class BookService {
     public List<Book> saveBooks(@NonNull List<Book> books) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
         logger.info("Request ID: {} - Recieved request to save books: {}", requestId, books);
-        Objects.requireNonNull(books, "Book list cannot be null.");
+        Assert.notNull(books, "Book list cannot be null.");
 
         if (books.isEmpty()) {
             logger.info("Request ID: {} - Recieved an empty book list. No books will be saved.", requestId);
@@ -72,14 +73,19 @@ public class BookService {
                 });
     }
 
+    @Transactional
     public void deleteBookById(Long id) {
-        if(bookRepository.existsById(id)) {
-            bookRepository.deleteById(id);
-            logger.info("Successfully deleted book with ID: " + id);
-        } else {
-            logger.warn("Book with ID : " + id + " not found.");
-            throw new RuntimeException("Book with ID " + id + " does not exist");
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting to delete book with id: {}", requestId, id);
+        Assert.notNull(id, "Book id cannot be null.");
+
+        if (bookRepository.existsById(id)) {
+            logger.warn("Request ID: {} - Attempted to delete a non-existent book with ID: {}", requestId, id);
+            throw new NoSuchElementException("Book with ID " + id + " does not exist");
         }
+
+        bookRepository.deleteById(id);
+        logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
     }
 
     public String getBookStatistics(List<Book> books) {
