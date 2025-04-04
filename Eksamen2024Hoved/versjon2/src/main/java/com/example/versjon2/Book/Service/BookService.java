@@ -1,16 +1,17 @@
 package com.example.versjon2.Book.Service;
 
-import com.example.versjon2.Book.BooksDTO;
+import com.example.versjon2.Book.AuthorCount;
+import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
 import com.example.versjon2.Authentication.Service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -88,35 +89,70 @@ public class BookService {
         logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
     }
 
-    public String getBookStatistics(List<Book> books) {
 
-        if(books == null || books.isEmpty()) {
-            throw new IllegalArgumentException("Book List cannot be null or empty. ");
+    /**
+     *
+     * @param includeStats
+     * @param request
+     * @return
+     */
+    public String getBookStatistics(Set<String> includeStats, HttpServletRequest request) {
+        logger.info("Recieved request for generating statistics.");
+        logger.info("Checking if user is signed in");
+        userService.authenticate(request);
+
+        BookStatsDTO statsDTO = new BookStatsDTO();
+
+        boolean getAllStats = (includeStats == null || includeStats.isEmpty());
+
+        StringBuilder result = new StringBuilder();
+
+        // 1. returner antall elementer
+        if(getAllStats || includeStats.contains("totalBooks")) {
+            statsDTO.setTotalBooks(bookRepository.count());
+            logger.info("Successfully counted total books: {}.", statsDTO.getTotalBooks());
+            result.append("We have ").append(statsDTO.getTotalBooks()).append(" books.\n");
         }
 
-        // Metode 1: Beregn antall bøker i listen
-        int bookCount = books.size(); // Antall bøker
-        // Opprett en Map for å holde oversikt over antall bøker per forfatter
-        Map<String, Integer> authorCountMap = new HashMap<>();
-        for(Book book : books) {
-            // Hvis forfatteren finnes, øk antallet med 1, ellers sett til 1
-            authorCountMap.put(book.getAuthor(), authorCountMap.getOrDefault(book.getAuthor(),0) + 1);
+        // 2. Antall bøker per forfatter
+        if (getAllStats || includeStats.contains("authorCountMap")) {
+            List<AuthorCount> results = bookRepository.countBooksByAuthor();
+            Map<String, Long> authorCountMap = results.stream()
+                    .collect(Collectors.toMap(AuthorCount::getAuthor, AuthorCount::getCount));
+            statsDTO.setAuthorCountMap(authorCountMap);
+            StringBuilder authorsCountString = new StringBuilder();
+            authorsCountString.append("Number of books per author: \n");
+            authorCountMap.forEach((author, count) -> {
+                authorsCountString.append(author).append(": ").append(count).append("\n");
+            });
+            result.append("number og books per author: ").append(authorsCountString);
         }
+
         // Metode 2: Finn den eldste boken ved å sammenligne publiseringsåret
-        Book oldestBook = books.stream()
-                .min((book1, book2) -> Integer.compare(book1.getPublishingYear(), book2.getPublishingYear()))
-                .orElseThrow(() -> new RuntimeException("No books available. ")); // Kaster unntak hvis listen er tom
+        if (getAllStats || includeStats.contains("oldestBook")) {
+            Optional<Book> oldestBook = bookRepository.findOldestBook();
+            result.append("The oldest book is: ").append(oldestBook.get().getAuthor()).append(", published on ").append(oldestBook.get().getPublishingYear()).append(".\n");
+        }
+
         // Metode 3: Finn forfattere som kommer mer enn 1 ganger
-        String authorsAppearMoreThanOnce = authorCountMap.entrySet().stream()
-                .filter(objekt -> objekt.getValue() > 1) // Filtrer ut forfattere som har mer enn en bok
-                .map(Map.Entry::getKey) // Hent forfatternavnene (nøklene)
-                .reduce((book1, book2) -> (book1 + ", " + book2)) // slå sammen forfatterNavnene til en streng
-                .orElse("No Authors appear more than once. "); // Hvis ingen forfattere har mer enn en bok vis denne meldingen
+        if (getAllStats || includeStats.contains("authorsApperingMoraThanonce")) {
+            List<AuthorCount> results = bookRepository.findAuthorsAppearingMoreThanOnce();
+            Map<String, Long> authorAppaering = results.stream()
+                    .collect(Collectors.toMap(AuthorCount::getAuthor, AuthorCount::getCount));
+            statsDTO.setAuthorAppearingMoreThanOnce(authorAppaering);
+            StringBuilder authorsAppearingString = new StringBuilder();
+            authorsAppearingString.append("Authors Appearing More Than once: \n");
+            authorAppaering.forEach((author, count) -> {
+                authorsAppearingString.append(author).append(": ").append(count).append("\n");
+            });
+        }g
+
         // Metode 4: Finn forfatteren med flest bøker
         int maxBooks = authorCountMap.entrySet().stream()
                 .max((author1, author2) -> Integer.compare(author1.getValue(), author2.getValue())) // finn den største verdien
                 .map(Map.Entry::getValue) // hent antall bøker for dne mest frekvente forfatteren
                 .orElse(0); // Hvis ingen bøker finnes, returner 0 som standard
+
         // Finn alle forfattere som har det maksimale antallet bøker
         List<String> authorsWithMostBooks = authorCountMap.entrySet().stream() // filtrer forfattere med samme antall bøker
                 .filter(objekt -> objekt.getValue() == maxBooks) // hent forfatternavnene

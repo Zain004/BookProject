@@ -1,6 +1,6 @@
 package com.example.versjon2.Authentication.Repository;
 
-import com.example.versjon2.Authentication.Entity.User;
+import com.example.versjon2.Authentication.UserEntity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

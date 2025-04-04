@@ -1,133 +1,200 @@
 package com.example.versjon2.Authentication.Service;
 
 import com.example.versjon2.Authentication.Repository.UserRepository;
-import com.example.versjon2.Authentication.Entity.User;
+import com.example.versjon2.Authentication.UserEntity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Enumeration;
 import java.util.Optional;
+import java.util.UUID;
 
-@AllArgsConstructor
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
-
-    private Logger logger = LoggerFactory.getLogger(UserService.class);
-    // login bruker
-    @Autowired // Injiser PasswordEncoder
-    private PasswordEncoder passwordEncoder;
+    private final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    /**
+     *
+     * @param username
+     * @param password
+     * @param request
+     * @return
+     */
     @Transactional
-    public User login(String username, String password, HttpSession session) {
-        Optional<User> optionalUser = userRepository.findByUsername(username);
-        // sjekk om brukeren finnes og om passordet matcher
-        return optionalUser.filter(user -> {
-            if(!passwordEncoder.matches(password, user.getPasswordHash())) {
-                logger.warn("invalid password for username '{}'", user.getUsername());
-                return false;
-            }
-            return true;
-            }).map(user -> { // sjekk om brukeren allerede er innlogget i databasen
-                    if(user.isLoggedIn()) {
-                        logger.warn("User '{}' is already logged in the database.",user.getUserId());
-                        user.setLoggedIn(false);
-                        userRepository.save(user);
-                    }// Sjekk om brukeren allerede er innlogget i sesjonen
-                    Boolean sessionLoggedIn = (Boolean) session.getAttribute("loggedIn") ;
-                    if(Boolean.TRUE.equals(sessionLoggedIn)) {
-                        logger.warn("User '{}' is already logged in this session.", user.getUserId());
-                    }
-                    // hvis optional user eksisterer og passord er riktig
-                    // lagre innloggingsstatus i database
-                    user.setLoggedIn(true); // Logg inn og oppdater statusen til "loggedIn
-                    userRepository.save(user); // Lagre endirnger i databasen
-                    // lagre innloggingsstatus i browser
-                    session.setAttribute("userId", user.getUserId()); // lagrer brukerens unike Id i HTTP sesjonen, nyttig når du trenger å vite hvilken bruker som utfører operasjonen
-                    session.setAttribute("loggedIn", true); // lagrer en loggedIn status boolsk verdi i HTTP-sesjonen, som indikerer at brukeren er logget inn elelr ikke i applikasjonen
-                    // logg inn suksessfullt
-                    logger.info("User {} logged in successfully with username '{}'", user.getUserId(), username);
-                    return user;
-                })
+    public Optional<User> login(String username, String password, HttpServletRequest request) {
+        logger.info("Attempting login for user: {}", username);
+        // Input validation
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            logger.warn("Login attempt with invalid username or password.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password or username");
+        }
+        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByUsername(username))
                 .orElseThrow(() -> {
-                    logger.warn("Failed login attempt for username: {" + username +"}");
-                    return new RuntimeException("Invalid username or password."); // kast er spesifikt unntak
+                    logger.warn("Login failed: USer {} not found", username);
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User dont exist");
+                });
+        User user = new User();
+        if(optionalUser.isPresent()) {
+            user = optionalUser.get();
+        }
+        if(!passwordEncoder.matches(password, optionalUser.get().getPasswordHash())) {
+            logger.warn("Login failed: Invalid password for user: {}", username);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
+        }
+        HttpSession existingSession = request.getSession(false);
+        if(existingSession != null) {
+            logger.info("Invalidating existing session for user: {}", username);
+            clearSessionAttributes(existingSession); // ugyldiggjør
+        }
+        return authenticateUser(request, user);
+    }
+    /**
+     *
+     * @param request
+     * @param user
+     * @return
+     */
+    private Optional<User> authenticateUser(HttpServletRequest request, User user) {
+        logger.info("Authenticating session on user request");
+        HttpSession session = request.getSession(true);
+        // Generer secure session id
+        String secureSessionId = generateSecureSessionID();
+        // Lagre bruker-ID, brukernavn og en tidsstempel for å sjekke om session er gammel
+        session.setAttribute("userId", user.getUserId());
+        session.setAttribute("user", user);
+        session.setAttribute("lastActivity", Instant.now());
+        session.setAttribute("secureSessionId", secureSessionId);
+        // Session time is set in APPLICATION.PROPERTIES
+        logger.info("User {} successfully logged in with session ID: {}," +
+                "sessionID: {}", user.getUsername(), session.getId(), secureSessionId);
+        return Optional.of(user);
+    }
+    /**
+     *
+     * @return
+     */
+    private String generateSecureSessionID() {
+        return UUID.randomUUID().toString(); // generer en unik universell ID
+    }
+    /**
+     *
+     * @param request
+     */
+    @Transactional
+    public void logout(HttpServletRequest request) {
+        logger.info("Retrieved request to logout.");
+        HttpSession session = request.getSession(false); // den er satt til false for å unngå å opprette en ny sesjon
+        if(session == null) {
+            logger.warn("Logout attempt without an existing session.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You're not logged in");
+        }
+        String sessionId = session.getId();
+        logger.info("Attempting logout for session ID: {}", sessionId);
+        clearSessionAttributes(session);
+        logger.info("User with session ID: {} successfully logged out and session invalidated.", sessionId);
+    }
+    /**
+     *
+     * @param session
+     */
+    private void clearSessionAttributes(HttpSession session) {
+        Enumeration<String> attributeNames = session.getAttributeNames();
+        // Fjern alle attributer
+        while (attributeNames.hasMoreElements()) {
+            String attributeName = attributeNames.nextElement();
+            session.removeAttribute(attributeName);
+            logger.debug("Removed session attribute : {}", attributeName);
+        }
+        logger.debug("All session attributes are removed.");
+    }
+    /**
+     *
+     * @param request
+     * @return
+     */
+    // autentiserer brukers login status
+    public boolean isAuthenticated(HttpServletRequest request) {
+        logger.info("Checking login status for user {}", request.getSession().getId());
+        return Optional.ofNullable(request.getSession(false))
+                .map(this::isAuthenticated) // peker til sammem metode i klasse
+                .orElseGet(() -> {
+                    logger.debug("Authentication check: no active session found.");
+                    return false;
                 });
     }
 
-    // Utlogging av bruker
-    @Transactional
-    public void logout(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId != null) {
-            // Bruk den innebygde findById-metoden fra JpaRepository
-            userRepository.findById(userId).ifPresent(user -> {
-                if(user.isLoggedIn()) {
-                    user.setLoggedIn(false); // Oppdaterer brukerens "loggedIn"-status i databasen
-                    userRepository.save(user); // Lagre endringene i databasen
-                    logger.info("User with ID {" + userId + "} has logged out.");
-                }
-            });
-        } else {
-            // hvis userId ikke finnes i sesion, logg en advarsel
-            logger.warn("User attempted to logout without a valid userId in session");
-        }
-        session.invalidate(); // Fjern all session-informasjon
-        logger.info("Session invalidated for user with ID {" + userId + "}");
-    }
-
-    public boolean isUserLoggedInWithCookies(HttpSession session, Long userId) {
-        if(session == null) {
-            logger.warn("Session is null for user with ID '{}'", userId);
-            return false; // Returner false hvis session er null
-        }
-        // Sjekk om sesjonen er gyldig
-        Boolean isSessionValid = Boolean.TRUE.equals(session.getAttribute("loggedIn"));
-        logger.debug("Session validity for user ID '{}' is '{}'", userId, isSessionValid);
-
-        // Dobeltsjekk status i databasen
-        boolean isDatabaseValid = userRepository.findById(userId)
-                .map(User::isLoggedIn)
-                .orElse(false);
-        logger.debug("Database validity for user ID '{}' is '{}'", userId, isDatabaseValid);
-
-        boolean result = isSessionValid && isDatabaseValid;
-        if(!result) {
-            logger.warn("User Id '{}' is not logged in. Session valid: '{}', Database valid: '{}'", userId, isSessionValid, isDatabaseValid);
-        }
-        return result;
-    }
-    public boolean isUserLoggedIn(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if(userId == null) {
-            logger.warn("No userId found in session");
+    /**
+     *
+     * @param session
+     * @return
+     */
+    private boolean isAuthenticated(HttpSession session) {
+        if(isSessionExpired(session)) {
+            logger.debug("Authentication check: Session is expired");
             return false;
         }
+        Object userId = session.getAttribute("userId");
+        Optional.ofNullable(userId)
+                .orElseGet(() -> {
+                    logger.warn("Authentication check: Session does not contain 'userId' attribute. Likely invalid session.");
+                    return false;
+                });
+        logger.debug("Authentication check: User with ID {} is authenticated.", userId);
+        return true; // Session exists and contains the userId attribute, user is authenticated
+    }
+
+    /**
+     *
+     * @param session
+     * @return
+     */
+    public boolean isSessionExpired(HttpSession session) {
+        Instant lastActivity = (Instant) session.getAttribute("lastActivity");
+        if(lastActivity == null) {
+                    logger.warn("Session has no last activity timestamp.");
+                    return true; // consider session as expired, since no last activity found
+        }
+        int maxInactInterval = session.getMaxInactiveInterval();
+        Instant expirationTime = lastActivity.plus(maxInactInterval, ChronoUnit.SECONDS);
+        return Instant.now().isAfter(expirationTime);
+    }
+    public void authenticate(HttpServletRequest request) {
+        logger.info("Authenticating and authorizing user for recipe deletion.");
+        //
+        if(!isAuthenticated(request)) {
+            logger.warn("User is not authenticated, cannot delete recipes");
+            throw new IllegalStateException("User is not authenticated, cannot delete recipes");
+        }
+        // sjekker om session finnes
+        HttpSession session = request.getSession(false);
         if(session == null) {
-            logger.warn("Session is null for user with ID '{}'", userId);
-            return false; // Returner false hvis session er null
+            logger.error("No session found for user authentication.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No active session found.");
         }
-        // Sjekk om sesjonen er gyldig
-        Boolean isSessionValid = Boolean.TRUE.equals(session.getAttribute("loggedIn"));
-        logger.debug("Session validity for user ID '{}' is '{}'", userId, isSessionValid);
-
-        // Dobeltsjekk status i databasen
-        boolean isDatabaseValid = userRepository.findById(userId)
-                .map(User::isLoggedIn)
-                .orElse(false);
-        logger.debug("Database validity for user ID '{}' is '{}'", userId, isDatabaseValid);
-
-        boolean result = isSessionValid && isDatabaseValid;
-        if(!result) {
-            logger.warn("User Id '{}' is not logged in. Session valid: '{}', Database valid: '{}'", userId, isSessionValid, isDatabaseValid);
+        // sjekker om user er lagret i session
+        Object userObject = session.getAttribute("user");
+        if(!(userObject instanceof User)) {
+            logger.error("Session does not contain a valid user Object.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user session.");
         }
-        return result;
+        // validerer bruker rolle
+        User user = (User) userObject;
+        if(!user.getRoles().contains(User.Role.ADMIN)) {
+            logger.warn("User {} is not unathorized to delete recipes.", user.getUsername());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not authorized to delete recipes");
+        }
+        logger.info("User {} is authorized to delete recipes.", user.getUsername());
     }
 }

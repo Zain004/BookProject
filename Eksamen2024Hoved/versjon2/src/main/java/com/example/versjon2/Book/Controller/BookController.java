@@ -111,20 +111,12 @@ public class BookController {
 
     @GetMapping("/bookStatistics")
     public ResponseEntity<String> getBookStatistics() {
-        try {
-            List<Book> books = bookService.getAllBooks();
-            if(books == null || books.isEmpty()) {
-                return ResponseEntity.badRequest().body("No books available.");
-            }
-            String statistics = bookService.getBookStatistics(books);
-            return ResponseEntity.ok(statistics);
-        } catch (IllegalArgumentException e) {
-            logger.error("Error fetching book statistics: ", e);
-            return ResponseEntity.badRequest().body("Error fetching book statistics: " + e.getMessage());
-        } catch (Exception e) { // håndterer uventede feil
-            logger.error("Unexpected error occured: ", e);
-           return ResponseEntity.badRequest().body("Unexpected error occured; " + e); // returnerer generiks feilmelding
+        List<Book> books = bookService.getAllBooks();
+        if(books == null || books.isEmpty()) {
+            return ResponseEntity.badRequest().body("No books available.");
         }
+        String statistics = bookService.getBookStatistics(books);
+        return ResponseEntity.ok(statistics);
     }
 
     @DeleteMapping("/deletePoetryBooks")

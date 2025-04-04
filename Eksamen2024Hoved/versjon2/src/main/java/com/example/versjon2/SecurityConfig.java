@@ -45,7 +45,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
+    @Bean // Bean er oppskrifter på hvordan lage ting, når den er laget brukes den til andre ting
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
