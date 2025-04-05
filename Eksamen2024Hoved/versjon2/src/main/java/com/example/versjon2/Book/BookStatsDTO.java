@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -15,6 +17,7 @@ import java.util.Map;
 public class BookStatsDTO {
     private Long totalBooks;
     private Map<String, Long> authorCountMap;
-    private Book oldestBook;
+    private Optional<Book> oldestBook;
     private Map<String, Long> authorAppearingMoreThanOnce;
+    private List<AuthorCount> authorWithMostBooks;
 }

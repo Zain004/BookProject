@@ -25,6 +25,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("SELECT b FROM Book b ORDER BY b.publishingYear ASC LIMIT 1")
     Optional<Book> findOldestBook();
 
-    @Query("SELECT b.author as author, COUNT(b) AS count FROM Book b GROUP BY b.author HAVING COUNT(*) > 1")
+    @Query("SELECT b.author as author, COUNT(b) AS bookCount FROM Book b GROUP BY b.author HAVING COUNT(*) > 1")
     List<AuthorCount> findAuthorsAppearingMoreThanOnce();
+
+    @Query("SELECT b.author as author, COUNT(b) as bookCount FROM Book b GROUP BY b.author ORDER BY bookCount DESC")
+    List<AuthorCount> findAuthorWithMostBooks();
 }

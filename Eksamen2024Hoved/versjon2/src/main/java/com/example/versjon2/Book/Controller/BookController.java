@@ -1,6 +1,7 @@
 package com.example.versjon2.Book.Controller;
 
 import com.example.versjon2.APIResponse;
+import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Service.BookService;
@@ -19,10 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @AllArgsConstructor
 @RestController
@@ -110,13 +108,22 @@ public class BookController {
     }
 
     @GetMapping("/bookStatistics")
-    public ResponseEntity<String> getBookStatistics() {
-        List<Book> books = bookService.getAllBooks();
-        if(books == null || books.isEmpty()) {
-            return ResponseEntity.badRequest().body("No books available.");
-        }
-        String statistics = bookService.getBookStatistics(books);
-        return ResponseEntity.ok(statistics);
+    public ResponseEntity<APIResponse<String>> getBookStatistics(HttpServletRequest request) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to fetch book statistics");
+
+        BookStatsDTO statsDTO = bookService.getBookStatistics(request);
+        logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
+
+        String bookStatistics = bookService.makeStatisticksFromDTO(statsDTO);
+        logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, bookStatistics);
+
+        return APIResponse.okResponse(null, bookStatistics);
+    }
+
+    @PostMapping("/book-statistics")
+    public String getBookStatistics(@RequestBody List<Book> books) {
+        return bookStatisticsService.generateBookStatisticsString(books);
     }
 
     @DeleteMapping("/deletePoetryBooks")
