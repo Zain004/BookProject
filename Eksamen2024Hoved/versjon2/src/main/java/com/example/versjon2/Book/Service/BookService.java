@@ -94,15 +94,12 @@ public class BookService {
 
     /**
      *
-     * @param request
      * @return
      */
-    public BookStatsDTO getBookStatistics(HttpServletRequest request) {
+    public BookStatsDTO getBookStatistics() {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
         logger.info("Request ID: {} - Recieved request for generating statistics.", requestId);
 
-        logger.info("Checking if user is signed in");
-        userService.authenticate(request);
 
         BookStatsDTO statsDTO = new BookStatsDTO();
 
@@ -234,27 +231,11 @@ public class BookService {
                 .orElse("No oldest book found .\n");
     }
 
-    public int deletePoetryBooksPublishedAfter2000(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        // sjekk om brukeren er logger inn
-        if(userId == null || !userService.isUserLoggedIn(session)) {
-            logger.warn("User is not logged in.");
-            throw new RuntimeException("USer is not logged in.");
-        }
-        // Hvis brukeren er logget inn, fortsett å slette bøker
-        try {
-            // Antall slettede bøker
-            int deletedCount = bookRepository.deleteBooksByCategoryAndPublishingYearGreaterThan("Poetry",2000);
-            logger.info("Deleted {} poetry books published after 2000", deletedCount);
-            return deletedCount;
-        } catch (RuntimeException e) {
-            logger.error("Runtime error while deleting books: " + e);
-            throw e;
-        }
-        catch (Exception e) {
-            logger.error("Error while deleting books: " + e);
-            throw new RuntimeException("An error occured while deleting books.");
-        }
+    @Transactional
+    public int deletePoetryBooksPublishedAfter2000() {
+        int deletedCount = bookRepository.deleteBooksByCategoryAndPublishingYearGreaterThan("Poetry",2000);
+        logger.info("Successfully Deleted {} poetry books published after 2000.", deletedCount);
+        return deletedCount;
     }
 
 

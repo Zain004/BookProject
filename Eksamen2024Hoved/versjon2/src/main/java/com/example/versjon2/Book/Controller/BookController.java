@@ -1,6 +1,7 @@
 package com.example.versjon2.Book.Controller;
 
 import com.example.versjon2.APIResponse;
+import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
@@ -31,6 +32,7 @@ public class BookController {
     private final Logger logger = LoggerFactory.getLogger(BookController.class);
     private final BookService bookService;
     private final AuthorService authorService;
+    private final UserService userService;
 
     @GetMapping("/listBooks")
     public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
@@ -115,7 +117,11 @@ public class BookController {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to fetch book statistics");
 
-        BookStatsDTO statsDTO = bookService.getBookStatistics(request);
+        logger.debug("Request ID: {} - Authenticating user.", requestId);
+        userService.authenticate(request);
+        logger.debug("Request ID: {} - User authenticated successfully.", requestId);
+
+        BookStatsDTO statsDTO = bookService.getBookStatistics();
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
 
         String bookStatistics = bookService.makeStatisticksFromDTO(statsDTO);
@@ -141,22 +147,22 @@ public class BookController {
     }
 
     @DeleteMapping("/deletePoetryBooks")
-    public ResponseEntity<APIResponse<>> deletePoetryBooks(HttpServletRequest request) {
-        //Hent session fra request
-        HttpSession session = request.getSession(false);
-        if(session == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    "message","User is not logged in."
-            ));
+    public ResponseEntity<APIResponse<Integer>> deletePoetryBooks(HttpServletRequest request) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to delete poetry books", requestId);
+
+        logger.debug("Request ID: {} - Authenticating user.", requestId);
+        userService.authenticate(request);
+        logger.debug("Request ID: {} - User authenticated successfully.", requestId);
+
+        int deleteCount = bookService.deletePoetryBooksPublishedAfter2000();
+
+        if (deleteCount == 0) {
+            logger.debug("Request ID: {} - No poetry books were deleted.", requestId);
+            return APIResponse.buildResponse(HttpStatus.NO_CONTENT, "No poetry books were deleted.", deleteCount);
         }
-        int deleteCount = bookService.deletePoetryBooksPublishedAfter2000(session);
-        if(deleteCount > 0) {
-            return ResponseEntity.ok(
-                    Map.of(
-                            "success","Deleted " + deleteCount + " poetry books published after 2000"));
-        } else {
-         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                 "message","No books found to delete"));
-        }
-}
+
+        logger.info("Request ID: {} - Successfully deleted {} poetry books.", requestId, deleteCount);
+        return APIResponse.okResponse(deleteCount,"Successfully deleted " + deleteCount + " poetry books.");
+    }
 }

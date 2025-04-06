@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface BookRepository extends JpaRepository<Book, Long> {
     //Optional<Book> findById(Long id);
     @Modifying
-    @Transactional
     @Query("DELETE FROM Book b WHERE b.category = :category AND b.publishingYear > :publishingYear")
     int deleteBooksByCategoryAndPublishingYearGreaterThan(String category, int publishingYear);
 
