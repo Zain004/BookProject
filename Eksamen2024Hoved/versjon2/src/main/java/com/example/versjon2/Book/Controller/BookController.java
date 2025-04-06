@@ -4,6 +4,7 @@ import com.example.versjon2.APIResponse;
 import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
+import com.example.versjon2.Book.Service.AuthorService;
 import com.example.versjon2.Book.Service.BookService;
 import com.example.versjon2.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,8 +27,10 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
+
     private final Logger logger = LoggerFactory.getLogger(BookController.class);
     private final BookService bookService;
+    private final AuthorService authorService;
 
     @GetMapping("/listBooks")
     public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
@@ -122,13 +125,23 @@ public class BookController {
     }
 
     @PostMapping("/book-statistics")
-    public String getBookStatistics(@RequestBody List<Book> books) {
-        return bookStatisticsService.generateBookStatisticsString(books);
+    public ResponseEntity<APIResponse<String>> getBookStatistics(@RequestBody List<Book> books) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to fetch book statistics");
+
+        if (books == null || books.isEmpty()) {
+            logger.info("RequestId: {} - No books to make statistics of", requestId);
+            return APIResponse.okResponse(null, "No books provided for statistics.");
+        }
+
+        String stats = bookService.getBookStatisticsFromList(books);
+        logger.info("RequestId: {} - Successfully made statistics from List: {}", requestId, stats);
+
+        return APIResponse.okResponse(null, stats);
     }
 
     @DeleteMapping("/deletePoetryBooks")
-    public ResponseEntity<?> deletePoetryBooks(HttpServletRequest request) {
-    try {
+    public ResponseEntity<APIResponse<>> deletePoetryBooks(HttpServletRequest request) {
         //Hent session fra request
         HttpSession session = request.getSession(false);
         if(session == null) {
@@ -145,13 +158,5 @@ public class BookController {
          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                  "message","No books found to delete"));
         }
-    } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                "message","User is not logged in."));
-    } catch (Exception e) {
-        logger.error("An error occured while deleting books: ", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "message","An error occured while deleting books."));
-    }
 }
 }

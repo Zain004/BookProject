@@ -181,13 +181,57 @@ public class BookService {
         result.append(sb);
         return result.toString();
     }
-/*
+
     public String getBookStatisticsFromList(List<Book> books) {
         if (books == null || books.isEmpty()) {
             return "No books provided.";
         }
-        long totalBooks = books.size();
+        // 1. How many books we have
+        StringBuilder sb = new StringBuilder();
+        sb.append(totalBooks(books));
 
+        // 2. Is there any author that appears more than once.
+        sb.append("Is there any author that appears more than once: ").append(hasDuplicateAuthors(books));
+
+        // 3. Which authors appear more than once
+        sb.append(authorsAppearingMoreThanOnce(books));
+
+        // 4. The oldest book from the list.
+        sb.append(oldestBook(books));
+        return sb.toString();
+    }
+
+    private String totalBooks(List<Book> books) {
+        long totalBooks = books.size();
+        return "Number of books: " + totalBooks + "\n";
+    }
+
+    private boolean hasDuplicateAuthors(List<Book> books) {
+        Set<String> authors = new HashSet<>(); // SET tar ikke duplikater
+        for (Book book : books) {
+            if (!authors.add(book.getAuthor())) {
+                return true; // er allerede lagt til
+            }
+        }
+        return false;
+    }
+
+    private String authorsAppearingMoreThanOnce(List<Book> books) {
+        Map<String, Long> authorsAppearingMoreThanOnce = books.stream()
+                .collect(Collectors.groupingBy(Book::getAuthor, Collectors.counting()));
+        StringBuilder sb = new StringBuilder();
+        authorsAppearingMoreThanOnce.forEach((author, count) -> {
+            if (count > 1) {
+                sb.append(author).append(" has ").append(count).append(" books.\n");
+            }
+        });
+        return sb.toString();
+    }
+
+    private String oldestBook(List<Book> books) {
+        Optional<Book> oldestBook = books.stream().min(Comparator.comparing(Book::getPublishingYear));
+        return oldestBook.map(book -> "The oldest book is: " + book.getTitle())
+                .orElse("No oldest book found .\n");
     }
 
     public int deletePoetryBooksPublishedAfter2000(HttpSession session) {
@@ -213,7 +257,7 @@ public class BookService {
         }
     }
 
- */
+
 
 }
 
