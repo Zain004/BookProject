@@ -183,8 +183,40 @@
             populateBookTable(data.data);
 
         } catch (error) {
-            console.error(`Error while attempting saving books: ${error}`);
-            toast.showToast(error.message, false);
+            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
+
+            if (axios.isAxiosError(error)) {
+                // Sjekk om det er netwerksproblem (ingen respons fra server)
+                if(!error.response) {
+                    console.error("Network Error: ", error)
+                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                } else {
+                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                    // Bruker en map for feilmeldinger, fordi det er nyere måte
+                    const errorMessages = {
+                        400: "Invalid request. Please check the fields and try again.", // BAD-REQUEST
+                        401: "You are not authorized to perform this action.", // UNAUTHORIZED
+                        403: "You do not have permission to perform this action.", // FORBIDDEN
+                        404: "Resource not found.", // NOT FOUND
+                        422: "Validation error: Please check that all fields are correctly filled in.",
+                        429: "Too many requests. Please wait a few minutes and try again.",
+                        500: "The server encountered an error. Please try again later.",
+                        503: "Service unavailable. Please try again later."
+                    };
+
+                    userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                    /*
+                    if (statusCode === 401 || statusCode === 403) {// ekstra håndtering}
+                    */
+                }
+            } else {
+                // Non-Axios related errors (e.g., JSON parsing, code errors)
+                console.error("Unexpected Error:", error); // Log full error object
+                toast.showToast("An unexpected error occurred. Please try again later.", false);
+            }
+
+            toast.showToast(userFriendlyErrorMessage, false);
         }
         finally {
             saveButton.disabled = false;
