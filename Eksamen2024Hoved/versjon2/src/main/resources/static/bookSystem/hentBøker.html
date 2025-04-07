@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- Bootstrap 5.3.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+    <style>
+        .navbar-brand {
+            padding-left: 0.8rem;
+        }
+        .loading-active {
+            display: block;
+        }
+        .loading-hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
+        <a class="navbar-brand" href="#">Book List</a>
+        <!-- Hamburger menu (mobile) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- Navigation links -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- You can add more navigation items here if needed -->
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">
+                        Book List <span class="visually-hidden">(current)</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content Container -->
+<main class="container mt-4">
+    <section>
+        <h1 class="mb-4">Book List</h1>
+        <!-- Loading Indicator -->
+        <!-- bruker loading hidden som standard før javascript er lastet inn-->
+        <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
+            <div class="spinner-border text-primary" role="status">
+                <!-- Ment for skjermlesere -->
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <!-- Dette er den ordentlige teksten som skal vises -->
+            <p class="mt-2 small text-muted">Fetching books from library...</p>
+        </div>
+        <!-- oppretter en toast-->
+        <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="toast-header">
+                    <strong class="me-auto">Recipe submission</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+                    </button>
+                </div>
+                <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- User Table-->
+        <div class="table-responsive">
+            <table class="table table-striped table bordered">
+                <thead> <!-- Table head -->
+                <tr>
+                    <th>Isbn</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Rating</th>
+                    <th>category</th>
+                </tr>
+                </thead>
+                <tbody id="bookTableBody">
+                <!-- Brukere vil bli satt inn her -->
+                </tbody>
+            </table>
+        </div>
+        <div id="noBooksMessage" class="alert alert-info mt-3" style="display: none" role="alert">
+            No books found in the database
+        </div>
+    </section>
+</main>
+<!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<!-- Axios CDN lenke -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script defer>
+    /**
+     *
+     * @param message
+     * @param isSuccess
+     */
+    const showToast = (message, isSuccess = true) => {
+        const toastElement = document.getElementById('toast');
+        const toastBody = toastElement.querySelector('.toast-body');
+        toastBody.classList.remove('bg-danger', 'bg-success');
+        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+        toastBody.textContent = message; // Sett meldingsteksten i toast-body
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+    class LoadingIndicator {
+        // Definerer attributer
+        static DEFAULT_OPTIONS = {
+            indicatorId: 'loadingIndicator',
+            loadingClass: 'loading-active',
+            hiddenClass: 'loading-hidden'
+        }
+        #indicatorElement
+        #options // lagres internt
+
+        constructor(options = {}) {
+            // 1. Validering og sammenslåing av konfigurasjon
+            this.#options = this.#validateAndMergeOptions(options);
+            this.#indicatorElement = document.getElementById(this.#options.indicatorId); // initialiser før kall
+            this.#initializeIndicatorElement();
+        }
+        /*
+Når du bruker { ...objekt1, ...objekt2 }, vil:
+Alle verdiene fra objekt1 kopieres først.
+Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle duplikater.
+         */
+        #validateAndMergeOptions(options) {
+            const mergedOptions = {
+                ...LoadingIndicator.DEFAULT_OPTIONS,
+                ...options};
+            // Valider string-options:
+            ['indicatorId', 'loadingClass', 'hiddenClass'].forEach(key => {
+                if (typeof mergedOptions[key] !== 'string' || mergedOptions[key].trim() === "") {
+                    throw new Error(`${key} must be a non-empty string.`);
+                }
+            });
+            console.debug(mergedOptions);
+            return mergedOptions;
+        }
+
+        #initializeIndicatorElement() {
+            this.#indicatorElement = document.getElementById(this.#options.indicatorId);
+
+            if (!this.#indicatorElement) {
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
+            }
+            // sjekker at det faktisk er et HTMLElement
+            if (!(this.#indicatorElement instanceof HTMLElement)) {
+                throw new Error(`Element with ID '${this.#options.indicatorId}' is not an HTMLElement.`)
+            }
+        }
+
+        #setDisplay(show) {
+            if (!this.#indicatorElement) {
+                console.error(`LoadingIndicator: Element with ID '${this.#options.indicatorId}' not found.
+                Please ensure an element with this ID exists in your HTML.`);
+                return; // avslutter tidlig
+            }
+
+            if (show) {
+                this.#indicatorElement.classList.add(this.#options.loadingClass);
+                this.#indicatorElement.classList.remove(this.#options.hiddenClass);
+            } else {
+                this.#indicatorElement.classList.remove(this.#options.loadingClass);
+                this.#indicatorElement.classList.add(this.#options.hiddenClass);
+            }
+        }
+
+        show() {
+            this.#setDisplay(true);
+            this.#setAriaBusy(true);
+            /*
+            Hvis isBusy er true, blir aria-busy satt til 'true', og dette signaliserer til skjermlesere
+            og andre tilgjengelighetsteknologier at noe på elementet er
+            i ferd med å bli behandlet, som for eksempel at data blir lastet
+             */
+        }
+
+        hide() {
+            this.#setDisplay(false);
+            this.#setAriaBusy(false);
+            /*
+            Hvis isBusy er false, blir aria-busy satt til 'false',
+                og dette signaliserer at prosessen er fullført, og elementet er ikke lenger opptatt.
+            */
+        }
+        #setAriaBusy(isBusy) {
+            if(this.#indicatorElement && this.#indicatorElement.setAttribute) {
+                this.#indicatorElement.setAttribute('aria-busy', isBusy.toString());
+            }
+        }
+    }
+
+    class MessageHandler {
+        static DEFAULT_OPTIONS = {
+            noUsersMessageId: 'noBooksMessage',
+            timeoutDuration: 5000 // Standardverdi hvis ikke spesifisert på 5 sekunder
+        }
+
+        #noUsersMessageElement
+        #options
+        #timeoutId
+
+        constructor(options = {}) {
+            this.#options = {
+                ...MessageHandler.DEFAULT_OPTIONS,
+                ...options
+            };
+            // Valider options *før* du bruker dem!
+            this.#validateOptions();
+            this.#timeoutId = null;
+            this.#noUsersMessageElement = document.getElementById(this.#options.noUsersMessageId);
+            this.validateElements();
+        }
+        validateElements() {
+            if (!this.#noUsersMessageElement) {
+                throw new Error(`Element with ID '${this.#options.noUsersMessageId}' not found.`);
+            }
+        }
+
+        #validateOptions() {
+            if (typeof this.#options.noUsersMessageId !== 'string' || this.#options.noUsersMessageId.trim() === "") {
+                throw new TypeError("options.noUsersMessageId must be a non-empty string.");
+            }
+            if (typeof this.#options.timeoutDuration !== 'number' || this.#options.timeoutDuration < 0) {
+                throw new TypeError("options.timeoutDuration must be a non-negative number.");
+            }
+        }
+
+        displayNoUserMessage = (message = "No users found.") => {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.showMessage(message);
+            this.hideNoUsersMessage(); // Start alltid timeout
+        }
+
+        showMessage(message) { // Forenklet
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.textContent = message;
+                this.#noUsersMessageElement.style.display = 'block';
+            }
+        }
+
+        hideNoUsersMessage() {
+            this.#clearExistingTimeout(); // Slett eksisterende timeout
+            this.#timeoutId = setTimeout(() => {
+                this.hideMessage();
+            }, this.#options.timeoutDuration); // Bruk den faste timeout-verdien
+        }
+
+        hideMessage() {
+            if (this.#noUsersMessageElement) {
+                this.#noUsersMessageElement.style.display = 'none';
+            }
+        }
+
+        #clearExistingTimeout() {
+            if (this.#timeoutId) {
+                clearTimeout(this.#timeoutId);
+                this.#timeoutId = null;
+            }
+        }
+    }
+
+
+    const messageHandler = new MessageHandler({timeoutDuration : 2000});
+    const loadingIndicator = new LoadingIndicator();
+
+    // V2
+    const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
+        loadingIndicator.show();
+        const API_BASE_URL = '/api/books';
+        const API_ENDPOINT = '/list';
+        const url = `${API_BASE_URL}${API_ENDPOINT}`;
+        try {
+            const response = await axios.get(url);
+            console.log("Fetching books: ")
+
+            if (response.status === 204) {  // Enklest og mest lesbart
+                messageHandler.displayNoUserMessage();
+                console.log(response)
+                console.log("No books found in DB");
+                return;
+            }
+
+            if (response.status >= 200 && response.status < 300) { // Mer robust sjekk for suksess
+                const apiResponse = response.data; // antar at APIResponse returnerer APIResponse<List<UsersDTO>>
+
+                if (!apiResponse.success) {
+                    // kallet til axios ble fullført uten problemer,
+                    // derfor skal den ikke fortsette nedover
+                    const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
+                    showToast(errorMessage, false); // vis API error message
+                    console.warn(`API Error (success=false): ${errorMessage}`)
+                    return;
+                }
+                // ved suksess fortsett nedover
+                const users = apiResponse.data; // henter ut brukere
+                // robust type sjekk - sjekker om det virkelig er et array
+                if (!Array.isArray(users)) {
+                    console.error("API returned non-array data:", apiResponse);
+                    showToast("An unexpected error occurred: Invalid data format received.", false);
+                    return; // avslutt
+                }
+                // sjekker om det er noen til stede
+                if (users.length > 0) {
+                    console.debug(users)
+                    populateBookTable(users);
+                } else {
+                    // Dette skal *aldri* skje hvis serveren er korrekt (204 er riktig),
+                    // men vi legger til en sikkerhetsmekanisme:
+                    console.warn("Server returned success with empty data, but not 204 status.");
+                    messageHandler.displayNoUserMessage()
+                    return;
+                }
+                return; // returnerer ekslpisitt etter vellykket prosessering
+            }
+
+            // ---  Unexpected HTTP Status (not 2xx) ---
+            console.warn(`Unexpected HTTP Status: ${response.status}`);
+            showToast(`Unexpected HTTP status: ${response.status}`, false);
+        }
+        catch (error) {
+            let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
+            const statusCode = error.response?.status;
+
+            if (axios.isAxiosError(error)) {
+                if(!error.response) {
+                    console.error("Network Error: ", error)
+                    userFriendlyErrorMessage = "Could not connect to the photo server. Please check your internet connection and try again.";
+                } else {
+                    console.warn(`API Error ${statusCode}:`, error); // Use warn for API erros, log full error
+                    // Bruker en map for feilmeldinger, fordi det er nyere måte
+                    const errorMessages = {
+                        400: "Invalid search query. Please try again with a different query.", // BAD-REQUEST
+                        401: "You are not authorized to view user list.", // UNAUTHORIZED
+                        403: "You do not have permission to view user list.", // FORBIDDEN
+                        404: "Book list resource not found. Please contact support if this issue persists.", // NOT FOUND
+                        429: "Too many requests to server. Please wait a few minutes and try again.", // TOO MANY REQUEST
+                        500: "The server encountered an error while processing your request. Please try again later." // INTERNAL SERVER ERROR
+                    };
+
+                    userFriendlyErrorMessage =  errorMessages[statusCode] || `The server reported an error (${statusCode}). Please try again later.`;
+                    /*
+                    if (statusCode === 401 || statusCode === 403) {
+                        // ekstra håndtering
+                    }
+                    */
+                }
+            } else {
+                // Non-Axios related errors (e.g., JSON parsing, code errors)
+                console.error("Unexpected Error:", error); // Log full error object
+                showToast("An unexpected error occurred. Please try again later.", false);
+            }
+// Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
+// ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
+// error.code settes av nettverket og ikke av backend
+            const isRetryableError =
+                error.code === 'ECONNREFUSED' ||
+                error.code === 'ECONNABORTED' ||
+                statusCode === 429 || // Rate limiting
+                statusCode >= 500;      // Serverfeil
+
+            if (isRetryableError && retryCount < maxRetries) {
+                const delayMs = initialBackOffMs * (2 ** retryCount); // Eksponentiell backoff (tydeliggjort)
+                console.warn(`Retry attempt ${retryCount + 1}/${maxRetries} in ${delayMs / 1000}s`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                return fetchUsers(retryCount + 1, maxRetries); // Fjernet unødvendig parameter
+            }
+
+            if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
+                console.error("Max retries reached. Error: ", error);
+                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+            }
+
+            showToast(userFriendlyErrorMessage, false);
+        }
+        finally {
+            loadingIndicator.hide();
+        }
+    }
+
+
+    const populateBookTable = (books) => {
+        const tableBody = document.getElementById('bookTableBody');
+        let htmlRows = ''; // Bygg HTML - stren for alle rader
+
+        // 1. sjekker om tablebody elementet eksisterer
+        if (!tableBody) {
+            console.error("Error: 'bookTableBody' element not found.");
+            return; // Avslutt tidlig hvis elementet ikke finnes
+        }
+        // 2. tøm tabellen på en sikker måte
+        tableBody.innerHTML = '';
+        // 3. håndter tom eller ugyldig input *før* løkken
+        if (!books || !Array.isArray(books)) {
+            const message = "Warning: 'users' is null, undefined, or not an array."
+            console.warn(message);
+            showToast(message, false);
+            messageHandler.displayNoUserMessage();
+            return; // Avslutt tidlig
+        }
+        if (books.length === 0) {
+            messageHandler.displayNoUserMessage()
+        }
+        // 4.Bruk .map for å bygge HTML-strengene
+        books.forEach(book => {
+            console.debug("User: " + JSON.stringify(book))
+
+            // Objekt destrukturering for å direkte hente ut attributer med en gang
+            const {isbnId, title, author, publishingYear, rating, category} = book;
+            // en lead utvikler ville også validert alle felter
+            // Bruk template literals for å bygge HTML-raden mer lesbart
+            htmlRows += `
+                <tr>
+                    <td>${isbnId}</td>
+                    <td>${title}</td>
+                    <td>${author}</td>
+                    <td>${publishingYear}</td>
+                    <td>${rating}</td>
+                    <td>${category}</td>
+                </tr>
+            `;
+        })
+        tableBody.innerHTML = htmlRows;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("ready")
+        const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
+        console.log(currentTime);
+        fetchUsers().catch(error => {
+            console.error("Error during initial user fetch: ", error);
+            showToast(error.message, false);
+        })
+    })
+</script>
+</body>
+</html>

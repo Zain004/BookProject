@@ -34,7 +34,7 @@ public class BookController {
     private final AuthorService authorService;
     private final UserService userService;
 
-    @GetMapping("/listBooks")
+    @GetMapping("/list")
     public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
         logger.info("Fetching all books from DB.");
         List<Book> books = bookService.getAllBooks();

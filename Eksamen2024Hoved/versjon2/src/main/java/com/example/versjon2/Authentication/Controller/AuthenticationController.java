@@ -1,5 +1,7 @@
 package com.example.versjon2.Authentication.Controller;
 
+import com.example.versjon2.APIResponse;
+import com.example.versjon2.Authentication.LoginRequest;
 import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Authentication.UserEntity.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,11 +27,12 @@ public class AuthenticationController {
      * @return
      */
     @PostMapping("/login")
-    public ResponseEntity<APiResponse<Object>> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<APIResponse<Void>> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         logger.info("Recieved login request for user: {}", loginRequest.getUsername());
         Optional<User> user = userService.login(loginRequest.getUsername(), loginRequest.getpassword(), request);
         logger.info("User {} successfully logged in.", loginRequest.getUsername());
-        return ResponseEntity.ok(new APiResponse<>("Successfully logged in with username: " + loginRequest.getUsername(), null, user));
+        String message = "User " + loginRequest.getUsername() + " successfully logged in.";
+        return APIResponse.okResponse(null, message);
     }
 
     /**
@@ -38,11 +41,12 @@ public class AuthenticationController {
      * @return
      */
     @PostMapping("/logout")
-    public ResponseEntity<APiResponse<Object>> logout(HttpServletRequest request) {
+    public ResponseEntity<APIResponse<Void>> logout(HttpServletRequest request) {
         logger.info("Revieved logout request for session: {}", request.getSession());
         userService.logout(request);
         logger.info("Session {} successfully logged out.", request.getSession());
-        return ResponseEntity.ok(new APiResponse<>("Session " + request.getSession() + " is successfully logged out.", null, null));
+        String message = "User " + request.getSession().getId() + " successfully logged out.";
+        return APIResponse.okResponse(null, message);
     }
 
     /**
@@ -51,10 +55,11 @@ public class AuthenticationController {
      * @return
      */
     @GetMapping("/isLoggedIn")
-    public ResponseEntity<APiResponse<Boolean>> isLoggedIn(HttpServletRequest request) {
+    public ResponseEntity<APIResponse<Boolean>> isLoggedIn(HttpServletRequest request) {
         logger.info("Recieved isLoggedIn request for session: {}", request.getSession());
         boolean isLoggedIn = userService.isAuthenticated(request);
         logger.info("Login status checked for session: {}.", request.getSession());
-        return ResponseEntity.ok(new APiResponse<>("User status logged in: " + isLoggedIn, null, isLoggedIn));
+        String message = "User " + request.getSession().getId() + " successfully logged in.";
+        return APIResponse.okResponse(isLoggedIn, message);
     }
 }

@@ -1,12 +1,11 @@
 package com.example.versjon2.ExamUserTask.Entity;
 
-import com.example.versjon2.Book.Valid.ValidAge;
+import com.example.versjon2.ExamUserTask.Valid.ValidAge;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.validator.constraints.CodePointLength;
 import org.hibernate.validator.constraints.Email;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
