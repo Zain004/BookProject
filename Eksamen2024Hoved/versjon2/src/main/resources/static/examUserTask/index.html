@@ -39,31 +39,31 @@
                         <!-- First Name Field -->
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" aria-required="true" aria-invalid="false" aria-describedby="firstnameFeedback" required>
-                            <label for="firstName">Firstname: </label>
+                            <label for="firstName" class="form-label">Firstname: </label>
                             <div id="firstnameFeedback" class="invalid-feedback">First Name must be between 2 and 50 characters.</div>
                         </div>
                         <!-- Last name Field -->
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last name" aria-required="true" aria-invalid="false" aria-describedby="lastnameFeedback" equired>
-                            <label for="lastName" >Lastname : </label>
+                            <label for="lastName" class="form-label">Lastname : </label>
                             <div id="lastnameFeedback" class="invalid-feedback">Last Name must be between 2 and 50 characters.</div>
                         </div>
                         <!-- Date of Birth Field -->
                         <div class="form-floating mb-3">
                             <input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" aria-required="true" aria-invalid="false" aria-describedby="dobFeedback" required>
-                            <label for="dob">Date of Birth</label>
+                            <label for="dob" class="form-label">Date of Birth</label>
                             <div id="dobFeedback" class="invalid-feedback">Must be over 18 years of age.</div>
                         </div>
                         <!-- Phone number Field-->
                         <div class="form-floating mb-3">
                             <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone number" aria-required="true" aria-invalid="false" aria-describedby="phoneFeedback" required>
-                            <label for="phone">Phone number: </label>
+                            <label for="phone" class="form-label">Phone number: </label>
                             <div id="phoneFeedback" class="invalid-feedback">Phone number must be 8 digits.</div>
                         </div>
                         <!-- Email Field-->
                         <div class="form-floating mb-3">
                             <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" aria-required="true" aria-invalid="false" aria-describedby="emailFeedback" required>
-                            <label for="email">Email: </label>
+                            <label for="email" class="form-label">Email: </label>
                             <div id="emailFeedback" class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
@@ -312,6 +312,7 @@
         #form
         #toastService
         #validator
+        #submitButton
 
         constructor(options = {}) {
             console.log("Options received in constructor:", options);
@@ -324,6 +325,7 @@
                 console.error(`Could not find form with ID: ${this.#options.form}`);
                 return; // Avbryt hvis form ikke finnes
             }
+            this.#submitButton = this.#form.querySelector('button[type=submit]');
             this.#intializer();
         }
 
@@ -348,6 +350,7 @@
         }
 
         #saveUser = async (event) => {
+            this.#submitButton.disabled = true;
             const API_BASE_URL = '/api/users';
             const url = `${API_BASE_URL}`;
 
@@ -428,6 +431,9 @@
                 }
 
                 this.#toastService.showToast(userFriendlyErrorMessage, false);
+            }
+            finally {
+                this.#submitButton.disabled = false;
             }
         }
     }
