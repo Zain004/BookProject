@@ -15,14 +15,21 @@ import java.util.Set;
 public class UserLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    @Override
+    /*@Override
     public void run(String... args) {
         if(userRepository.count() == 0) {
             Set<User.Role> roles = new HashSet<>();
             roles.add(User.Role.ADMIN);
-            User user = new User("test.user-1", "Test123!", roles);
+            User user = new User("test.user-1", "SterktPassord123!", roles);
             user.updateHashPassword("Test123!", passwordEncoder);
             userRepository.save(user);
         }
     }
+
+     */
+    @Override
+    public void run(String... args) {
+    return;
+    }
+
 }

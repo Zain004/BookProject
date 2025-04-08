@@ -7,13 +7,10 @@ import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Service.AuthorService;
 import com.example.versjon2.Book.Service.BookService;
-import com.example.versjon2.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -21,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @AllArgsConstructor

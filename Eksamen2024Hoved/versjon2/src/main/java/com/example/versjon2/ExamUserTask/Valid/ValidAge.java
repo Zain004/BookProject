@@ -1,7 +1,8 @@
 package com.example.versjon2.ExamUserTask.Valid;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+
 import java.lang.annotation.*;
 // Mal for å definere en egen annotasjon i JAVA
 @Documented // Angir at annotasjonen skal inkluderes i Javadoc
