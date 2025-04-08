@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
+  <style>
+    html, body {
+      height: 100%; /* Viktig for at flexbox skal fungere riktig */
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1; /* Hovedinnhold tar opp all ledig plass */
+    }
+
+    footer {
+      background-color: #f8f9fa; /* Samme som bg-light i Bootstrap */
+      padding: 1.5rem 0; /* Justert padding for bedre visuell balanse */
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header class="bg-light py-3"> <!-- py-3 legger til litt padding vertikalt -->
+  <div class="container">
+    <h1>Save Books (Predefined List)</h1>
+    <p>This page sends a predefined list of books to the server.</p>
+  </div>
+</header>
+
+<main class="container mt-4">
+  <section>
+    <p>Click this button to save book list</p>
+    <button id="saveBooksButton" class="btn btn-primary mt-2">Save Books</button>
+    <div id="response"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <p>© 2023 Book Management</p>
+  </div>
+</footer>
+
+<!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<!-- Axios CDN lenke -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  const savebutton = document.getElementById("saveBooksButton");
+
+  const books = [
+    {
+      title: "The Lord of the Rings",
+      author: "J.R.R. Tolkien",
+      publishingYear: 1954,
+      rating: 4.5,
+      category: "Fantasy"
+    },
+    {
+      title: "Pride and Prejudice",
+      author: "Jane Austen",
+      publishingYear: 1813,
+      rating: 4.7,
+      category: "Romance"
+    },
+    {
+      title: "Valid Title",
+      author: "Valid Author",
+      publishingYear: 2000,
+      rating: 4.0,
+      category: "Valid Category"
+    }
+    // Add more books here
+  ];
+
+  const sendBooks = async (books) => {
+    savebutton.disabled = true;
+    const API_BASE_URL = '/api/books';
+    const API_ENDPOINT = '/saveBooks2';
+    const url = `${API_BASE_URL}${API_ENDPOINT}`;
+    try {
+        const response = await axios.post(url, books);
+    } catch (error) {
+
+    }
+  }
+
+  savebutton.addEventListener("click", () => {
+
+  })
+</script>
+</body>
+</html>
