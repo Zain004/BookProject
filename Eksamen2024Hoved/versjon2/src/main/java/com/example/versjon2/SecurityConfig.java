@@ -22,20 +22,13 @@ public class SecurityConfig {
     @Bean(name = "authenticationSecurityFilterChain")
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF (ONLY for local testing)
+                .csrf(csrf -> csrf.disable()) // Disable CSRF (ONLY for local testing - REMOVE IN PRODUCTION)
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll() // Tillat H2-konsollen (KUN i dev!)
-                        .anyRequest().permitAll() //La til en kommentar
+                        .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll() // Allow H2-console access
+                        .anyRequest().permitAll()  //  Allow all other requests - ADJUST IN PRODUCTION
                 )
                 .headers((headers) -> headers
-                        .addHeaderWriter(new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.DENY))
-                        .addHeaderWriter((request, response) -> {
-                            response.setHeader("Report-To", "{ \"group\": \"csp-endpoint\", \"max_age\": 10886400, \"endpoints\": [ { \"url\": \"/csp-report-endpoint\" } ] }");
-                            response.setHeader("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains; preload");
-                            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-                            response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-                            response.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=(), usb=(), gyroscope=(), magnetometer=(), picture-in-picture=(), display-capture=(), fullscreen=(self)");
-                        })
+                        .frameOptions(frameOptions -> frameOptions.disable())  // Disable frame options to allow H2 console
                 );
 
         return http.build();

@@ -52,14 +52,11 @@ public class BookController {
         logger.info("Request ID: {} - Recieved request to save Users to DB.", requestId);
 
         List<Book> books = new ArrayList<>();
-        books.add(new Book("The Great Gatsby", "F. Scott Fitzgerald", 1925, 4.0, "Fiction"));
-        books.add(new Book("To Kill a Mockingbird", "Harper Lee", 1960, 4.2, "Fiction"));
-        books.add(new Book("1984", "George Orwell", 1949, 4.5, "Dystopian"));
-        books.add(new Book("Pride and Prejudice", "Jane Austen", 1813, 4.3, "Romance"));
-        books.add(new Book("Animal Farm", "George Orwell", 1951, 4.1, "Satire"));
-        books.add(new Book("The Lord of the Rings", "J.R.R. Tolkien", 1954, 4.6, "Fantasy"));
-        books.add(new Book("Leaves of Grass", "Walt Whitman", 1855, 4.3, "Poetry"));
-        books.add(new Book("Inferno", "Dante Alighieri", 1320, 4.7, "Poetry"));
+        books.add(new Book("Pride and Prejudice", "Jane Austen", 1813, 4.3, "Romance")); //OK
+        books.add(new Book("Animal Farm", "George Orwell", 1951, 4.1, "Satire")); //OK
+        books.add(new Book("The Lord of the Rings", "J.R.R. Tolkien", 1954, 4.6, "Fantasy"));//OK
+        books.add(new Book("Leaves of Grass", "Walt Whitman", 1855, 4.3, "Poetry")); //OK
+        books.add(new Book("Inferno", "Dante Alighieri", 1320, 4.7, "Poetry")); //OK
 
         bookService.saveBooks(books);
         books.forEach(book -> logger.info("Saving book: {" + book + "}"));
