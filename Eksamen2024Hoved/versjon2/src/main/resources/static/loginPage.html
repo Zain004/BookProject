@@ -36,7 +36,7 @@ document.getElementById('testLoggedIn').addEventListener('click', testIsLoggedIn
 async function regTest() {
     try {
         // Send POST-forespørsel til serveren
-        const response = await fetch('api/users/register', {
+        const response = await fetch('/auth/isLoggedIn', {
             method: 'POST',
         });
 
@@ -104,7 +104,7 @@ class APiService {
 class UserAuth {
     static async login(username, password) {
         try {
-            const data = await APiService.post('/api/users/login',{username, password});
+            const data = await APiService.post('/auth/login',{username, password});
             this.showMessage('Login successful', 'success');
             return data;
         } catch (error) {
@@ -114,7 +114,7 @@ class UserAuth {
     }
     static async logout() {
         try {
-            const data = await APiService.get('/api/users/logout');
+            const data = await APiService.post('/auth/logout');
             this.showMessage('Logout successfull', 'success');
             return data;
         } catch (error) {
@@ -185,7 +185,7 @@ async function testIsLoggedInWithCookie() {
         console.log("User Id hentet fra cookie: ", userId);
         // Eksempel på testing - kall en backend-endpoint med userId
         try {
-            const response = await fetch(`/api/users/isLoggedIn/${userId}`);
+            const response = await fetch(`/auth/isLoggedIn/${userId}`);
             const data = await response.json();
             if(response.ok) {
                 console.log("status",data.status)
@@ -211,7 +211,7 @@ async function testIsLoggedInWithCookie() {
 }
 async function testIsLoggedIn() { // uten cookies
     try {
-        const response = await fetch('/api/users/isLoggedIn'); // Kall endpoint uten userId
+        const response = await fetch('/auth/isLoggedIn'); // Kall endpoint uten userId
         const data = await response.json();
 
         if(response.ok) {

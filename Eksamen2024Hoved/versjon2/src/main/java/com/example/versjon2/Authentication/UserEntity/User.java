@@ -40,12 +40,14 @@ public class User {
 
     @Getter // ingen setter for å hindre uønskede opppdateringer
     @NotBlank
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character from '@$!%*?&'")
+    //@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character from '@$!%*?&'")
     @Column(name="password_Hash", nullable = false) // kan ikke være null
     private String passwordHash; // Hash av passordet, ikke klartekst
+
     public void updateHashPassword(String rawPassword, PasswordEncoder passwordEncoder) {
         this.passwordHash = passwordEncoder.encode(rawPassword);
     }
+
     @CreatedDate
     @Column
     private LocalDateTime createdAt;
