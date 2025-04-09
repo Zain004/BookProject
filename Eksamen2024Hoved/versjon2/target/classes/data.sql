@@ -18,6 +18,7 @@ VALUES
 
 INSERT INTO book (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
+('The Sun and flower', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),
 ('Milk and Honey', 'Rupi Kaur', 2014, 4.3, 'Poetry'),
 ('1984', 'George Orwell', 1949, 4.5, 'Dystopian'),

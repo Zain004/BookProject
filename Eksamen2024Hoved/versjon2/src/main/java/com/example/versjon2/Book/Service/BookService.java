@@ -1,12 +1,10 @@
 package com.example.versjon2.Book.Service;
 
-import com.example.versjon2.Book.AuthorCount;
+import com.example.versjon2.AuthorCount;
 import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
 import com.example.versjon2.Authentication.Service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.slf4j.Logger;

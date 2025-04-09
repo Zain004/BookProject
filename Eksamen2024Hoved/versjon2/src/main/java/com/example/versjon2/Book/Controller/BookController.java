@@ -106,13 +106,13 @@ public class BookController {
     }
 
     @GetMapping("/bookStatistics")
-    public ResponseEntity<APIResponse<String>> getBookStatistics(HttpServletRequest request) {
+    public ResponseEntity<APIResponse<String>> getBookStatistics() { // HttpServletRequest request
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to fetch book statistics");
 
-        logger.debug("Request ID: {} - Authenticating user.", requestId);
-        userService.authenticate(request);
-        logger.debug("Request ID: {} - User authenticated successfully.", requestId);
+        //logger.debug("Request ID: {} - Authenticating user.", requestId);
+        //userService.authenticate(request);
+        //logger.debug("Request ID: {} - User authenticated successfully.", requestId);
 
         BookStatsDTO statsDTO = bookService.getBookStatistics();
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
