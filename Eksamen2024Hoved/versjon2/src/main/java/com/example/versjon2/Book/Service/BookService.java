@@ -82,7 +82,7 @@ public class BookService {
         logger.info("Request ID: {} - Attempting to delete book with id: {}", requestId, id);
         Assert.notNull(id, "Book id cannot be null.");
 
-        if (bookRepository.existsById(id)) {
+        if (!bookRepository.existsById(id)) {
             logger.warn("Request ID: {} - Attempted to delete a non-existent book with ID: {}", requestId, id);
             throw new NoSuchElementException("Book with ID " + id + " does not exist");
         }

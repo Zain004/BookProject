@@ -139,12 +139,14 @@
             bookIdInput.classList.add('is-invalid');
             bookIdInput.setAttribute('aria-invalid', 'true');
             isValid = false;
+            console.error("Book ID is invalid");
         }
 
         if (!newYear || isNaN(newYear)) {
             newYearInput.classList.add('is-invalid');
             newYearInput.setAttribute('aria-invalid', 'true');
             isValid = false;
+            console.error("Book Year is invalid");
         }
 
         return isValid

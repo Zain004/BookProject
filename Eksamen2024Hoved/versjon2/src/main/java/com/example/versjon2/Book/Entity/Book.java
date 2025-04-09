@@ -38,7 +38,6 @@ public class Book {
     @Column(name = "title", nullable = false, length = 50)
     private String title;
 
-
     @NotBlank(message = "Author cannot be blank")
     @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.\\- ]{2,50}(?<!\\s)$",
             message = "Author name must contain only letters, spaces, dots, and dashes, and no leading or trailing spaces.")
