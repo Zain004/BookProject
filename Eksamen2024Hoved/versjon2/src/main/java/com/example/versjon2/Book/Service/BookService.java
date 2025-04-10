@@ -1,6 +1,6 @@
 package com.example.versjon2.Book.Service;
 
-import com.example.versjon2.AuthorCount;
+import com.example.versjon2.Book.AuthorCount;
 import com.example.versjon2.Book.BookStatsDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
@@ -186,7 +186,7 @@ public class BookService {
         sb.append(totalBooks(books));
 
         // 2. Is there any author that appears more than once.
-        sb.append("Is there any author that appears more than once: ").append(hasDuplicateAuthors(books));
+        sb.append("Is there any author that appears more than once: ").append(hasDuplicateAuthors(books) + "\n");
 
         // 3. Which authors appear more than once
         sb.append(authorsAppearingMoreThanOnce(books));

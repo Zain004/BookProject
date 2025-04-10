@@ -1,6 +1,5 @@
 package com.example.versjon2.Book;
 
-import com.example.versjon2.AuthorCount;
 import com.example.versjon2.Book.Entity.Book;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

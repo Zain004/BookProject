@@ -171,11 +171,11 @@ public class UserService {
         return Instant.now().isAfter(expirationTime);
     }
     public void authenticate(HttpServletRequest request) {
-        logger.info("Authenticating and authorizing user for recipe deletion.");
+        logger.info("Authenticating user for request.");
         //
         if(!isAuthenticated(request)) {
-            logger.warn("User is not authenticated, cannot delete recipes");
-            throw new IllegalStateException("User is not authenticated, cannot delete recipes");
+            logger.warn("User is not authenticated, cannot perform actions");
+            throw new IllegalStateException("User is not authenticated, cannot perform acions");
         }
         // sjekker om session finnes
         HttpSession session = request.getSession(false);
@@ -192,9 +192,9 @@ public class UserService {
         // validerer bruker rolle
         User user = (User) userObject;
         if(!user.getRoles().contains(User.Role.ADMIN)) {
-            logger.warn("User {} is not unathorized to delete recipes.", user.getUsername());
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not authorized to delete recipes");
+            logger.warn("User {} is not unathorized to perform this action.", user.getUsername());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not authorized to perform this action.");
         }
-        logger.info("User {} is authorized to delete recipes.", user.getUsername());
+        logger.info("User {} is authorized to perform this action.", user.getUsername());
     }
 }

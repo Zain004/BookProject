@@ -1,4 +1,4 @@
-package com.example.versjon2;
+package com.example.versjon2.Book;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

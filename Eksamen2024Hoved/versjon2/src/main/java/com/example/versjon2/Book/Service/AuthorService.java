@@ -1,6 +1,6 @@
 package com.example.versjon2.Book.Service;
 
-import com.example.versjon2.AuthorCount;
+import com.example.versjon2.Book.AuthorCount;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
 import lombok.AllArgsConstructor;
