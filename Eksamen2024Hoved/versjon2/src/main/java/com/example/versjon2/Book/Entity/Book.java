@@ -47,13 +47,14 @@ public class Book {
 
     @Min(value = 1000, message = "Publishing year must be at least 1000")
     @Max(value = 2100, message = "Publishing year must be no later than 2100")
+    @NotNull(message = "Publishing year cannot be null")
     @Column(name = "publishing_year")
     private int publishingYear;
 
     @DecimalMin(value = "0.0", message = "Rating must be at least 0.0")
     @DecimalMax(value = "5.0", message = "Rating must be no more than 5.0")
     @NonNull
-    private Double rating;
+    private double rating;
 
     @NotBlank(message = "Category cannot be blank")
     @Size(min = 2, max = 50, message = "Category must be between 2 and 50 characters")

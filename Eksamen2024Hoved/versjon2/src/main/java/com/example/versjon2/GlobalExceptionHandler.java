@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,13 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.toList());
         logger.warn("ConstraintViolationException: {}", errors, ex); // Enkel logging
         return APIResponse.buildResponseError(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+    }
+
+    @ExceptionHandler(SQLException.class)
+    protected ResponseEntity<APIResponse<ErrorInfo>> handleSQLException(SQLException ex) {
+        logger.error("SQLException: {}", ex.getMessage(), ex);
+        ErrorInfo errorInfo = new ErrorInfo("Database Error", "A SQL error occurred.", ex.getClass().getSimpleName());
+        return APIResponse.buildResponseError(HttpStatus.INTERNAL_SERVER_ERROR, "Database error", errorInfo);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
