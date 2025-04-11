@@ -16,12 +16,11 @@ VALUES
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
 
-INSERT INTO book (title, author, publishing_year, rating, category) VALUES
+INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('The Sun and flower', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('To Kill a Mockingbird', 'Harper Lee', 1960, 4.2, 'Fiction'),
 ('Milk and Honey', 'Rupi Kaur', 2014, 4.3, 'Poetry'),
-('1984', 'George Orwell', 1949, 4.5, 'Dystopian'),
 ('Citizen: An American Lyric', 'Claudia Rankine', 2014, 4.2, 'Poetry'),
 ('Dearly', 'Margaret Atwood', 2020, 4.1, 'Poetry'),
 ('Pride and Prejudice', 'Jane Austen', 1813, 4.3, 'Romance'),

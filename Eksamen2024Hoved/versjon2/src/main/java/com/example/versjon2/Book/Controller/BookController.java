@@ -124,7 +124,7 @@ public class BookController {
     }
 
     @PostMapping("/book-statistics")
-    public ResponseEntity<APIResponse<String>> getBookStatistics(@RequestBody List<Book> books) {
+    public ResponseEntity<APIResponse<String>> getBookStatistics(@RequestBody @Valid List<Book> books) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to fetch book statistics");
 

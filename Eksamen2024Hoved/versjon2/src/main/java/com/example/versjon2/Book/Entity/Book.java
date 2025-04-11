@@ -32,14 +32,14 @@ public class Book {
     private Long isbnId;
 
     @NotBlank(message = "Title cannot be blank")
-    @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.\\- ]{2,50}(?<!\\s)$",
+    @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.: -]{2,50}(?<!\\s)$",
             message = "Tite name must contain only letters, spaces, dots, and dashes, and no leading or trailing spaces.")
     @Size(min = 2, max = 50, message = "Title must be between 2 and 50 characters")
     @Column(name = "title", nullable = false, length = 50)
     private String title;
 
     @NotBlank(message = "Author cannot be blank")
-    @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z.\\- ]{2,50}(?<!\\s)$",
+    @Pattern(regexp = "^(?!\\s)(?!.*\\s{2})[A-Za-z. -]{2,50}(?<!\\s)$",
             message = "Author name must contain only letters, spaces, dots, and dashes, and no leading or trailing spaces.")
     @Size(min = 2, max = 50, message = "Author must be between 2 and 50 characters")
     @Column(name = "author", nullable = false, length = 50)

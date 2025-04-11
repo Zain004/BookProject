@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS BOOKSQL (
     rating NUMERIC(5,2) NOT NULL CONSTRAINT valid_rating CHECK (rating >= 0.0 AND rating <= 5.0),
     category VARCHAR(50) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE
+    updated_at TIMESTAMP WITH TIME ZONE Default current_timestamp
     );
 
 CREATE INDEX IF NOT EXISTS idx_title ON BOOKSQL (title);
