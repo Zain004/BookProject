@@ -43,4 +43,12 @@ public class BookSQL {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public BookSQL(String title, String author, int publishingYear, double rating, String category) {
+        this.title = title;
+        this.author = author;
+        this.publishingYear = publishingYear;
+        this.rating = rating;
+        this.category = category;
+    }
 }

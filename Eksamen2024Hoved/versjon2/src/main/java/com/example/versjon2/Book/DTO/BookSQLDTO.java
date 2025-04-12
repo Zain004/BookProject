@@ -1,11 +1,10 @@
-package com.example.versjon2.Book;
+package com.example.versjon2.Book.DTO;
 
-import com.example.versjon2.Book.Entity.Book;
+import com.example.versjon2.Book.Entity.BookSQL;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.SecondaryRow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class BooksDTO {
+public class BookSQLDTO {
     private Long isbnId;
     private String title;
     private String author;
@@ -22,8 +21,8 @@ public class BooksDTO {
     private double rating;
     private String category;
 
-    public static BooksDTO convertToDTO(Book book) {
-        return new BooksDTO(
+    public static BookSQLDTO convertToDTO(BookSQL book) {
+        return new BookSQLDTO(
                 book.getIsbnId(),
                 book.getTitle(),
                 book.getAuthor(),
@@ -33,9 +32,9 @@ public class BooksDTO {
         );
     }
 
-    public static List<BooksDTO> convertToDTOList(List<Book> book) {
-        List<BooksDTO> dtos = new ArrayList<>();
-        for (Book b : book) {
+    public static List<BookSQLDTO> convertToDTOList(List<BookSQL> book) {
+        List<BookSQLDTO> dtos = new ArrayList<>();
+        for (BookSQL b : book) {
             dtos.add(convertToDTO(b));
         }
         return dtos;
