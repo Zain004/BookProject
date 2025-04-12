@@ -15,19 +15,20 @@ CREATE INDEX IF NOT EXISTS idx_publishingyear on BOOKSQL (publishing_year);
 CREATE INDEX IF NOT EXISTS idx_category_year on BOOKSQL (category, publishing_year);
 
 CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS '
 BEGIN
-    NEW.updated_at = NOW;  -- Fjernet parenteser
-RETURN NEW;
+    NEW.updated_at = NOW();
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
-
+' LANGUAGE plpgsql;
 
 -- Opprett en trigger som kaller funksjonen før hver oppdatering
 CREATE TRIGGER booksql_updateat
 BEFORE UPDATE ON BOOKSQL
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+
 
 /*
 NUMERIC(5,2) betyr at man kan lagre opptil 5 sifre før komma og 2 etter komma.

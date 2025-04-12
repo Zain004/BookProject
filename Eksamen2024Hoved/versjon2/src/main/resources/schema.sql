@@ -13,15 +13,14 @@ CREATE INDEX IF NOT EXISTS idx_title ON BOOKSQL (title);
 CREATE INDEX IF NOT EXISTS idx_category ON BOOKSQL (category);
 CREATE INDEX IF NOT EXISTS idx_publishingyear on BOOKSQL (publishing_year);
 CREATE INDEX IF NOT EXISTS idx_category_year on BOOKSQL (category, publishing_year);
-/*
-CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW;  -- Fjernet parenteser
-RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS '
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+' LANGUAGE plpgsql;
 
 -- Opprett en trigger som kaller funksjonen før hver oppdatering
 CREATE TRIGGER booksql_updateat
@@ -30,7 +29,7 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
 
- */
+
 /*
 NUMERIC(5,2) betyr at man kan lagre opptil 5 sifre før komma og 2 etter komma.
 (?!\s)             # Negativ lookahead: tittel kan ikke starte med mellomrom
