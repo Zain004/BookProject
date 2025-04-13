@@ -40,6 +40,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>Isbn ID</th>
                     <th>Title</th>
                     <th>Author</th>
                     <th>Year</th>
@@ -155,8 +156,8 @@
         const saveButton = document.getElementById("save-books-button");
         saveButton.disabled = true; // Disable button during request
 
-        const API_BASE_URL = '/api/books';
-        const API_ENDPOINT = '/saveBooks';
+        const API_BASE_URL = '/api/booksSQL';
+        const API_ENDPOINT = '/saveBooksBatch';
         const url = `${API_BASE_URL}${API_ENDPOINT}`;
         try {
             const response = await axios.post(url, {}, {
@@ -165,7 +166,7 @@
                 }
             });
 
-            console.info("Attempting saving users in server!")
+            console.info("Attempting saving books in server!")
 
             if (response.status !== 201) {
                 console.error(`Error form API:`, response.data);
@@ -179,6 +180,7 @@
                 console.error(`Error form API:`, response.data);
                 toast.showToast(data.message, false);
             }
+            console.log(`Saved books: ${data.message}`);
             console.log('Retrieved books: ' + JSON.stringify(data.data));
             populateBookTable(data.data);
 

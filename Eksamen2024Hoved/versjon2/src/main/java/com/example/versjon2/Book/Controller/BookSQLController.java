@@ -2,14 +2,9 @@ package com.example.versjon2.Book.Controller;
 
 import com.example.versjon2.APIResponse;
 import com.example.versjon2.Authentication.Service.UserService;
-import com.example.versjon2.Book.BookStatsDTO;
-import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.DTO.BookSQLDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
-import com.example.versjon2.Book.Service.BookJDBCService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import com.example.versjon2.Book.Service.BookSQLService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +18,19 @@ import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/books")
-public class BookJDBCController {
+@RequestMapping("/api/booksSQL")
+public class BookSQLController {
 
-    private final Logger logger = LoggerFactory.getLogger(BookJDBCController.class);
-    private final BookJDBCService bookService;
+    private final Logger logger = LoggerFactory.getLogger(BookSQLController.class);
+    private final BookSQLService bookService;
     //private final AuthorService authorService;
     private final UserService userService;
 
-    @PostMapping("/saveBooks")
+    /**
+     * returnerer liste med key
+     * @return
+     */
+    @PostMapping("/saveBooksWithID")
     public ResponseEntity<APIResponse<List<BookSQLDTO>>> saveBooks() {
         String requestId = MDC.get("requestId"); // hent fra MDC
         logger.info("Request ID: {} - Recieved request to save Users to DB.", requestId);
@@ -52,6 +51,29 @@ public class BookJDBCController {
         return APIResponse.buildResponse(HttpStatus.CREATED, "Books successfully created in DB", booksDTOs);
     }
 
+    /**
+     * denne returnerer integer, fordi batch ikke returnerer key, kan returnere resten av listen
+     * @return
+     */
+    @PostMapping("/saveBooksBatch")
+    public ResponseEntity<APIResponse<Integer>> saveBatchInt() {
+        String requestId = MDC.get("requestId"); // hent fra MDC
+        logger.info("Request ID: {} - Recieved request to save Users to DB.", requestId);
+
+        List<BookSQL> books = new ArrayList<>();
+        books.add(new BookSQL("Pride and Prejudice", "Jane Austen", 1813, 4.3, "Romance")); //OK
+        books.add(new BookSQL("Animal Farm", "George Orwell", 1951, 4.1, "Satire")); //OK
+        books.add(new BookSQL("The Lord of the Rings", "J.R.R. Tolkien", 1954, 4.6, "Fantasy"));//OK
+        books.add(new BookSQL("Leaves of Grass", "Walt Whitman", 1855, 4.3, "Poetry")); //OK
+        books.add(new BookSQL("Inferno", "Dante Alighieri", 1320, 4.7, "Poetry")); //OK
+
+        Integer bookSQL = bookService.saveBatch(books);
+
+        logger.info("Request ID: {} - Successfully saved {} books.", requestId, bookSQL);
+        // implementer MDCFilter
+        return APIResponse.buildResponse(HttpStatus.CREATED, "Successfully created " + bookSQL + " books.", bookSQL);
+    }
+    /*
     @GetMapping("/list")
     public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
         logger.info("Fetching all books from DB.");
@@ -159,4 +181,6 @@ public class BookJDBCController {
         logger.info("Request ID: {} - Successfully deleted {} poetry books.", requestId, deleteCount);
         return APIResponse.okResponse(deleteCount,"Successfully deleted " + deleteCount + " poetry books.");
     }
+
+     */
 }

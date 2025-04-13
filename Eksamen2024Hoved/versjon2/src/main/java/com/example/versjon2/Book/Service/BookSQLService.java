@@ -2,32 +2,23 @@ package com.example.versjon2.Book.Service;
 
 import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Book.Entity.BookSQL;
-import com.example.versjon2.Book.Repository.BookJDBCRepository;
+import com.example.versjon2.Book.Repository.BookSQLRepository;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.*;
 
 @AllArgsConstructor
 @Service
-public class BookJDBCService {
-    private final BookJDBCRepository bookRepository;
+public class BookSQLService {
+    private final BookSQLRepository bookRepository;
 
-    private final Logger logger = LoggerFactory.getLogger(BookJDBCService.class);
+    private final Logger logger = LoggerFactory.getLogger(BookSQLService.class);
 
     private final AuthorService authorService;
 
@@ -47,6 +38,22 @@ public class BookJDBCService {
         logger.info("RequestId: {} - Attempting saving {} books.", requestId, (Integer) books.size());
         return bookRepository.saveAll(books);
     }
+
+    @Transactional
+    public int saveBatch(@NonNull List<BookSQL> books) {
+        String requestId = MDC.get("requestId"); // Hent requestId fra MDC
+        logger.info("Request ID: {} - Recieved request to save books: {}", requestId, books);
+        Assert.notNull(books, "Book list cannot be null.");
+
+        if (books.isEmpty()) {
+            logger.info("Request ID: {} - Recieved an empty book list. No books will be saved.", requestId);
+            throw new IllegalArgumentException("No books will be saved.");
+        }
+
+        logger.info("RequestId: {} - Attempting saving {} books.", requestId, (Integer) books.size());
+        return bookRepository.saveBatch(books);
+    }
+
 /*
     @Transactional(readOnly = true)
     public List<Book> getAllBooks() {

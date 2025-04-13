@@ -22,11 +22,15 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 
--- Opprett en trigger som kaller funksjonen før hver oppdatering
+-- Slett triggern hvis den eksisterer
+DROP TRIGGER IF EXISTS booksql_updateat ON BOOKSQL;
+
+-- Opprett triggern
 CREATE TRIGGER booksql_updateat
-BEFORE UPDATE ON BOOKSQL
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
+    BEFORE UPDATE ON BOOKSQL
+    FOR EACH ROW
+    EXECUTE FUNCTION update_timestamp();
+
 
 
 

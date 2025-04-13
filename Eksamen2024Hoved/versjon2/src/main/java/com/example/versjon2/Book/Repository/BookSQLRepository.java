@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -16,13 +17,13 @@ import org.springframework.stereotype.Repository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.AbstractList;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @AllArgsConstructor
-public class BookJDBCRepository {
-    private final Logger logger = LoggerFactory.getLogger(BookJDBCRepository.class);
+public class BookSQLRepository {
+    private final Logger logger = LoggerFactory.getLogger(BookSQLRepository.class);
     private JdbcTemplate jdbcTemplate;
 
     /**
@@ -61,18 +62,41 @@ public class BookJDBCRepository {
             };
             // bruker kun keyholder fordi jeg trenger den genererte id'en
             jdbcTemplate.update(psmt, keyHolder); // oppdaterer databasen
-            Number key = keyHolder.getKey();
+            // **EKSTRA LOGGING (FØR HENTING):** Logg KeyHolder-informasjon
+            logger.info("Request ID: {} - KeyHolder keys: {}", requestId, keyHolder.getKeys()); // Eller keyHolder.getKeyList()
+            Long isbnId = extractIsbnId(keyHolder, book);
 
-            if (key != null) {
-                book.setIsbnId((Long) key);
+            if (isbnId != null) {
+                book.setIsbnId(isbnId);
                 rowsInserted++;
                 logger.info("Request ID: {} - Successfully saved book with ID: {}", requestId, book.getIsbnId());
             } else {
-                logger.warn("Request ID: {} - Could not get generated ID for Book {}.", requestId, book);
+                logger.warn("Request ID: {} - Could not get generated ID for Book but successfully inserted {}.", requestId, book);
             }
         }
         logger.info("Request ID: {} - Successfully saved {} books.", requestId, (Integer) rowsInserted);
         return books;
+    }
+
+    private Long extractIsbnId(KeyHolder keyHolder, BookSQL book) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Extracting isbn ID from book: {}", requestId, book);
+        List<Map<String, Object>> keyList = keyHolder.getKeyList();
+        if (keyList == null || keyList.isEmpty()) {
+            logger.warn("Request ID: {} - Could not get generated ID for Book {}. KeyList is null or empty.", requestId, book);
+            return null; // Eller kast en exception hvis det er mer passende
+        }
+        // Hent første Map fra listen
+        Map<String, Object> keys = keyList.get(0);
+
+        Object isbnIdObject = keys.get("isbn_id");
+
+        // sjekk at isnnIdObject er en Number
+        if (!(isbnIdObject instanceof Number)) {
+            logger.error("Request ID: {} - Unexpected type for isbn_id: {}. Expected Number, got {}.", requestId, isbnIdObject, isbnIdObject.getClass().getName());
+            return null; // eller kast exceptio
+        }
+        return ((Number) isbnIdObject).longValue();
     }
 
     /**
@@ -104,6 +128,9 @@ public class BookJDBCRepository {
             };
         });
 
-        return updatedColumns.length;
+        int rowsInserted = updatedColumns.length;
+        logger.info("Request ID: {} - Successfully saved {} books.", rowsInserted);
+
+        return rowsInserted;
     }
 }
