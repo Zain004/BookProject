@@ -1,6 +1,7 @@
 package com.example.versjon2.Book.Repository;
 
 
+import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Entity.BookSQL;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -29,6 +30,30 @@ public class BookSQLRepository {
     private final Logger logger = LoggerFactory.getLogger(BookSQLRepository.class);
     private JdbcTemplate jdbcTemplate;
 
+
+
+    public Optional<BookSQL> getBookById(Long id) {
+        String requestId = MDC.get("requestId"); // hent fra MDC
+        logger.info("Request ID: {} - Attempting to fetch Book from Database with ID: {}.", requestId, id);
+
+        String sql = "SELECT * FROM book WHERE isbn_id = ?";
+        BookSQL bookSQL = jdbcTemplate.queryForObject(sql, new Object[]{id}, bookSQLRowMapper);
+        logger.debug("Request ID: {} - Successfully fetched book with ID: {} from database. Book details: {}", requestId, id, bookSQL);
+
+        return Optional.of(bookSQL);
+    }
+
+    private static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
+        BookSQL book = new BookSQL();
+        book.setIsbnId(rs.getLong("isbn_id"));
+        book.setTitle(rs.getString("title"));
+        book.setAuthor(rs.getString("author"));
+        book.setPublishingYear(rs.getInt("publishing_year"));
+        book.setRating(rs.getDouble("rating"));
+        book.setCategory(rs.getString("category"));
+        return book;
+    };
+
     /**
      * Denne metoden oppdaterer hvert enkelt element separat, fordi jeg ønsker
      * å hente ut id'ene til hvert element pg returnere en DTO til klient.
@@ -40,7 +65,7 @@ public class BookSQLRepository {
      */
     public List<BookSQL> saveAll(List<BookSQL> books) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
-        logger.info("Request ID: {} - Saving books through book repository: {}", requestId, books);
+        logger.info("Request ID: {} - Attemprting Saving books through book DB: {}", requestId, books);
 
         String sql = "INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES (?, ?, ?, ?, ?)";
 
@@ -110,7 +135,7 @@ public class BookSQLRepository {
      */
     public int saveBatch(List<BookSQL> books) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
-        logger.info("Request ID: {} - Saving batch through book repository: {}", requestId, books);
+        logger.info("Request ID: {} - Attempting Saving batch to database: {}", requestId, books);
 
         String sql = "INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES (?, ?, ?, ?, ?)";
 
@@ -138,7 +163,7 @@ public class BookSQLRepository {
 
     public List<BookSQL> findAllBooksList() {
         String requestId = MDC.get("requestId"); // hent fra MDC
-        logger.info("Request ID: {} - Fetching all books from DB.", requestId);
+        logger.info("Request ID: {} - Attempting Fetching all books from Database.", requestId);
         String sql = "SELECT * FROM booksql";
         try {
             logger.debug("Request ID: {}, Executing SQL query: {}", requestId, sql);
@@ -155,7 +180,7 @@ public class BookSQLRepository {
         String requestId = MDC.get("requestId");
 
         String sql = "UPDATE booksql Set publishing_year = ? Where isbn_id = ?";
-        logger.debug("Request ID: {} - Updating book with ID={} to new year: {}. SQL='{}', parameters=[{}, {}]",
+        logger.debug("Request ID: {} - Attempting Updating book on Database with ID={} to new year: {}. SQL='{}', parameters=[{}, {}]",
                 requestId, id, newYear, sql, newYear, id);
 
         int rowsAffected = jdbcTemplate.update(connection -> {
@@ -176,14 +201,5 @@ public class BookSQLRepository {
         return jdbcTemplate.queryForObject(selectSql, new Object[]{id}, BookSQLRepository.bookSQLRowMapper);
     }
 
-    private static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
-        BookSQL book = new BookSQL();
-        book.setIsbnId(rs.getLong("isbn_id"));
-        book.setTitle(rs.getString("title"));
-        book.setAuthor(rs.getString("author"));
-        book.setPublishingYear(rs.getInt("publishing_year"));
-        book.setRating(rs.getDouble("rating"));
-        book.setCategory(rs.getString("category"));
-        return book;
-    };
+
 }

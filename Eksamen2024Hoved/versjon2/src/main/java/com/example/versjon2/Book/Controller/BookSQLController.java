@@ -9,6 +9,7 @@ import com.example.versjon2.Book.Service.BookSQLService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.aspectj.apache.bcel.classfile.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -29,9 +30,18 @@ public class BookSQLController {
     //private final AuthorService authorService;
     private final UserService userService;
 
+    @GetMapping("/{id}")
+    public ResponseEntity<APIResponse<BookSQLDTO>> getBookByID(@PathVariable @NotNull Long id) {
+        String requestId = MDC.get("requestId"); // hent fra MDC
+        logger.info("Request ID: {} - Recieved request to fetch Book with Isbn ID: {}.", requestId, id);
 
-    // lag et endepunkt som henter med id
+        BookSQL bookSQL = bookService.getBook(id);
 
+        logger.info("Request ID: {} - Successfully fetched Book with ID: {}, Book: {}", requestId, id, bookSQL);
+        BookSQLDTO bookSQLDTO = BookSQLDTO.convertToDTO(bookSQL);
+
+        return APIResponse.okResponse(bookSQLDTO, "Successfully fetched book with ID : " + id);
+    }
 
     /**
      * returnerer liste med key

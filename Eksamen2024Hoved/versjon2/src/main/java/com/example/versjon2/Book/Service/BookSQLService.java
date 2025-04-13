@@ -1,6 +1,7 @@
 package com.example.versjon2.Book.Service;
 
 import com.example.versjon2.Authentication.Service.UserService;
+import com.example.versjon2.Book.DTO.BookSQLDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
 import com.example.versjon2.Book.Repository.BookSQLRepository;
 import lombok.AllArgsConstructor;
@@ -31,10 +32,28 @@ public class BookSQLService {
     private final UserService userService;
     private JdbcTemplate jdbcTemplate;
 
+
+    @Transactional(readOnly = true)
+    public BookSQL getBook(Long id) {
+        String requestId = MDC.get("requestId"); // hent fra MDC
+        logger.info("Request ID: {} - Attempting to fetch Book with ID: {}.", requestId, id);
+
+        Assert.notNull(id, "ID cannot be null.");
+        Optional<BookSQL> bookSQL = bookRepository.getBookById(id);
+
+        if (bookSQL.isEmpty()) {
+            logger.info("Request ID: {} - Attempted to fetch book but no book with id: {} was found.", requestId, id);
+            throw new EmptyResultDataAccessException("Book with id " + id + " not found.",1);
+        }
+
+        logger.info("Requst ID: {} - Successfully fetched book with id {}, Book: {}.", requestId, id, bookSQL);
+        return bookSQL.get();
+    }
+
     @Transactional
     public List<BookSQL> saveBooks(@NonNull List<BookSQL> books) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
-        logger.info("Request ID: {} - Recieved request to save books: {}", requestId, books);
+        logger.info("Request ID: {} - Attempting to save books: {}", requestId, books);
         Assert.notNull(books, "Book list cannot be null.");
 
         if (books.isEmpty()) {
@@ -49,7 +68,7 @@ public class BookSQLService {
     @Transactional
     public int saveBatch(@NonNull List<BookSQL> books) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
-        logger.info("Request ID: {} - Recieved request to save books: {}", requestId, books);
+        logger.info("Request ID: {} - Attempting to save books: {}", requestId, books);
         Assert.notNull(books, "Book list cannot be null.");
 
         if (books.isEmpty()) {
@@ -64,7 +83,7 @@ public class BookSQLService {
 
     @Transactional(readOnly = true)
     public List<BookSQL> getAllBooksList() {
-        logger.info("Fetching all books from DB.");
+        logger.info("Attemprign to Fetch all books from DB.");
         List<BookSQL> books = bookRepository.findAllBooksList();
 
         if(books.isEmpty()) {
