@@ -2,9 +2,12 @@ package com.example.versjon2.Book.Controller;
 
 import com.example.versjon2.APIResponse;
 import com.example.versjon2.Authentication.Service.UserService;
+import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.DTO.BookSQLDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
 import com.example.versjon2.Book.Service.BookSQLService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +33,7 @@ public class BookSQLController {
      * returnerer liste med key
      * @return
      */
-    @PostMapping("/saveBooksWithID")
+    @PostMapping("/saveBooks")
     public ResponseEntity<APIResponse<List<BookSQLDTO>>> saveBooks() {
         String requestId = MDC.get("requestId"); // hent fra MDC
         logger.info("Request ID: {} - Recieved request to save Users to DB.", requestId);
@@ -73,38 +76,38 @@ public class BookSQLController {
         // implementer MDCFilter
         return APIResponse.buildResponse(HttpStatus.CREATED, "Successfully created " + bookSQL + " books.", bookSQL);
     }
-    /*
-    @GetMapping("/list")
-    public ResponseEntity<APIResponse<List<BooksDTO>>> getBooks() {
-        logger.info("Fetching all books from DB.");
-        List<Book> books = bookService.getAllBooks();
 
-        List<BooksDTO> booksDTOs = List.of();
+    @GetMapping("/list")
+    public ResponseEntity<APIResponse<List<BookSQLDTO>>> getBooks() {
+        logger.info("Fetching all books from DB.");
+        List<BookSQL> books = bookService.getAllBooksList();
+
+        List<BookSQLDTO> booksDTOs = List.of();
         if (books.isEmpty()) {
             logger.info("No books found in DB, returning 204 no Content.");
             return APIResponse.noContentResponse("No books found.", booksDTOs);
         }
 
-        booksDTOs = BooksDTO.convertToDTOList(books);
+        booksDTOs = BookSQLDTO.convertToDTOList(books);
         logger.info("Returning list of books to client.");
         return APIResponse.okResponse(booksDTOs, "Books successfully retrieved from DB");
     }
 
     @PostMapping("/saveBooks2")
-    public ResponseEntity<APIResponse<List<BooksDTO>>> saveBooks(@Valid @RequestBody @NotNull List<Book> books) {
+    public ResponseEntity<APIResponse<List<BookSQLDTO>>> saveBooks(@Valid @RequestBody @NotNull List<BookSQL> books) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Received request to save books: {}", requestId, books);
 
-        bookService.saveBooks(books);
+        List<BookSQL> bookSQLS = bookService.saveBooks(books);
         books.forEach(book -> logger.info("Saving book: {" + book + "}"));
 
-        List<BooksDTO> booksDTOs = BooksDTO.convertToDTOList(books);
+        List<BookSQLDTO> booksDTOs = BookSQLDTO.convertToDTOList(bookSQLS);
         logger.info("Request ID: {} - Returning list of books to client. Saved successfully {}.", requestId, booksDTOs);
 
         return APIResponse.buildResponse(HttpStatus.CREATED, "Books successfully created in DB", booksDTOs);
     }
 
-
+/*
     @PutMapping("/updateBookYear/{id}")
     public ResponseEntity<APIResponse<BooksDTO>> updateBookYear(@PathVariable Long id, @RequestParam int newYear) {
         String requestId = MDC.get("requestId");

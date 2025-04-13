@@ -285,7 +285,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     // V2
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
-        const API_BASE_URL = '/api/books';
+        const API_BASE_URL = '/api/booksSQL';
         const API_ENDPOINT = '/list';
         const url = `${API_BASE_URL}${API_ENDPOINT}`;
         try {

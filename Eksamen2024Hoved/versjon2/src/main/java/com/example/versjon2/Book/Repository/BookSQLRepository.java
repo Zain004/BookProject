@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -19,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 @AllArgsConstructor
@@ -41,7 +44,6 @@ public class BookSQLRepository {
 
         String sql = "INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES (?, ?, ?, ?, ?)";
 
-        KeyHolder keyholder = new GeneratedKeyHolder();
         int rowsInserted = 0;
         // implementerer BatchPreparedStatements interface
         for (BookSQL book : books) {
@@ -133,4 +135,30 @@ public class BookSQLRepository {
 
         return rowsInserted;
     }
+
+    public List<BookSQL> findAllBooksList() {
+        String requestId = MDC.get("requestId"); // hent fra MDC
+        logger.info("Request ID: {} - Fetching all books from DB.", requestId);
+        String sql = "SELECT * FROM booksql";
+        try {
+            logger.debug("Request ID: {}, Executing SQL query: {}", requestId, sql);
+            List<BookSQL> books = jdbcTemplate.query(sql, bookSQLRowMapper);
+
+            return books;
+        } catch (DataAccessException e) {
+            logger.error("Request ID: Error fetching all books from DB: {}", requestId, e.getMessage(), e); // Logg generell melding
+            throw e;
+        }
+    }
+
+    private static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
+        BookSQL book = new BookSQL();
+        book.setIsbnId(rs.getLong("isbn_id"));
+        book.setTitle(rs.getString("title"));
+        book.setAuthor(rs.getString("author"));
+        book.setPublishingYear(rs.getInt("publishing_year"));
+        book.setRating(rs.getDouble("rating"));
+        book.setCategory(rs.getString("category"));
+        return book;
+    };
 }

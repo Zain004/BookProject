@@ -8,6 +8,7 @@ import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -23,6 +24,7 @@ public class BookSQLService {
     private final AuthorService authorService;
 
     private final UserService userService;
+    private JdbcTemplate jdbcTemplate;
 
     @Transactional
     public List<BookSQL> saveBooks(@NonNull List<BookSQL> books) {
@@ -54,11 +56,11 @@ public class BookSQLService {
         return bookRepository.saveBatch(books);
     }
 
-/*
+
     @Transactional(readOnly = true)
-    public List<Book> getAllBooks() {
+    public List<BookSQL> getAllBooksList() {
         logger.info("Fetching all books from DB.");
-        List<Book> books = bookRepository.findAll();
+        List<BookSQL> books = bookRepository.findAllBooksList();
 
         if(books.isEmpty()) {
             logger.info("No books found in DB.");
@@ -69,6 +71,7 @@ public class BookSQLService {
         return books;
     }
 
+    /*
     @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 10)
     public Book updateBookYear(Long id, int newYear) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC

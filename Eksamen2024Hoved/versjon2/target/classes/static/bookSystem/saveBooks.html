@@ -121,7 +121,7 @@
         tableBody.innerHTML = '';
         // 3. håndter tom eller ugyldig input *før* løkken
         if (!books || !Array.isArray(books)) {
-            const message = "Warning: 'users' is null, undefined, or not an array."
+            const message = "Warning: 'books' is null, undefined, or not an array."
             console.warn(message);
             toast.showToast(message, false);
             return; // Avslutt tidlig
@@ -157,7 +157,7 @@
         saveButton.disabled = true; // Disable button during request
 
         const API_BASE_URL = '/api/booksSQL';
-        const API_ENDPOINT = '/saveBooksBatch';
+        const API_ENDPOINT = '/saveBooks';
         const url = `${API_BASE_URL}${API_ENDPOINT}`;
         try {
             const response = await axios.post(url, {}, {
@@ -180,6 +180,7 @@
                 console.error(`Error form API:`, response.data);
                 toast.showToast(data.message, false);
             }
+
             console.log(`Saved books: ${data.message}`);
             console.log('Retrieved books: ' + JSON.stringify(data.data));
             populateBookTable(data.data);
