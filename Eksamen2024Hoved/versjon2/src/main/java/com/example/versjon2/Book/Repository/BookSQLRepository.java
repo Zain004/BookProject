@@ -151,6 +151,31 @@ public class BookSQLRepository {
         }
     }
 
+    public BookSQL updateBookById(Long id, int newYear) {
+        String requestId = MDC.get("requestId");
+
+        String sql = "UPDATE booksql Set publishing_year = ? Where isbn_id = ?";
+        logger.debug("Request ID: {} - Updating book with ID={} to new year: {}. SQL='{}', parameters=[{}, {}]",
+                requestId, id, newYear, sql, newYear, id);
+
+        int rowsAffected = jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, newYear);
+            ps.setLong(2, id);
+            return ps;
+        });
+
+        if (rowsAffected == 0) {
+            logger.warn("Request ID: {} - Book with id {} not found for updating year.", requestId, id);
+            throw new EmptyResultDataAccessException("Book with id " + id + " not found for updating year.",1);
+        }
+
+        logger.info("Request ID: {} - Successfully updated book with id: {} to newYear: {}", requestId, id, newYear);
+        // Hent det oppdaterte objektet
+        String selectSql = "SELECT * FROM booksql WHERE isbn_id = ?";
+        return jdbcTemplate.queryForObject(selectSql, new Object[]{id}, BookSQLRepository.bookSQLRowMapper);
+    }
+
     private static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
         BookSQL book = new BookSQL();
         book.setIsbnId(rs.getLong("isbn_id"));

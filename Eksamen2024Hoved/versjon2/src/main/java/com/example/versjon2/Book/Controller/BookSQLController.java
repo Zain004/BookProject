@@ -29,6 +29,10 @@ public class BookSQLController {
     //private final AuthorService authorService;
     private final UserService userService;
 
+
+    // lag et endepunkt som henter med id
+
+
     /**
      * returnerer liste med key
      * @return
@@ -107,18 +111,19 @@ public class BookSQLController {
         return APIResponse.buildResponse(HttpStatus.CREATED, "Books successfully created in DB", booksDTOs);
     }
 
-/*
+
     @PutMapping("/updateBookYear/{id}")
-    public ResponseEntity<APIResponse<BooksDTO>> updateBookYear(@PathVariable Long id, @RequestParam int newYear) {
+    public ResponseEntity<APIResponse<BookSQLDTO>> updateBookYear(@PathVariable Long id, @RequestParam int newYear) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Received request to update book with id : {} AND year: {}",requestId, id, newYear);
 
-        Book updateBook = bookService.updateBookYear(id, newYear);
-        BooksDTO booksDTO = BooksDTO.convertToDTO(updateBook);
+        BookSQL updateBook = bookService.updateBookYear(id, newYear);
+        BookSQLDTO booksDTO = BookSQLDTO.convertToDTO(updateBook);
 
         logger.info("RequestId: {} - Updated Successfully Book: " + updateBook);
         return APIResponse.okResponse(booksDTO, "Updated book ID: " + id + " with new year: " + newYear);
     }
+    /*
 
     @DeleteMapping("/deleteBook/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {

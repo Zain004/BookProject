@@ -8,10 +8,15 @@ import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+
+import java.sql.PreparedStatement;
 import java.util.*;
 
 @AllArgsConstructor
@@ -71,22 +76,25 @@ public class BookSQLService {
         return books;
     }
 
-    /*
+
     @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 10)
-    public Book updateBookYear(Long id, int newYear) {
+    public BookSQL updateBookYear(Long id, int newYear) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
         logger.debug("Request ID: {} - Attempting to update book with id: {} to newYear: {}", requestId, id, newYear);
+        Assert.notNull(id, "Book id cannot be null.");
 
-        return bookRepository.findById(id)
-                .map(book -> {
-                    book.setPublishingYear(newYear);
-                    return bookRepository.save(book);
-                }).orElseThrow(() -> {
-                    logger.warn("Request ID: {} - Book with id {} not found for updating year.", requestId, id);
-                    throw new EmptyResultDataAccessException("Book with id " + id + " not found for updating year.", 1);
-                });
+        BookSQL bookSQL = bookRepository.updateBookById(id, newYear);
+
+        if (bookSQL == null) {
+            logger.info("Request ID: {} - Attempted to update book but no book with id: {} was found.", requestId, id);
+            throw new EmptyResultDataAccessException("Book with id " + id + " not found for updating year.",1);
+        }
+
+        logger.info("Request ID: {} - Successfully updated book with id: {} to newYear: {}, BOOKEntity: {}", requestId, id, newYear, bookSQL);
+        return bookSQL;
     }
 
+    /*
     @Transactional
     public void deleteBookById(Long id) {
         String requestId = MDC.get("requestId");

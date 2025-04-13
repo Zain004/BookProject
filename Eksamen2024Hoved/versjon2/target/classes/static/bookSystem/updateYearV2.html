@@ -166,7 +166,7 @@
         submitButton.disabled = true;
         submitButton.textContent = 'Updating...';
 
-        const API_BASE_URL = '/api/books';
+        const API_BASE_URL = '/api/booksSQL';
         const API_ENDPOINT = `/updateBookYear`;
         const url = `${API_BASE_URL}${API_ENDPOINT}/${bookId}?newYear=${newYear}`;
 
@@ -225,6 +225,7 @@
         }
         finally {
             submitButton.disabled = false;
+            submitButton.innerText = 'Submit';
         }
     }
 
