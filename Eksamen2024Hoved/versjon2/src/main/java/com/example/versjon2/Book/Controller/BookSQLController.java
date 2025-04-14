@@ -2,14 +2,12 @@ package com.example.versjon2.Book.Controller;
 
 import com.example.versjon2.APIResponse;
 import com.example.versjon2.Authentication.Service.UserService;
-import com.example.versjon2.Book.BooksDTO;
 import com.example.versjon2.Book.DTO.BookSQLDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
 import com.example.versjon2.Book.Service.BookSQLService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.aspectj.apache.bcel.classfile.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -29,6 +27,8 @@ public class BookSQLController {
     private final BookSQLService bookService;
     //private final AuthorService authorService;
     private final UserService userService;
+
+    // LAg en side for testing
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<BookSQLDTO>> getBookByID(@PathVariable @NotNull Long id) {
@@ -133,7 +133,7 @@ public class BookSQLController {
         logger.info("RequestId: {} - Updated Successfully Book: " + updateBook);
         return APIResponse.okResponse(booksDTO, "Updated book ID: " + id + " with new year: " + newYear);
     }
-    /*
+
 
     @DeleteMapping("/deleteBook/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
@@ -145,7 +145,7 @@ public class BookSQLController {
         logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
         return ResponseEntity.noContent().build();
     }
-
+/*
     @GetMapping("/bookStatistics")
     public ResponseEntity<APIResponse<String>> getBookStatistics(HttpServletRequest request) {
         String requestId = MDC.get("requestId");

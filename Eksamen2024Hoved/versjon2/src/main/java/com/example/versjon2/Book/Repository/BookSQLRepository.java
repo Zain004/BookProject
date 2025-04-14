@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Repository
@@ -197,9 +198,31 @@ public class BookSQLRepository {
 
         logger.info("Request ID: {} - Successfully updated book with id: {} to newYear: {}", requestId, id, newYear);
         // Hent det oppdaterte objektet
-        String selectSql = "SELECT * FROM booksql WHERE isbn_id = ?";
+        String selectSql = "SELECT * FROM BOOKSQL WHERE isbn_id = ?";
         return jdbcTemplate.queryForObject(selectSql, new Object[]{id}, BookSQLRepository.bookSQLRowMapper);
     }
 
+    public Integer getCountByID(Long id) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting to check if book with ID exists: {}",requestId, id);
+
+        String countQuery = "SELECT COUNT(*) FROM BOOKSQL WHERE isbn_id = ?";
+        Integer count = jdbcTemplate.queryForObject(countQuery, Integer.class, id);
+
+        if (count == null) {
+            logger.warn("Request ID: {} - Attempted to retrieve a non-existent book with ID: {}", requestId, id);
+            return 0;
+        }
+
+        return count;
+    }
+
+    public int deleteByID(Long id) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting to delete book with ID: {}", requestId, id);
+
+        String deleteQuery = "DELETE FROM BOOKSQL WHERE isbn_id = ?";
+        return jdbcTemplate.update(deleteQuery, ps -> ps.setLong(1,id));
+    }
 
 }

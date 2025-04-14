@@ -113,20 +113,30 @@ public class BookSQLService {
         return bookSQL;
     }
 
-    /*
+
     @Transactional
     public void deleteBookById(Long id) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Attempting to delete book with id: {}", requestId, id);
         Assert.notNull(id, "Book id cannot be null.");
 
-        if (!bookRepository.existsById(id)) {
-            logger.warn("Request ID: {} - Attempted to delete a non-existent book with ID: {}", requestId, id);
+        Integer count = bookRepository.getCountByID(id);
+
+        if (count == null || count == 0) {
+            logger.warn("Request ID: {} - Attempted to retrieve a non-existent book with ID: {}", requestId, id);
             throw new NoSuchElementException("Book with ID " + id + " does not exist");
         }
 
-        bookRepository.deleteById(id);
-        logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
+        logger.info("Request ID: {} - Successfully confirmed book with ID: {} exists before deleting.", requestId, id);
+        int rowsAffected = bookRepository.deleteByID(id);
+
+        if (rowsAffected == 1) {
+            logger.info("Request ID: {} - Successfully deleted book with ID: {}, (rows affected: {}).", requestId, id, rowsAffected);
+        } else if (rowsAffected == 0) {
+            logger.warn("Request ID: {} - No book found with ID: {} to delete.  Possible race condition or data integrity issue.", requestId, id);
+        } else {
+            logger.error("Request ID: {} - Unexpected number of rows ({}) affected when deleting book with ID: {}.  Data corruption likely!", requestId, rowsAffected, id);
+        }
     }
 
 
