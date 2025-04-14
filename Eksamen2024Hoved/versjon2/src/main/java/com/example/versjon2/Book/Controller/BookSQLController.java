@@ -5,6 +5,8 @@ import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Book.DTO.BookSQLDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
 import com.example.versjon2.Book.Service.BookSQLService;
+import com.example.versjon2.Book.statistics.BookSQLStatsDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -145,17 +147,17 @@ public class BookSQLController {
         logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
         return ResponseEntity.noContent().build();
     }
-/*
+
     @GetMapping("/bookStatistics")
-    public ResponseEntity<APIResponse<String>> getBookStatistics(HttpServletRequest request) {
+    public ResponseEntity<APIResponse<String>> getBookStatistics( ) { //HttpServletRequest request) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to fetch book statistics");
 
-        logger.debug("Request ID: {} - Authenticating user.", requestId);
+        /*logger.debug("Request ID: {} - Authenticating user.", requestId);
         userService.authenticate(request);
         logger.debug("Request ID: {} - User authenticated successfully.", requestId);
-
-        BookStatsDTO statsDTO = bookService.getBookStatistics();
+         */
+        BookSQLStatsDTO statsDTO = bookService.getBookStatistics();
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
 
         String bookStatistics = bookService.makeStatisticksFromDTO(statsDTO);
@@ -163,22 +165,7 @@ public class BookSQLController {
 
         return APIResponse.okResponse(null, bookStatistics);
     }
-
-    @PostMapping("/book-statistics")
-    public ResponseEntity<APIResponse<String>> getBookStatistics(@RequestBody @Valid List<Book> books) {
-        String requestId = MDC.get("requestId");
-        logger.info("Request ID: {} - Recieved request to fetch book statistics");
-
-        if (books == null || books.isEmpty()) {
-            logger.info("RequestId: {} - No books to make statistics of", requestId);
-            return APIResponse.okResponse(null, "No books provided for statistics.");
-        }
-
-        String stats = bookService.getBookStatisticsFromList(books);
-        logger.info("RequestId: {} - Successfully made statistics from List: {}", requestId, stats);
-
-        return APIResponse.okResponse(null, stats);
-    }
+    /*
 
     @DeleteMapping("/deletePoetryBooks")
     public ResponseEntity<APIResponse<Integer>> deletePoetryBooks(HttpServletRequest request) {

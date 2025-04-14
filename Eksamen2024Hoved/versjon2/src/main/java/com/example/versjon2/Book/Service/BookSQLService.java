@@ -1,7 +1,10 @@
 package com.example.versjon2.Book.Service;
 
 import com.example.versjon2.Authentication.Service.UserService;
-import com.example.versjon2.Book.DTO.BookSQLDTO;
+import com.example.versjon2.Book.Entity.Book;
+import com.example.versjon2.Book.statistics.AuthorCount;
+import com.example.versjon2.Book.statistics.BookSQLStatsDTO;
+import com.example.versjon2.Book.statistics.BookStatsDTO;
 import com.example.versjon2.Book.Entity.BookSQL;
 import com.example.versjon2.Book.Repository.BookSQLRepository;
 import lombok.AllArgsConstructor;
@@ -11,13 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.sql.PreparedStatement;
 import java.util.*;
 
 @AllArgsConstructor
@@ -27,7 +28,7 @@ public class BookSQLService {
 
     private final Logger logger = LoggerFactory.getLogger(BookSQLService.class);
 
-    private final AuthorService authorService;
+    private final AuthorSQLService authorService;
 
     private final UserService userService;
     private JdbcTemplate jdbcTemplate;
@@ -140,17 +141,12 @@ public class BookSQLService {
     }
 
 
-    /**
-     *
-     * @return
-     */
-    /*
-    public BookStatsDTO getBookStatistics() {
+    public BookSQLStatsDTO getBookStatistics() {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
         logger.info("Request ID: {} - Recieved request for generating statistics.", requestId);
 
 
-        BookStatsDTO statsDTO = new BookStatsDTO();
+        BookSQLStatsDTO statsDTO = new BookSQLStatsDTO();
 
         long totalBooks = authorService.findTotalBookCount();
 
@@ -176,7 +172,7 @@ public class BookSQLService {
         return statsDTO;
     }
 
-    public String makeStatisticksFromDTO(BookStatsDTO statsDTO) {
+    public String makeStatisticksFromDTO(BookSQLStatsDTO statsDTO) {
         String requestId = MDC.get("requestId"); // Hent requestId fra MDC
         logger.info("Request ID: {} - Making statisticks from DTO: {}", requestId, statsDTO);
 
@@ -200,15 +196,17 @@ public class BookSQLService {
         result.append("number og books per author: ").append(authorsCountString);
 
         // Metode 3: Finn den eldste boken ved å sammenligne publiseringsåret
-        Optional<Book> oldestBook = statsDTO.getOldestBook();
+        Optional<BookSQL> oldestBook = statsDTO.getOldestBook();
         result.append("The oldest book is: ").append(oldestBook.get().getAuthor()).append(", published on ").append(oldestBook.get().getPublishingYear()).append(".\n");
 
         // Metode 4: Finn forfattere som kommer mer enn 1 ganger
         StringBuilder authorsAppearingString = new StringBuilder();
         authorsAppearingString.append("Authors Appearing More Than once: \n");
+
         statsDTO.getAuthorAppearingMoreThanOnce().forEach((author, count) -> {
             authorsAppearingString.append(author).append(": ").append(count).append("\n");
         });
+
         result.append(authorsAppearingString);
 
         // Metode 5: Finn forfattere som har det maksimale antallet bøker blant alle forfattere
@@ -227,58 +225,7 @@ public class BookSQLService {
         result.append(sb);
         return result.toString();
     }
-
-    public String getBookStatisticsFromList(List<Book> books) {
-        if (books == null || books.isEmpty()) {
-            return "No books provided.";
-        }
-        // 1. How many books we have
-        StringBuilder sb = new StringBuilder();
-        sb.append(totalBooks(books));
-
-        // 2. Is there any author that appears more than once.
-        sb.append("Is there any author that appears more than once: ").append(hasDuplicateAuthors(books) + "\n");
-
-        // 3. Which authors appear more than once
-        sb.append(authorsAppearingMoreThanOnce(books));
-
-        // 4. The oldest book from the list.
-        sb.append(oldestBook(books));
-        return sb.toString();
-    }
-
-    private String totalBooks(List<Book> books) {
-        long totalBooks = books.size();
-        return "Number of books: " + totalBooks + "\n";
-    }
-
-    private boolean hasDuplicateAuthors(List<Book> books) {
-        Set<String> authors = new HashSet<>(); // SET tar ikke duplikater
-        for (Book book : books) {
-            if (!authors.add(book.getAuthor())) {
-                return true; // er allerede lagt til
-            }
-        }
-        return false;
-    }
-
-    private String authorsAppearingMoreThanOnce(List<Book> books) {
-        Map<String, Long> authorsAppearingMoreThanOnce = books.stream()
-                .collect(Collectors.groupingBy(Book::getAuthor, Collectors.counting()));
-        StringBuilder sb = new StringBuilder();
-        authorsAppearingMoreThanOnce.forEach((author, count) -> {
-            if (count > 1) {
-                sb.append(author).append(" has ").append(count).append(" books.\n");
-            }
-        });
-        return sb.toString();
-    }
-
-    private String oldestBook(List<Book> books) {
-        Optional<Book> oldestBook = books.stream().min(Comparator.comparing(Book::getPublishingYear));
-        return oldestBook.map(book -> "The oldest book is: " + book.getTitle())
-                .orElse("No oldest book found .\n");
-    }
+/*
 
     @Transactional
     public int deletePoetryBooksPublishedAfter2000() {

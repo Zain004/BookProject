@@ -1,7 +1,7 @@
 package com.example.versjon2.Book.Service;
 
-import com.example.versjon2.Book.AuthorCount;
-import com.example.versjon2.Book.BookStatsDTO;
+import com.example.versjon2.Book.statistics.AuthorCount;
+import com.example.versjon2.Book.statistics.BookStatsDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Repository.BookRepository;
 import com.example.versjon2.Authentication.Service.UserService;

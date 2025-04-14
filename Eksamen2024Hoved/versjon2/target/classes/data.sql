@@ -1,5 +1,5 @@
-INSERT INTO users (first_name, last_name, dob, phone, email)
-VALUES
+BEGIN;
+INSERT INTO users (first_name, last_name, dob, phone, email) VALUES
     ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'), -- Ola 1
     ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'), -- Kari 1
     ('Per', 'Hansen', '1992-11-22', '34567890', 'per.hansen@example.com'),
@@ -36,7 +36,7 @@ INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES
 ('American Sonnets for My Past and Future Assassin', 'Terrance Hayes', 2018, 4.2, 'Poetry'),
 ('Hamlet', 'William Shakespeare', 1603, 4.7, 'Tragedy'),
 ('Macbeth', 'William Shakespeare', 1606, 4.6, 'Tragedy');
-
+COMMIT;
 
 
 

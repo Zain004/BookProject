@@ -1,4 +1,4 @@
-package com.example.versjon2.Book;
+package com.example.versjon2.Book.statistics;
 
 import com.example.versjon2.Book.Entity.Book;
 import lombok.AllArgsConstructor;

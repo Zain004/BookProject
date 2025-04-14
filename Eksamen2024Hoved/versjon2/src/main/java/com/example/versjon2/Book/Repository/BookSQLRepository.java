@@ -31,8 +31,6 @@ public class BookSQLRepository {
     private final Logger logger = LoggerFactory.getLogger(BookSQLRepository.class);
     private JdbcTemplate jdbcTemplate;
 
-
-
     public Optional<BookSQL> getBookById(Long id) {
         String requestId = MDC.get("requestId"); // hent fra MDC
         logger.info("Request ID: {} - Attempting to fetch Book from Database with ID: {}.", requestId, id);
@@ -44,7 +42,7 @@ public class BookSQLRepository {
         return Optional.of(bookSQL);
     }
 
-    private static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
+    public static final RowMapper<BookSQL> bookSQLRowMapper = (rs, rowNum) -> {
         BookSQL book = new BookSQL();
         book.setIsbnId(rs.getLong("isbn_id"));
         book.setTitle(rs.getString("title"));

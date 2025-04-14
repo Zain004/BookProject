@@ -101,7 +101,7 @@
 
     const fetchStatistics = async (retryCount = 0, maxRetries = 3, initialBackOffMs = 2) => {
         loading.innerHTML = '<p>Loading...</p>';
-        const API_BASE_URL = '/api/books'; // Changed this!
+        const API_BASE_URL = '/api/booksSQL'; // Changed this!
         const API_ENDPOINT = `/bookStatistics`; //The correct end point.
         const url = `${API_BASE_URL}${API_ENDPOINT}`;
         try {
