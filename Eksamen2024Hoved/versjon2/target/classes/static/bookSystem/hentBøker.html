@@ -18,6 +18,21 @@
             display: none;
         }
 
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1; /* Hovedinnhold tar opp all ledig plass */
+        }
+
+        footer {
+            padding: 1.5rem 0; /* Justert padding for bedre visuell balanse */
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -46,11 +61,12 @@
         </div>
     </nav>
 </header>
+
 <!-- Main Content Container -->
 <main class="container mt-4">
+    <h1 class="mb-4">Book List</h1>
+    <!-- Loading Indicator -->
     <section>
-        <h1 class="mb-4">Book List</h1>
-        <!-- Loading Indicator -->
         <!-- bruker loading hidden som standard før javascript er lastet inn-->
         <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
             <div class="spinner-border text-primary" role="status">
@@ -60,20 +76,10 @@
             <!-- Dette er den ordentlige teksten som skal vises -->
             <p class="mt-2 small text-muted">Fetching books from library...</p>
         </div>
-        <!-- oppretter en toast-->
-        <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                <div class="toast-header">
-                    <strong class="me-auto">Recipe submission</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
-                    </button>
-                </div>
-                <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
-                </div>
-            </div>
-        </aside>
+    </section>
 
-        <!-- User Table-->
+    <!-- User Table-->
+    <section>
         <div class="table-responsive">
             <table class="table table-striped table bordered">
                 <thead> <!-- Table head -->
@@ -96,6 +102,26 @@
         </div>
     </section>
 </main>
+
+<!-- oppretter en toast-->
+<aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="toast-header">
+            <strong class="me-auto">Recipe submission</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+            </button>
+        </div>
+        <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+        </div>
+    </div>
+</aside>
+
+<footer class="bg-dark py-4 text-light">
+    <div class="container">
+        <p>© 2023 Book Management</p>
+    </div>
+</footer>
+</body>
 <!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -451,5 +477,4 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         })
     })
 </script>
-</body>
 </html>

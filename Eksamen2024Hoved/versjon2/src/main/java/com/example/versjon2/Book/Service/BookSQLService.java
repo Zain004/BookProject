@@ -233,9 +233,5 @@ public class BookSQLService {
         logger.info("Request ID: {} - Attempting deleting Boooks with Category: {}, AND publishing_year Greather than: {}.", requestId, category, publishing_year);
         return bookSQLRepository.deleteBooksWithCategoryAndPublishingYearGreatherThanEquals(category, publishing_year);
     }
-
-
-
-
 }
 

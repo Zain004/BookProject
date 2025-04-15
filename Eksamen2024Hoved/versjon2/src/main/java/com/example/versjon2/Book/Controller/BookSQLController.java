@@ -26,19 +26,15 @@ import java.util.List;
 public class BookSQLController {
 
     private final Logger logger = LoggerFactory.getLogger(BookSQLController.class);
-    private final BookSQLService bookService;
-    //private final AuthorService authorService;
     private final UserService userService;
     private final BookSQLService bookSQLService;
-
-    // LAg en side for testing
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<BookSQLDTO>> getBookByID(@PathVariable @NotNull Long id) {
         String requestId = MDC.get("requestId"); // hent fra MDC
         logger.info("Request ID: {} - Recieved request to fetch Book with Isbn ID: {}.", requestId, id);
 
-        BookSQL bookSQL = bookService.getBook(id);
+        BookSQL bookSQL = bookSQLService.getBook(id);
 
         logger.info("Request ID: {} - Successfully fetched Book with ID: {}, Book: {}", requestId, id, bookSQL);
         BookSQLDTO bookSQLDTO = BookSQLDTO.convertToDTO(bookSQL);
@@ -62,7 +58,7 @@ public class BookSQLController {
         books.add(new BookSQL("Leaves of Grass", "Walt Whitman", 1855, 4.3, "Poetry")); //OK
         books.add(new BookSQL("Inferno", "Dante Alighieri", 1320, 4.7, "Poetry")); //OK
 
-        List<BookSQL> bookSQL = bookService.saveBooks(books);
+        List<BookSQL> bookSQL = bookSQLService.saveBooks(books);
         bookSQL.forEach(book -> logger.info("Saving book: {" + book + "}"));
 
         List<BookSQLDTO> booksDTOs = BookSQLDTO.convertToDTOList(bookSQL);
@@ -87,7 +83,7 @@ public class BookSQLController {
         books.add(new BookSQL("Leaves of Grass", "Walt Whitman", 1855, 4.3, "Poetry")); //OK
         books.add(new BookSQL("Inferno", "Dante Alighieri", 1320, 4.7, "Poetry")); //OK
 
-        Integer bookSQL = bookService.saveBatch(books);
+        Integer bookSQL = bookSQLService.saveBatch(books);
 
         logger.info("Request ID: {} - Successfully saved {} books.", requestId, bookSQL);
         // implementer MDCFilter
@@ -97,7 +93,7 @@ public class BookSQLController {
     @GetMapping("/list")
     public ResponseEntity<APIResponse<List<BookSQLDTO>>> getBooks() {
         logger.info("Fetching all books from DB.");
-        List<BookSQL> books = bookService.getAllBooksList();
+        List<BookSQL> books = bookSQLService.getAllBooksList();
 
         List<BookSQLDTO> booksDTOs = List.of();
         if (books.isEmpty()) {
@@ -115,7 +111,7 @@ public class BookSQLController {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Received request to save books: {}", requestId, books);
 
-        List<BookSQL> bookSQLS = bookService.saveBooks(books);
+        List<BookSQL> bookSQLS = bookSQLService.saveBooks(books);
         books.forEach(book -> logger.info("Saving book: {" + book + "}"));
 
         List<BookSQLDTO> booksDTOs = BookSQLDTO.convertToDTOList(bookSQLS);
@@ -130,7 +126,7 @@ public class BookSQLController {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Received request to update book with id : {} AND year: {}",requestId, id, newYear);
 
-        BookSQL updateBook = bookService.updateBookYear(id, newYear);
+        BookSQL updateBook = bookSQLService.updateBookYear(id, newYear);
         BookSQLDTO booksDTO = BookSQLDTO.convertToDTO(updateBook);
 
         logger.info("RequestId: {} - Updated Successfully Book: " + updateBook);
@@ -143,7 +139,7 @@ public class BookSQLController {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to delete book with ID: {}", requestId, id);
 
-        bookService.deleteBookById(id);
+        bookSQLService.deleteBookById(id);
 
         logger.info("Request ID: {} - Successfully deleted book with ID: {}", requestId, id);
         return ResponseEntity.noContent().build();
@@ -158,28 +154,26 @@ public class BookSQLController {
         userService.authenticate(request);
         logger.debug("Request ID: {} - User authenticated successfully.", requestId);
 
-        BookSQLStatsDTO statsDTO = bookService.getBookStatistics();
+        BookSQLStatsDTO statsDTO = bookSQLService.getBookStatistics();
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
 
-        String bookStatistics = bookService.makeStatisticksFromDTO(statsDTO);
+        String bookStatistics = bookSQLService.makeStatisticksFromDTO(statsDTO);
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, bookStatistics);
 
         return APIResponse.okResponse(null, bookStatistics);
     }
 
     @DeleteMapping("/deletePoetryBooks")
-    public ResponseEntity<APIResponse<Integer>> deletePoetryBooks( //HttpServletRequest request,
+    public ResponseEntity<APIResponse<Integer>> deletePoetryBooks(HttpServletRequest request,
             @RequestParam(name="category", defaultValue = "Poetry") String category,
             @RequestParam(name="publishing_year", defaultValue = "2000") int publishingYear) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to delete poetry books", requestId);
-/*
+
         logger.debug("Request ID: {} - Authenticating user.", requestId);
         userService.authenticate(request);
         logger.debug("Request ID: {} - User authenticated successfully.", requestId);
 
-
- */
         int deleteCount = bookSQLService.deleteBooksWithCategoryAndPublishingYearGreatherThan(category, publishingYear);
 
         if (deleteCount == 0) {

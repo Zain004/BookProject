@@ -35,7 +35,7 @@ public class BookSQLRepository {
         String requestId = MDC.get("requestId"); // hent fra MDC
         logger.info("Request ID: {} - Attempting to fetch Book from Database with ID: {}.", requestId, id);
 
-        String sql = "SELECT * FROM book WHERE isbn_id = ?";
+        String sql = "SELECT * FROM BOOKSQL WHERE isbn_id = ?";
         BookSQL bookSQL = jdbcTemplate.queryForObject(sql, new Object[]{id}, bookSQLRowMapper);
         logger.debug("Request ID: {} - Successfully fetched book with ID: {} from database. Book details: {}", requestId, id, bookSQL);
 

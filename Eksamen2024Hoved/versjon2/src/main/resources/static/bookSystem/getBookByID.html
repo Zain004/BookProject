@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Book By ID</title>
     <!-- Bootstrap 5.3.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
@@ -26,43 +27,57 @@
     </style>
 </head>
 <body>
+
 <header class="bg-secondary py-2"> <!-- py-3 legger til litt padding vertikalt -->
     <div class="container">
-        <h1>Update Book Year</h1>
-        <p>This page updates a book's year by using ID.</p>
+        <h1>Get Book by ID</h1>
+        <p>This page fetch's a book by ID.</p>
     </div>
 </header>
-
 
 <main class="container mt-4">
     <section class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
-                    <h2>Update Book Form</h2>
-                    <p>Using this form you can simply update a Book Entity</p>
-                    <form id="updateForm" novalidate>
-                        <!-- Field for bookId -->
+                    <h2>Get Book By ID</h2>
+                    <p>Using this form you can simply fetch a book by ID.</p>
+                    <form id="getBookByID" novalidate>
+                        <!-- Enter Book id -->
                         <div class="form-floating mb-3">
                             <input type="number" class="form-control" id="bookId" placeholder="Enter a book ID here" aria-required="true" aria-invalid="false" aria-describedby="bookIdFeedback" required/>
-                            <label for="bookId" class="form-label">Book ID: </label>
+                            <label for="bookId" class="form-label">Book ID:</label>
                             <div id="bookIdFeedback" class="invalid-feedback">Must enter a book id to continue</div>
                         </div>
-                        <!-- Field for Year input -->
-                        <div class="form-floating mb-3">
-                            <input type="number" class="form-control" id="updateYear" placeholder="Enter Year" aria-required="true" aria-invalid="false" aria-describedby="yearFeedback" required>
-                            <label for="updateYear" class="form-label">Year: </label>
-                            <div id="yearFeedback" class="invalid-feedback">Year must be a digit number.</div>
-                        </div>
-                        <!-- Update button -->
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <!-- Get Book By ID Button -->
+                        <button type="submit" class="btn btn-primary">Get Book Details</button>
                     </form>
                 </div>
             </div>
         </div>
     </section>
-</main>
 
+    <!-- book Table body-->
+    <section class="mt-5 justify-content-center">
+        <div class="table-responsive">
+            <table class="table table-striped table bordered">
+                <thead> <!-- Table head -->
+                <tr>
+                    <th>Isbn</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Publishing Year</th>
+                    <th>Rating</th>
+                    <th>category</th>
+                </tr>
+                </thead>
+                <tbody id="bookTableBody">
+                <!-- Brukere vil bli satt inn her -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
 
 <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
     <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
@@ -81,6 +96,7 @@
         <p>© 2023 Book Management</p>
     </div>
 </footer>
+
 <!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -119,21 +135,16 @@
     }
 
     const toast = new ToastService();
-
-    const form = document.getElementById('updateForm');
+    const form = document.getElementById('getBookByID');
     const bookIdInput = document.getElementById('bookId');
-    const newYearInput = document.getElementById('updateYear');
-    const submitButton = document.querySelector('button[type="submit"]')
+    const submitButton = document.querySelector('button[type="submit"]');
 
-
-
-    const validateForm = (bookId, newYear) => {
+    const validateForm = (bookIdInput) => {
         let isValid = true;
+        const bookId = bookIdInput.value;
         // Reset validation states
         bookIdInput.classList.remove('is-invalid');
-        newYearInput.classList.remove('is-invalid');
         bookIdInput.removeAttribute('aria-invalid');
-        newYearInput.removeAttribute('aria-invalid');
         // Validate BookId
         if (!bookId || isNaN(bookId)) {
             bookIdInput.classList.add('is-invalid');
@@ -142,40 +153,28 @@
             console.error("Book ID is invalid");
         }
 
-        if (!newYear || isNaN(newYear)) {
-            newYearInput.classList.add('is-invalid');
-            newYearInput.setAttribute('aria-invalid', 'true');
-            isValid = false;
-            console.error("Book Year is invalid");
-        }
-
         return isValid
     }
 
 
-    const updateBookYear = async () => {
+    const getBookById = async () => {
+        const bookID = bookIdInput.value;
 
-        const bookId = bookIdInput.value;
-        const newYear = newYearInput.value;
-
-        if (!validateForm(bookId, newYear)) {
+        if (!validateForm(bookIdInput)) {
             toast.showToast("Please correct the invalid fields.", false);
             return;
         }
-        console.log('Validating passed!');
-        submitButton.disabled = true;
-        submitButton.textContent = 'Updating...';
 
         const API_BASE_URL = '/api/booksSQL';
-        const API_ENDPOINT = `/updateBookYear`;
-        const url = `${API_BASE_URL}${API_ENDPOINT}/${bookId}?newYear=${newYear}`;
+        const API_ENDPOINT = `/${bookID}`;
+        const url = `${API_BASE_URL}${API_ENDPOINT}`;
 
         try {
-            const response = await axios.put(url, {
+            const response = await axios.get(url, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
-            })
+            });
 
             if (response.status !== 200) {
                 console.error(`Error from API:`, response.data);
@@ -183,9 +182,14 @@
                 submitButton.disabled = false;
                 return;
             }
+
             console.debug(response);
             console.info(response.data.message);
 
+            const book = response.data.data;
+            console.debug(book);
+
+            populateBookTable(book);
             toast.showToast(response.data.message, true);
         } catch (error) {
             let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
@@ -225,13 +229,43 @@
         }
         finally {
             submitButton.disabled = false;
-            submitButton.innerText = 'Submit';
+            submitButton.innerText = 'Get Book Details';
         }
     }
 
+    const populateBookTable = (book) => {
+        const tableBody = document.getElementById('bookTableBody');
+        let htmlRows = ''; // Bygg HTML - stren for alle rader
+
+        // 1. sjekker om tablebody elementet eksisterer
+        if (!tableBody) {
+            console.error("Error: 'bookTableBody' element not found.");
+            return; // Avslutt tidlig hvis elementet ikke finnes
+        }
+        // 2. tøm tabellen på en sikker måte
+        tableBody.innerHTML = '';
+        // 4.Bruk .map for å bygge HTML-strengene
+        console.debug("User: " + JSON.stringify(book))
+        // Objekt destrukturering for å direkte hente ut attributer med en gang
+        const {isbnId, title, author, publishingYear, rating, category} = book;
+        // en lead utvikler ville også validert alle felter
+        // Bruk template literals for å bygge HTML-raden mer lesbart
+        htmlRows += `
+               <tr>
+                   <td>${isbnId}</td>
+                   <td>${title}</td>
+                   <td>${author}</td>
+                   <td>${publishingYear}</td>
+                   <td>${rating}</td>
+                   <td>${category}</td>
+               </tr>
+           `;
+
+        tableBody.innerHTML = htmlRows;
+    }
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        updateBookYear();
+        getBookById();
     })
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -240,5 +274,6 @@
         console.log(currentTime);
     })
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

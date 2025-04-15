@@ -233,6 +233,12 @@
         event.preventDefault();
         updateBookYear();
     })
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("ready")
+        const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
+        console.log(currentTime);
+    })
 </script>
 </body>
 </html>
