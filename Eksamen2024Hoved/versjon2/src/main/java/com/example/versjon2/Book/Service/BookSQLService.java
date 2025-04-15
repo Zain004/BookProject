@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-
 import java.util.*;
 
 @AllArgsConstructor
@@ -31,6 +30,8 @@ public class BookSQLService {
     private final AuthorSQLService authorService;
 
     private final UserService userService;
+    private final BookSQLRepository bookSQLRepository;
+
     private JdbcTemplate jdbcTemplate;
 
 
@@ -225,16 +226,15 @@ public class BookSQLService {
         result.append(sb);
         return result.toString();
     }
-/*
 
     @Transactional
-    public int deletePoetryBooksPublishedAfter2000() {
-        int deletedCount = bookRepository.deleteBooksByCategoryAndPublishingYearGreaterThan("Poetry",2000);
-        logger.info("Successfully Deleted {} poetry books published after 2000.", deletedCount);
-        return deletedCount;
+    public int deleteBooksWithCategoryAndPublishingYearGreatherThan(String category, int publishing_year) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting deleting Boooks with Category: {}, AND publishing_year Greather than: {}.", requestId, category, publishing_year);
+        return bookSQLRepository.deleteBooksWithCategoryAndPublishingYearGreatherThanEquals(category, publishing_year);
     }
 
-*/
+
 
 
 }

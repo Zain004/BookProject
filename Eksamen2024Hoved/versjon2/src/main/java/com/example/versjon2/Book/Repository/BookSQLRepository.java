@@ -167,7 +167,6 @@ public class BookSQLRepository {
         try {
             logger.debug("Request ID: {}, Executing SQL query: {}", requestId, sql);
             List<BookSQL> books = jdbcTemplate.query(sql, bookSQLRowMapper);
-
             return books;
         } catch (DataAccessException e) {
             logger.error("Request ID: Error fetching all books from DB: {}", requestId, e.getMessage(), e); // Logg generell melding
@@ -182,11 +181,9 @@ public class BookSQLRepository {
         logger.debug("Request ID: {} - Attempting Updating book on Database with ID={} to new year: {}. SQL='{}', parameters=[{}, {}]",
                 requestId, id, newYear, sql, newYear, id);
 
-        int rowsAffected = jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql);
+        int rowsAffected = jdbcTemplate.update(sql,ps -> {
             ps.setInt(1, newYear);
             ps.setLong(2, id);
-            return ps;
         });
 
         if (rowsAffected == 0) {
@@ -212,6 +209,7 @@ public class BookSQLRepository {
             return 0;
         }
 
+        logger.info("Request ID: {} - Successfully retrieved book with ID: {}, AND COUNT: ", requestId, id, countQuery);
         return count;
     }
 
@@ -223,4 +221,17 @@ public class BookSQLRepository {
         return jdbcTemplate.update(deleteQuery, ps -> ps.setLong(1,id));
     }
 
+    public int deleteBooksWithCategoryAndPublishingYearGreatherThanEquals(String category, int publishing_year) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting to delete Boooks with Category: {}, AND publishing_year Greather than: {}.", requestId, category, publishing_year);
+
+        String sql = "DELETE FROM BOOKSQL WHERE category ilike ? AND publishing_year >= ?";
+        int deletedRows = jdbcTemplate.update(sql, ps -> {
+            ps.setString(1, category);
+            ps.setInt(2, publishing_year);
+        });
+
+        logger.info("Request ID: {} - Successfully Deleted {} {} books published after {}.", requestId, deletedRows, category, publishing_year);
+        return deletedRows;
+    }
 }

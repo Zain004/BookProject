@@ -29,6 +29,7 @@ public class BookSQLController {
     private final BookSQLService bookService;
     //private final AuthorService authorService;
     private final UserService userService;
+    private final BookSQLService bookSQLService;
 
     // LAg en side for testing
 
@@ -149,14 +150,14 @@ public class BookSQLController {
     }
 
     @GetMapping("/bookStatistics")
-    public ResponseEntity<APIResponse<String>> getBookStatistics( ) { //HttpServletRequest request) {
+    public ResponseEntity<APIResponse<String>> getBookStatistics(HttpServletRequest request) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to fetch book statistics");
 
-        /*logger.debug("Request ID: {} - Authenticating user.", requestId);
+        logger.debug("Request ID: {} - Authenticating user.", requestId);
         userService.authenticate(request);
         logger.debug("Request ID: {} - User authenticated successfully.", requestId);
-         */
+
         BookSQLStatsDTO statsDTO = bookService.getBookStatistics();
         logger.info("RequestId: {} - Successfully made statsDTO: {}", requestId, statsDTO);
 
@@ -165,18 +166,21 @@ public class BookSQLController {
 
         return APIResponse.okResponse(null, bookStatistics);
     }
-    /*
 
     @DeleteMapping("/deletePoetryBooks")
-    public ResponseEntity<APIResponse<Integer>> deletePoetryBooks(HttpServletRequest request) {
+    public ResponseEntity<APIResponse<Integer>> deletePoetryBooks( //HttpServletRequest request,
+            @RequestParam(name="category", defaultValue = "Poetry") String category,
+            @RequestParam(name="publishing_year", defaultValue = "2000") int publishingYear) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Recieved request to delete poetry books", requestId);
-
+/*
         logger.debug("Request ID: {} - Authenticating user.", requestId);
         userService.authenticate(request);
         logger.debug("Request ID: {} - User authenticated successfully.", requestId);
 
-        int deleteCount = bookService.deletePoetryBooksPublishedAfter2000();
+
+ */
+        int deleteCount = bookSQLService.deleteBooksWithCategoryAndPublishingYearGreatherThan(category, publishingYear);
 
         if (deleteCount == 0) {
             logger.debug("Request ID: {} - No poetry books were deleted.", requestId);
@@ -187,5 +191,5 @@ public class BookSQLController {
         return APIResponse.okResponse(deleteCount,"Successfully deleted " + deleteCount + " poetry books.");
     }
 
-     */
+
 }
