@@ -41,3 +41,36 @@ NUMERIC(5,2) betyr at man kan lagre opptil 5 sifre før komma og 2 etter komma.
 [A-Za-z.\- ]{2,50} # Tillatte tegn: bokstaver, punktum, bindestrek og mellomrom. Lengde 2 til 50 tegn
 (?<!\s)            # Negativ lookbehind: tittel kan ikke slutte med mellomrom
  */
+
+-- Table: users
+CREATE TABLE USERSSQL (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    dob DATE NOT NULL,
+    phone VARCHAR(8) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_firstname ON USERSSQL (first_name);
+CREATE INDEX IF NOT EXISTS idx_lastname ON USERSSQL (last_name);
+CREATE INDEX IF NOT EXISTS idx_email on USERSSQL (email);
+
+CREATE OR REPLACE FUNCTION update_timestamp_Users()
+RETURNS TRIGGER AS '
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+' LANGUAGE plpgsql;
+
+-- Slett triggern hvis den eksisterer
+DROP TRIGGER IF EXISTS USERSSQL_updateAt ON USERSSQL;
+
+-- Opprett triggern
+CREATE TRIGGER USERSSQL_updateAt
+    BEFORE UPDATE ON USERSSQL
+    FOR EACH ROW
+    EXECUTE FUNCTION update_timestamp_Users();

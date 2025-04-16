@@ -37,8 +37,8 @@ public class BookSQLRepository {
 
         String sql = "SELECT * FROM BOOKSQL WHERE isbn_id = ?";
         BookSQL bookSQL = jdbcTemplate.queryForObject(sql, new Object[]{id}, bookSQLRowMapper);
-        logger.debug("Request ID: {} - Successfully fetched book with ID: {} from database. Book details: {}", requestId, id, bookSQL);
 
+        logger.debug("Request ID: {} - Successfully fetched book with ID: {} from database. Book details: {}", requestId, id, bookSQL);
         return Optional.of(bookSQL);
     }
 
