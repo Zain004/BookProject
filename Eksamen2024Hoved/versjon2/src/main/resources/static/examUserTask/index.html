@@ -351,7 +351,7 @@
 
         #saveUser = async (event) => {
             this.#submitButton.disabled = true;
-            const API_BASE_URL = '/api/users';
+            const API_BASE_URL = '/api/usersDB';
             const url = `${API_BASE_URL}`;
 
             if (!this.#validator.validateForm()) {
@@ -450,16 +450,13 @@
         phone: validator.validatephone.bind(validator),
         email: validator.validateEmail.bind(validator)
     };
+
     document.addEventListener('DOMContentLoaded', () => {
         console.log("ready")
         const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
         console.log(currentTime);
         console.log(document.getElementById('filterForm') || 'not found'); // Sjekk om
-
     })
-
-
-
 </script>
 </body>
 </html>

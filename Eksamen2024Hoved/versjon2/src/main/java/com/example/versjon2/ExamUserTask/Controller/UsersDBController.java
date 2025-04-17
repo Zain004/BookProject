@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URISyntaxException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class UsersDBController {
      * @return
      */
     @PostMapping()
-    public ResponseEntity<APIResponse<UsersDBDTO>> saveUser(@RequestBody @Valid UsersDB usersDB) {
+    public ResponseEntity<APIResponse<UsersDBDTO>> saveUser(@RequestBody @Valid UsersDB usersDB) throws SQLException {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Received request to save user: {}", requestId, usersDB); // Logg kun relevant info
 
@@ -52,18 +54,18 @@ public class UsersDBController {
      *
      * @return list
      */
-/*
+
     @GetMapping("/list")
-    public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsers() {
+    public ResponseEntity<APIResponse<List<UsersDBDTO>>> getAllUsers() {
         logger.info("Fetching all users from DB.");
-        List<Users> users = usersService.fetchAllUsers(); // 1. Hent Users (ikke DTO)
+        List<UsersDB> users = usersService.fetchAllUsersList(); // 1. Hent Users (ikke DTO)
         if(users.isEmpty()) {
             logger.info("No users found, returning 204 No Content");
             return ResponseEntity.noContent().build();
         }
-        List<UsersDTO> usersDTOs = UsersDTO.convertToDtoList(users);
+        List<UsersDBDTO> usersDBDtos = UsersDBDTO.convertToDtoList(users);
         logger.info("Returning list of users to client.");
-        return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
+        return APIResponse.okResponse(usersDBDtos, "Users successfully retrieved from DB");
     }
 
     /**

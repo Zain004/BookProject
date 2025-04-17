@@ -58,7 +58,7 @@ public class UsersDBService {
         Optional<UsersDB> savedUser = usersDbRepository.getUserDB(email);
 
         if (savedUser.isEmpty()) {
-            logger.info("Request ID: {} - Attempted to fetch user with email: {} after INSERT but no USER was found.", requestId, userdb.getEmail());
+            logger.info("Request ID: {} - Attempted to fetch user with email: {} after INSERT but no USER was found.", requestId, email);
             throw new EmptyResultDataAccessException("Book with id " + email + " not found.",1);
         }
         return savedUser.get();
@@ -75,19 +75,23 @@ public class UsersDBService {
             logger.error("Request ID: {} - Attempted to insert user with duplicate email: {}", requestId, usersDB.getEmail());
             throw new IllegalArgumentException("User with email '" + usersDB.getEmail() + "' already exists in the database.");
         }
-    }/*
+    }
+
     @Transactional(readOnly = true)
-    public List<Users> fetchAllUsers() {
+    public List<UsersDB> fetchAllUsersList() {
         logger.info("Fetching all users from DB");
-        List<Users> users = usersRepository.findAll();
+        List<UsersDB> users = usersDbRepository.getUserDBs();
+
         if(users.isEmpty()) {
             logger.info("No users found in the database");
             return Collections.emptyList();
         }
+
         logger.info("Recieved {} users.", users);
         return users;
     }
 
+    /*
     @Transactional(readOnly = true)
     public List<Users> fetchAllUsersSortedByFirstNameAsc(boolean sortByFirstName) {
         logger.info("Fetching all users from DB, sorting by: {}", sortByFirstName);
@@ -110,6 +114,7 @@ public class UsersDBService {
      * @param pageable
      * @return
      */
+    /*
     @Transactional(readOnly = true)
     public Page<UsersDTO> fetchAllUsersPaginated(Pageable pageable) {
         logger.info("Service Request: Fetching paginated users from DB - Page: {}, Size: {}",

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class UsersDBDTO {
     private LocalDate dob;
     private String phone;
     private String email;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static UsersDBDTO convertToDTO(UsersDB user) {
         return new UsersDBDTO(
@@ -29,7 +32,9 @@ public class UsersDBDTO {
                 user.getLastName(),
                 user.getDob(),
                 user.getPhone(),
-                user.getEmail()
+                user.getEmail(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
         );
     }
 

@@ -17,7 +17,20 @@
         .loading-hidden {
             display: none;
         }
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1;
+        }
+        footer {
+            text-align: center;
 
+        }
     </style>
 </head>
 <body>
@@ -47,9 +60,12 @@
 
 <!-- Main Content Container -->
 <main class="container mt-4">
+    <!-- Section: User List Heading -->
     <section>
         <h1 class="mb-4">User List</h1>
-        <!-- Loading Indicator -->
+    </section>
+    <!-- Loading Indicator -->
+    <section>
         <!-- bruker loading hidden som standard før javascript er lastet inn-->
         <div id="loadingIndicator" class="text-center mb-3 loading-hidden">
             <div class="spinner-border text-primary" role="status">
@@ -59,20 +75,10 @@
             <!-- Dette er den ordentlige teksten som skal vises -->
             <p class="mt-2 small text-muted">Fetching users...</p>
         </div>
-        <!-- oppretter en toast-->
-        <aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                <div class="toast-header">
-                    <strong class="me-auto">Recipe submission</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
-                    </button>
-                </div>
-                <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
-                </div>
-            </div>
-        </aside>
+    </section>
 
-        <!-- User Table-->
+    <!-- User Table-->
+    <section>
         <div class="table-responsive">
             <table class="table table-striped table bordered">
                 <thead> <!-- Table head -->
@@ -90,11 +96,35 @@
                 </tbody>
             </table>
         </div>
+    </section>
+
+    <!-- No users message -->
+    <section>
         <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
             No users found in the database
         </div>
     </section>
 </main>
+
+<!-- oppretter en toast-->
+<aside class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="toast-header">
+            <strong class="me-auto">Recipe submission</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close">
+            </button>
+        </div>
+        <div id="toastBody" class="toast-body"> <!-- Dynamically updated content will go here -->
+        </div>
+    </div>
+</aside>
+
+<footer class="bg-secondary py-4 text-white">
+    <div class="container">
+        <p>© 2023 Users Management</p>
+    </div>
+</footer>
+
 <!-- Bootstrap 5.3.3 JavaScript (bundle with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -102,19 +132,33 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
-    /**
-     *
-     * @param message
-     * @param isSuccess
-     */
-    const showToast = (message, isSuccess = true) => {
-        const toastElement = document.getElementById('toast');
-        const toastBody = toastElement.querySelector('.toast-body');
-        toastBody.classList.remove('bg-danger', 'bg-success');
-        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
-        toastBody.textContent = message; // Sett meldingsteksten i toast-body
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
+    class ToastService {
+        static DEFAULT_OPTIONS = {
+            toastElementId: 'toast',
+            toastBody: 'toast-body'
+        }
+
+        #options
+        #toastElementId
+        #toastBody
+        constructor(options = {}) {
+            this.#options = {
+                ...ToastService.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#toastElementId = document.getElementById(this.#options.toastElementId);
+            this.#toastBody = document.querySelector(`.${this.#options.toastBody}`);
+            if (!this.#toastElementId || !this.#toastBody) {
+                console.error("Toast element or body not found.")
+            }
+        }
+        showToast(message, isSuccess = true) {
+            this.#toastBody.classList.remove('bg-danger', 'bg-success');
+            this.#toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+            this.#toastBody.textContent = message; // Sett meldingsteksten i toast-body
+            const toast = new bootstrap.Toast(this.#toastElementId);
+            toast.show();
+        }
     }
 
     class LoadingIndicator {
@@ -173,14 +217,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 return; // avslutter tidlig
             }
 
-                if (show) {
-                    this.#indicatorElement.classList.add(this.#options.loadingClass);
-                    this.#indicatorElement.classList.remove(this.#options.hiddenClass);
-                } else {
-                    this.#indicatorElement.classList.remove(this.#options.loadingClass);
-                    this.#indicatorElement.classList.add(this.#options.hiddenClass);
-                }
+            if (show) {
+                this.#indicatorElement.classList.add(this.#options.loadingClass);
+                this.#indicatorElement.classList.remove(this.#options.hiddenClass);
+            } else {
+                this.#indicatorElement.classList.remove(this.#options.loadingClass);
+                this.#indicatorElement.classList.add(this.#options.hiddenClass);
             }
+        }
 
         show() {
             this.#setDisplay(true);

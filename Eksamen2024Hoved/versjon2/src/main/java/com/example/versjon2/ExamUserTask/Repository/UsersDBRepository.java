@@ -1,22 +1,17 @@
 package com.example.versjon2.ExamUserTask.Repository;
 
-import com.example.versjon2.Book.Entity.BookSQL;
-import com.example.versjon2.DatabaseException;
-import com.example.versjon2.ExamUserTask.Entity.Users;
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -29,7 +24,7 @@ public class UsersDBRepository {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Attempting saving user: {}", requestId, userdb);
         //Users savedUser = usersRepository.save(userdb);
-        String sql = "INSERT INTO USERSDB(first_name, last_name, dob, email, phone_number) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO USERSDB(first_name, last_name, dob, email, phone) VALUES (?, ?, ?, ?, ?)";
 
         int insertedRows = jdbcTemplate.update(sql, ps -> {
             ps.setString(1, userdb.getFirstName());
@@ -51,15 +46,26 @@ public class UsersDBRepository {
     public static final RowMapper<UsersDB> usersDBRowMapper = (ResultSet rs, int rowNum) -> {
         UsersDB userdb = new UsersDB();
         userdb.setId(rs.getLong("id"));
+
         userdb.setFirstName(rs.getString("first_name"));
         userdb.setLastName(rs.getString("last_name"));
+
         java.sql.Date dob = rs.getDate("dob");
+        userdb.setDob(dob.toLocalDate());
+
         userdb.setPhone(rs.getString("phone"));
         userdb.setEmail(rs.getString("email"));
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        userdb.setCreatedAt(createdAt != null ? createdAt.toLocalDateTime() : null);
-        Timestamp updatedAt = rs.getTimestamp("updated_at");
-        userdb.setUpdatedAt(updatedAt != null ? updatedAt.toLocalDateTime() : null);
+
+        OffsetDateTime createdAtOffset = rs.getObject("created_at", OffsetDateTime.class);
+        if (createdAtOffset != null) {
+            userdb.setCreatedAt(createdAtOffset.toLocalDateTime());
+        }
+
+        OffsetDateTime updatedAtOffset = rs.getObject("updated_at", OffsetDateTime.class);
+        if (updatedAtOffset != null) {
+            userdb.setUpdatedAt(updatedAtOffset.toLocalDateTime());
+        }
+
         return userdb;
     };
 
@@ -72,5 +78,16 @@ public class UsersDBRepository {
 
         logger.debug("Request ID: {} - Successfully fetched USer with email: {} from database. User details: {}", requestId, usersDB.getEmail(), usersDB);
         return Optional.of(usersDB);
+    }
+
+    public List<UsersDB> getUserDBs() {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting fetching all users from DB", requestId);
+
+        String sql = "SELECT * FROM USERSDB";
+        List<UsersDB> usersDBs = jdbcTemplate.query(sql, usersDBRowMapper);
+
+        logger.debug("Request ID: {} - Successfully fetched all Users: {} from DB", requestId, usersDBs);
+        return usersDBs;
     }
 }

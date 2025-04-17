@@ -43,7 +43,7 @@ NUMERIC(5,2) betyr at man kan lagre opptil 5 sifre før komma og 2 etter komma.
  */
 
 -- Table: users
-CREATE TABLE USERSDB (
+CREATE TABLE IF NOT EXISTS USERSDB (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,

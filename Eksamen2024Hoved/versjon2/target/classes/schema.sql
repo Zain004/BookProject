@@ -43,7 +43,7 @@ NUMERIC(5,2) betyr at man kan lagre opptil 5 sifre før komma og 2 etter komma.
  */
 
 -- Table: users
-CREATE TABLE USERSSQL (
+CREATE TABLE IF NOT EXISTS USERSDB (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -54,9 +54,9 @@ CREATE TABLE USERSSQL (
     updated_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX IF NOT EXISTS idx_firstname ON USERSSQL (first_name);
-CREATE INDEX IF NOT EXISTS idx_lastname ON USERSSQL (last_name);
-CREATE INDEX IF NOT EXISTS idx_email on USERSSQL (email);
+CREATE INDEX IF NOT EXISTS idx_firstname ON USERSDB (first_name);
+CREATE INDEX IF NOT EXISTS idx_lastname ON USERSDB (last_name);
+CREATE INDEX IF NOT EXISTS idx_email on USERSDB (email);
 
 CREATE OR REPLACE FUNCTION update_timestamp_Users()
 RETURNS TRIGGER AS '
@@ -66,11 +66,12 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 
--- Slett triggern hvis den eksisterer
-DROP TRIGGER IF EXISTS USERSSQL_updateAt ON USERSSQL;
+-- Slett triggern hvis den eksisterer, for å sikre at den er kompatibel
+-- med den nye funksjonsdefinisjonen.
+DROP TRIGGER IF EXISTS USERSDB_updateAt ON USERSDB;
 
 -- Opprett triggern
-CREATE TRIGGER USERSSQL_updateAt
-    BEFORE UPDATE ON USERSSQL
+CREATE TRIGGER USERSDB_updateAt
+    BEFORE UPDATE ON USERSDB
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp_Users();
