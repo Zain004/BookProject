@@ -464,41 +464,41 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         try {
             const response = await axios.get(url);
             console.log("Fetching users: ");
+            // MERK! DETTE API'ET RETURNERER ALLTID 200 0K STATUS
 
-            if (response.status >= 200 && response.status < 300) {
-                // 1. Sjekk om response.data eksisterer
-                if (!response.data) {
-                    console.warn("Empty or invalid response recieved: response.data is missing", response);
-                    showToast("Recieved an unexpected response from the server.");
-                    return;
-                }
-                const pagedResponse = response.data.data; // hent ut listen med users
-                // 2. sjekk om response.data.data er gyldig, om det inneholder noe content
-                if (!pagedResponse) {
-                    console.warn("Invalid response recieved: data is invalid.", data);
-                    showToast("No users were found for this request.")
-                    return;
-                }
-                const users = pagedResponse.content;
-                // 3. valider om det er ert array
-                if (!Array.isArray(users)) {
-                    console.error("API returned non-array data:", data);
-                    showToast("An unexpected error occurred: Invalid data format received.", false);
-                    return; // avslutt
-                }
-                // 4. Oppdater paginering (Nå er vi sikre på gyldige data)
-                pagination.updatePagination(pagedResponse);
-                // 5. sjekk om det er noen til stede
-                if (users.length > 0) {
-                    console.debug(users);
-                    populateUsersTable(users);
-                } else {
-                    // servereen returnerte ingen elementer
-                    console.log("Server returned success with empty data with 200 ok status.")
-                    messageHandler.displayNoUserMessage();
-                }
+            // 1. Sjekk om response.data eksisterer
+            if (!response.data) {
+                console.warn("Empty or invalid response recieved: response.data is missing", response);
+                showToast("Recieved an unexpected response from the server.");
                 return;
             }
+            const pagedResponse = response.data.data; // hent ut listen med users
+            // 2. sjekk om response.data.data er gyldig, om det inneholder noe content
+            if (!pagedResponse) {
+                console.warn("Invalid response recieved: data is invalid.", data);
+                showToast("No users were found for this request.")
+                return;
+            }
+            const users = pagedResponse.content;
+            // 3. valider om det er ert array
+            if (!Array.isArray(users)) {
+                console.error("API returned non-array data:", data);
+                showToast("An unexpected error occurred: Invalid data format received.", false);
+                return; // avslutt
+            }
+            // 4. Oppdater paginering (Nå er vi sikre på gyldige data)
+            pagination.updatePagination(pagedResponse);
+            // 5. sjekk om det er noen til stede
+            if (users.length > 0) {
+                console.debug(users);
+                populateUsersTable(users);
+            } else {
+                // servereen returnerte ingen elementer
+                console.log("Server returned success with empty data with 200 ok status.")
+                messageHandler.displayNoUserMessage();
+            }
+            return;
+
             const errorMessage = `API Error: ${response.message || 'Failed to fetch users (no message provided)'}`;
             showToast(errorMessage, false);
         } catch (error) {

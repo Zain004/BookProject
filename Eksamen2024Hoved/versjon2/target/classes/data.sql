@@ -1,4 +1,5 @@
 BEGIN;
+/*
 INSERT INTO usersdb (first_name, last_name, dob, phone, email) VALUES
     ('Ola', 'Nordmann', '1990-01-01', '12345678', 'ola.nordmann@example.com'), -- Ola 1
     ('Kari', 'Nordmann', '1985-05-15', '23456789', 'kari.nordmann@example.com'), -- Kari 1
@@ -16,6 +17,8 @@ INSERT INTO usersdb (first_name, last_name, dob, phone, email) VALUES
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
 
+
+ */
 INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('The Sun and flower', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
