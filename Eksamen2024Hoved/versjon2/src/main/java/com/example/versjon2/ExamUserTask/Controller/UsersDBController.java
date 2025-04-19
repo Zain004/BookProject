@@ -12,9 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -101,13 +99,12 @@ public class UsersDBController {
      * @param pageable
      * @return
      */
-    /*
     @GetMapping("/paged")
-    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(Pageable pageable) {
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(Pageable pageable) {
         logger.info("Recieved request to fetch all users with pageable: {}", pageable);
-        Page<UsersDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
+        Page<UsersDBDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
 
-        PagedResponseDTO<UsersDTO> pagedResponseDTO;
+        PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
             logger.info("No users found for requsted page - Page: {}, Size: {}",

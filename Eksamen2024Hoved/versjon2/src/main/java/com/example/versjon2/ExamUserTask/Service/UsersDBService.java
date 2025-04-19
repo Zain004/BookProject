@@ -1,5 +1,7 @@
 package com.example.versjon2.ExamUserTask.Service;
 
+import com.example.versjon2.Authentication.UserEntity.User;
+import com.example.versjon2.ExamUserTask.DTO.UsersDBDTO;
 import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
 import com.example.versjon2.ExamUserTask.Repository.UsersDBRepository;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -114,17 +117,27 @@ public class UsersDBService {
      * @param pageable
      * @return
      */
-    /*
+
     @Transactional(readOnly = true)
-    public Page<UsersDTO> fetchAllUsersPaginated(Pageable pageable) {
+    public Page<UsersDBDTO> fetchAllUsersPaginated(Pageable pageable) {
         logger.info("Service Request: Fetching paginated users from DB - Page: {}, Size: {}",
                 pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<Users> usersPage = usersRepository.findAll(pageable);
-        logger.debug("Fetched {} Users entities from DB for page {} of {}",
-                usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages());
+        int pageNumber = pageable.getPageNumber(); // kun brukt for loggign
+        int pageSize = pageable.getPageSize();
+        long offSet = pageable.getOffset(); // de du vil hoppe over
 
-        return usersPage.map(UsersDTO::convertToDTO); // Convert each entity to DTO
+        // 1. Hent totalt antall elementer (for Page-objektet)
+        long totalElements = usersDbRepository.countElements();
+
+        // 2. Hent data for gjeldende side
+        List<UsersDB> usersDBS = usersDbRepository.getUersPage(pageSize, offSet);
+
+        logger.debug("Fetched {} Users entities from DB for page {} of {}",
+                usersDBS.size(), pageNumber + 1, (totalElements + pageSize - 1) / pageSize); // Calculate total pages
+
+        Page<UsersDB> page = new PageImpl<>(usersDBS, pageable, totalElements);
+        return page.map(UsersDBDTO::convertToDTO);
     }
 /*
     @Transactional(readOnly = true)

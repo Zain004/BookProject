@@ -102,5 +102,22 @@ public class UsersDBRepository {
         return usersDBs;
     }
 
+    public long countElements() {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting counting all users from DB", requestId);
+        String sql = "SELECT COUNT(*) FROM USERSDB";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        logger.info("Request ID: {} - Successfully fetched all Users: {} from DB", requestId, count);
+        return count;
+    }
+
+    public List<UsersDB> getUersPage(int pageSize, long offset) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting fetching page {} of {} users from DB", requestId, pageSize, offset);
+        String sql = "SELECT * FROM USERSDB LIMIT ? OFFSET ?";
+        List<UsersDB> usersDBs = jdbcTemplate.query(sql, new Object[]{pageSize, offset}, usersDBRowMapper);
+        logger.info("Request ID: {} - Successfully fetched page {} of {} Users: {} from DB", requestId, pageSize, offset, usersDBs);
+        return usersDBs;
+    }
 
 }
