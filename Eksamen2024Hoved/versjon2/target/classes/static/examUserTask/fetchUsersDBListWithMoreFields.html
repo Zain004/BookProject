@@ -344,38 +344,37 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 return;
             }
 
-            if (response.status >= 200 && response.status < 300) { // Mer robust sjekk for suksess
-                const apiResponse = response.data; // antar at APIResponse returnerer APIResponse<List<UsersDTO>>
+            const apiResponse = response.data; // antar at APIResponse returnerer APIResponse<List<UsersDTO>>
 
-                if (!apiResponse.success) {
-                    // kallet til axios ble fullført uten problemer,
-                    // derfor skal den ikke fortsette nedover
-                    const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
-                    toast.showToast(errorMessage, false); // vis API error message
-                    console.warn(`API Error (success=false): ${errorMessage}`)
-                    return;
-                }
-                // ved suksess fortsett nedover
-                const users = apiResponse.data; // henter ut brukere
-                // robust type sjekk - sjekker om det virkelig er et array
-                if (!Array.isArray(users)) {
-                    console.error("API returned non-array data:", apiResponse);
-                    toast.showToast("An unexpected error occurred: Invalid data format received.", false);
-                    return; // avslutt
-                }
-                // sjekker om det er noen til stede
-                if (users.length > 0) {
-                    console.debug(users)
-                    populateUsersTable(users);
-                } else {
-                    // Dette skal *aldri* skje hvis serveren er korrekt (204 er riktig),
-                    // men vi legger til en sikkerhetsmekanisme:
-                    console.warn("Server returned success with empty data, but not 204 status.");
-                    messageHandler.displayNoUserMessage()
-                    return;
-                }
-                return; // returnerer ekslpisitt etter vellykket prosessering
+            if (!apiResponse.success) {
+                // kallet til axios ble fullført uten problemer,
+                // derfor skal den ikke fortsette nedover
+                const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
+                toast.showToast(errorMessage, false); // vis API error message
+                console.warn(`API Error (success=false): ${errorMessage}`)
+                return;
             }
+            // ved suksess fortsett nedover
+            const users = apiResponse.data; // henter ut brukere
+            // robust type sjekk - sjekker om det virkelig er et array
+            if (!Array.isArray(users)) {
+                console.error("API returned non-array data:", apiResponse);
+                toast.showToast("An unexpected error occurred: Invalid data format received.", false);
+                return; // avslutt
+            }
+            // sjekker om det er noen til stede
+            if (users.length > 0) {
+                console.debug(users)
+                populateUsersTable(users);
+            } else {
+                // Dette skal *aldri* skje hvis serveren er korrekt (204 er riktig),
+                // men vi legger til en sikkerhetsmekanisme:
+                console.warn("Server returned success with empty data, but not 204 status.");
+                messageHandler.displayNoUserMessage()
+                return;
+            }
+
+            return; // returnerer ekslpisitt etter vellykket prosessering
 
             // ---  Unexpected HTTP Status (not 2xx) ---
             console.warn(`Unexpected HTTP Status: ${response.status}`);
