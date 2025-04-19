@@ -90,4 +90,17 @@ public class UsersDBRepository {
         logger.debug("Request ID: {} - Successfully fetched all Users: {} from DB", requestId, usersDBs);
         return usersDBs;
     }
+
+    public List<UsersDB> getUserDBsOrderByFirstNameAsc() {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting fetching all users from DB Sorting by firstname.", requestId);
+
+        String sql = "SELECT * FROM USERSDB ORder BY first_name ASC";
+        List<UsersDB> usersDBs = jdbcTemplate.query(sql, usersDBRowMapper);
+
+        logger.debug("Request ID: {} - Successfully fetched all Users: {} from DB sorted by firstname", requestId, usersDBs);
+        return usersDBs;
+    }
+
+
 }

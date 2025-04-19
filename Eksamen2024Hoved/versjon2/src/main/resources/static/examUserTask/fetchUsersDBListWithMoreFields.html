@@ -331,7 +331,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
         const API_BASE_URL = '/api/usersDB';
-        const API_ENDPOINT = '/list';
+        const API_ENDPOINT = '/list/sortedByFirstname';
         const url = `${API_BASE_URL}${API_ENDPOINT}`;
         try {
             const response = await axios.get(url);

@@ -57,14 +57,18 @@ public class UsersDBController {
 
     @GetMapping("/list")
     public ResponseEntity<APIResponse<List<UsersDBDTO>>> getAllUsers() {
-        logger.info("Fetching all users from DB.");
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Fetching all users from DB.", requestId);
         List<UsersDB> users = usersService.fetchAllUsersList(); // 1. Hent Users (ikke DTO)
+
         if(users.isEmpty()) {
-            logger.info("No users found, returning 204 No Content");
+            logger.info("Request ID: {} - No users found, returning 204 No Content", requestId);
             return ResponseEntity.noContent().build();
         }
+
         List<UsersDBDTO> usersDBDtos = UsersDBDTO.convertToDtoList(users);
-        logger.info("Returning list of users to client.");
+
+        logger.info("Request ID: {} - Returning list of users to client.", requestId);
         return APIResponse.okResponse(usersDBDtos, "Users successfully retrieved from DB");
     }
 
@@ -73,19 +77,20 @@ public class UsersDBController {
      * @param sortByFirstName
      * @return
      */
-    /*
+
     @GetMapping("/list/sortedByFirstname")
-    public ResponseEntity<APIResponse<List<UsersDTO>>> getAllUsersSortedByFirstName(
-            @RequestParam(value = "sortByFirstname", required = false, defaultValue = "false") boolean sortByFirstName) {
+    public ResponseEntity<APIResponse<List<UsersDBDTO>>> getAllUsersSortedByFirstName(
+            @RequestParam(value = "sortByFirstname", required = false, defaultValue = "False") boolean sortByFirstName) {
             logger.info("Fetching all users from DB, sortByFirstname = {}", sortByFirstName);
-            List<Users> users = usersService.fetchAllUsersSortedByFirstNameAsc(sortByFirstName);
-            List<UsersDTO> usersDTOs = List.of();
+            List<UsersDB> users = usersService.fetchAllUsersSortedByFirstNameAsc(sortByFirstName);
+            List<UsersDBDTO> usersDTOs = List.of();
 
             if(users.isEmpty()) {
                 logger.info("No users found, returning 204 No Content");
                 return APIResponse.noContentResponse("No users found", usersDTOs);
             }
-            usersDTOs = UsersDTO.convertToDtoList(users);
+            usersDTOs = UsersDBDTO.convertToDtoList(users);
+
             logger.info("Returning list of users to client.");
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }

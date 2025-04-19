@@ -79,27 +79,27 @@ public class UsersDBService {
 
     @Transactional(readOnly = true)
     public List<UsersDB> fetchAllUsersList() {
-        logger.info("Fetching all users from DB");
-        List<UsersDB> users = usersDbRepository.getUserDBs();
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Fetching all users from DB", requestId);
 
+        List<UsersDB> users = usersDbRepository.getUserDBs();
         if(users.isEmpty()) {
-            logger.info("No users found in the database");
+            logger.info("Request ID: {} - No users found in the database", requestId);
             return Collections.emptyList();
         }
 
-        logger.info("Recieved {} users.", users);
+        logger.info("Request ID: {} - Recieved {} users.", requestId, users);
         return users;
     }
 
-    /*
     @Transactional(readOnly = true)
-    public List<Users> fetchAllUsersSortedByFirstNameAsc(boolean sortByFirstName) {
+    public List<UsersDB> fetchAllUsersSortedByFirstNameAsc(boolean sortByFirstName) {
         logger.info("Fetching all users from DB, sorting by: {}", sortByFirstName);
-        List<Users> users;
+        List<UsersDB> users;
         if (sortByFirstName) {
-            users = usersRepository.findAllByOrderByFirstNameAsc();
+            users = usersDbRepository.getUserDBsOrderByFirstNameAsc();
         } else {
-            users = usersRepository.findAll();
+            users = usersDbRepository.getUserDBs();
         }
          if(users.isEmpty()) {
              logger.info("No users found in the database");

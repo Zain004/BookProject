@@ -324,7 +324,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
     const loadingIndicator = new LoadingIndicator();
-
+    const toast = new ToastService();
     // V2
     const fetchUsers = async (retryCount = 0, maxRetries = 3, initialBackOffMs  = 2) => {
         loadingIndicator.show();
@@ -349,7 +349,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                     // kallet til axios ble fullført uten problemer,
                     // derfor skal den ikke fortsette nedover
                     const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
-                    showToast(errorMessage, false); // vis API error message
+                    toast.showToast(errorMessage, false); // vis API error message
                     console.warn(`API Error (success=false): ${errorMessage}`)
                     return;
                 }
@@ -377,7 +377,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
             // ---  Unexpected HTTP Status (not 2xx) ---
             console.warn(`Unexpected HTTP Status: ${response.status}`);
-            showToast(`Unexpected HTTP status: ${response.status}`, false);
+            toast.showToast(`Unexpected HTTP status: ${response.status}`, false);
         }
         catch (error) {
             let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
@@ -409,7 +409,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             } else {
                 // Non-Axios related errors (e.g., JSON parsing, code errors)
                 console.error("Unexpected Error:", error); // Log full error object
-                showToast("An unexpected error occurred. Please try again later.", false);
+                toast.showToast("An unexpected error occurred. Please try again later.", false);
             }
 // Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
 // ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
@@ -429,10 +429,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
             if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
                 console.error("Max retries reached. Error: ", error);
-                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+                toast.showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
             }
 
-            showToast(userFriendlyErrorMessage, false);
+            toast.showToast(userFriendlyErrorMessage, false);
         }
         finally {
             loadingIndicator.hide();
@@ -455,7 +455,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         if (!users || !Array.isArray(users)) {
             const message = "Warning: 'users' is null, undefined, or not an array."
             console.warn(message);
-            showToast(message, false);
+            toast.showToast(message, false);
             messageHandler.displayNoUserMessage();
             return; // Avslutt tidlig
         }
@@ -490,7 +490,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         console.log(currentTime);
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
-            showToast(error.message, false);
+            toast.showToast(error.message, false);
         })
     })
 </script>
