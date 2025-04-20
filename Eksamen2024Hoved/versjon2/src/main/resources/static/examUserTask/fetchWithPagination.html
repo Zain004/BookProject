@@ -450,14 +450,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const currentPage = pagination.getCurrentPage();
         const pageSize = pagination.getPageSize();
         const API_BASE_URL = '/api/usersDB';
-        const API_ENDPOINT = '/standardSort';
+        const API_ENDPOINT = '/pageWithoutSortOnServer';
         const PAGE = `?page=${currentPage}`;
         const SIZE = `&size=${pageSize}`;
-        const SORT = '&sort=';
-        // SORT = '&sort='', ikke fyll inn noe hvis du ikke vil bruke den
-        // SORT = '&sort=firstName' sorter etter fornavn
-        // SORT = '&sort=firstName,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
-        // SORT = '&sort=firstName,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
+        const SORT = '&sort=;'
+        // SORT = '&sort='first_name', ikke fyll inn noe hvis du ikke vil bruke den
+        // SORT = '&sort=first_name, phone,desc' sorter etter fornavn
+        // SORT = '&sort=first_name,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
+        // SORT = '&sort=first_name,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
         // de har annerledes bokstav på email, sorteres de på email også
         // vanlig sort returnerer i asc
         const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}${SORT}`;

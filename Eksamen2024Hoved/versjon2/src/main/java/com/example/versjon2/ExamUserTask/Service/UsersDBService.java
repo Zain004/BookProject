@@ -152,24 +152,27 @@ public class UsersDBService {
         int pageSize = pageable.getPageSize();
         long offSet = pageable.getOffset();
         // Hent listen over sorteringskriterier
-        Optional<String> sortField = Optional.empty();
+        List<String> sortFields = new ArrayList<>();
         Optional<String> sortDirection = Optional.empty();
 
         if (pageable.getSort().isSorted()) {
-            Sort.Order order = pageable.getSort().toList().get(0); // hent første sorteringsorder
-            logger.info("Sort field: {}, Sort direction: {}", order.getProperty(), order.getDirection());
-            sortField = Optional.of(order.getProperty());
-            sortDirection = Optional.of(order.getDirection().name());
+            List<Sort.Order> sortOrders = pageable.getSort().toList();
+            for (Sort.Order order : sortOrders) {
+                logger.info("Request ID: {} - Sort field: {}, Sort direction: {}", requestId, order.getProperty(), order.getDirection());
+                sortFields.add(order.getProperty());
+                sortDirection = Optional.of(order.getDirection().name());
+            }
         }
+        logger.info("Request ID: {} - Sort fields: {}, Sort direction: {}", requestId, sortFields, sortDirection);
 
         // 1. Hent totalt antall elementer (for Page-objektet)
         long totalElements = usersDbRepository.countElements();
 
         // 2. Hent data for gjeldende side
-        List<UsersDB> usersDBS = usersDbRepository.getUersPageOrderByFirstNameAsc(pageSize,offSet, sortField, sortDirection);
+        List<UsersDB> usersDBS = usersDbRepository.getUersPageOrderByAndDirection(pageSize,offSet, sortFields, sortDirection);
 
 
-        logger.debug("Fetched {} Users entities from DB for page {} of {}",
+        logger.debug("Request ID: {} - Fetched {} Users entities from DB for page {} of {}",
                 usersDBS.size(), pageNumber + 1, (totalElements + pageSize - 1) / pageSize); // Calculate total pages
 
         Page<UsersDB> page = new PageImpl<>(usersDBS, pageable, totalElements);

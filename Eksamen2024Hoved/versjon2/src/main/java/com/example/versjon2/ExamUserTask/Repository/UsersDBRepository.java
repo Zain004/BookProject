@@ -123,13 +123,13 @@ public class UsersDBRepository {
         return usersDBs;
     }
 
-    public List<UsersDB> getUersPageOrderByFirstNameAsc(int pageSize, long offset, Optional<String> sortBy, Optional<String> sortDirection) {
+    public List<UsersDB> getUersPageOrderByAndDirection(int pageSize, long offset, List<String> sortBy, Optional<String> sortDirection) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Attempting fetching page {} of {} users from DB.", requestId, pageSize, offset);
-
+        logger.info("Request ID: {} - Sorting by: {}. Sorting direction: {}", requestId, sortBy, sortDirection);
         StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM USERSDB");
 
-        if (sortBy.isPresent() && !sortBy.get().trim().isEmpty()) {
+        if (!sortBy.isEmpty()) {
             // White-list tillatte kolonner for å forhindre SQL-injeksjon
             List<String> validSortColumsns = sortBy.stream()
                     .map(String::trim)
@@ -143,10 +143,13 @@ public class UsersDBRepository {
                 for (int i = 0; i < validSortColumsns.size(); i++) {
                     String sortColumn = validSortColumsns.get(i);
                     if (i == 0) {
-                        sqlBuilder.append(" ORDER BY ").append(sortColumn);
+                        sqlBuilder.append(" ORDER BY ");
+                    } else {
+                        sqlBuilder.append(", ");
                     }
-                    sqlBuilder.append(", ").append(sortColumn);
+                    sqlBuilder.append(sortColumn).append(" ");
                 }
+
             }
             // Velger sorteringsretning
             if (sortDirection.isPresent()) {
@@ -159,6 +162,7 @@ public class UsersDBRepository {
                 }
             }
         }
+        logger.info("Request ID: {} - Final SQL: {}", requestId, sqlBuilder.toString());
         sqlBuilder.append(" LIMIT ? OFFSET ?");
         String sql = sqlBuilder.toString();
         List<UsersDB> usersDBs = jdbcTemplate.query(sql, new Object[]{pageSize, offset}, usersDBRowMapper);

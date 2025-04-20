@@ -81,42 +81,46 @@ public class UsersDBController {
     @GetMapping("/list/sortedByFirstname")
     public ResponseEntity<APIResponse<List<UsersDBDTO>>> getAllUsersSortedByFirstName(
             @RequestParam(value = "sortByFirstname", required = false, defaultValue = "False") boolean sortByFirstName) {
-            logger.info("Fetching all users from DB, sortByFirstname = {}", sortByFirstName);
+            String requestId = MDC.get("requestId");
+            logger.info("Request ID: {} - Fetching all users from DB, sortByFirstname = {}", sortByFirstName);
             List<UsersDB> users = usersService.fetchAllUsersSortedByFirstNameAsc(sortByFirstName);
             List<UsersDBDTO> usersDTOs = List.of();
 
             if(users.isEmpty()) {
-                logger.info("No users found, returning 204 No Content");
+                logger.info("Request ID: {} - No users found, returning 204 No Content");
                 return APIResponse.noContentResponse("No users found", usersDTOs);
             }
             usersDTOs = UsersDBDTO.convertToDtoList(users);
 
-            logger.info("Returning list of users to client.");
+            logger.info("Request ID: {} - Returning list of users to client.");
             return APIResponse.okResponse(usersDTOs, "Users successfully retrieved from DB");
     }
 
     /**
      * denne er standard, returner en page med objekter
+     * BRUK DENNE HVIS DU TRENGER SIMPEL PAGINERING UTEN NOE SORTERING MEN STANDARD
+     * AT ID ER SORTERT I STIGENDE NATURLIG REKKEFØLGE
      * den kan også ta inn sort via javascript
      * @param pageable
      * @return
      */
     @GetMapping("/paged")
-    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(Pageable pageable) {
-        logger.info("Recieved request to fetch all users with pageable: {}", pageable);
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginatedWithoutSort(Pageable pageable) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to fetch all users with pageable: {}", pageable);
         Page<UsersDBDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
 
         PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
-            logger.info("No users found for requsted page - Page: {}, Size: {}",
+            logger.info("Request ID: {} - No users found for requsted page - Page: {}, Size: {}",
                     pageable.getPageNumber(), pageable.getPageSize());
             // tar inn page objekt og gjlr om til et PagedResponseDTO
             pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
             return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
         }
 
-        logger.info("Successfully fetched {} users - Page {} of {}, Total Users: {}",
+        logger.info("Request ID: {} - Successfully fetched {} users - Page {} of {}, Total Users: {}",
                 usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages(), usersPage.getTotalElements());
         pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
 
@@ -136,11 +140,11 @@ public class UsersDBController {
      * @return
      */
     @GetMapping("/standardSort")
-    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginatedWithServerDefaultValues(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "first_name, phone") String sortBy, @RequestParam(defaultValue = "ASC") String sortDirection) {
-
-        logger.info("Recieved request to fetch all users with page: {}, size: {}, sortBy: {}, sortDirection: {}", page, size, sortBy, sortDirection);
+            @RequestParam(defaultValue = "first_name") String sortBy, @RequestParam(defaultValue = "ASC") String sortDirection) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to fetch all users with page: {}, size: {}, sortBy: {}, sortDirection: {}", page, size, sortBy, sortDirection);
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
 
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -149,14 +153,43 @@ public class UsersDBController {
         PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
-            logger.info("No users found for requsted page - Page: {}, Size: {}",
+            logger.info("Request ID: {} - No users found for requsted page - Page: {}, Size: {}",
                     pageable.getPageNumber(), pageable.getPageSize());
             // tar inn page objekt og gjlr om til et PagedResponseDTO
             pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
             return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
         }
 
-        logger.info("Successfully fetched {} users - Page {} of {}, Total Users: {}",
+        logger.info("Request ID: {} - Successfully fetched {} users - Page {} of {}, Total Users: {}",
+                usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages(), usersPage.getTotalElements());
+        pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
+
+        return APIResponse.okResponse(pagedResponseDTO, "Users successfully retrieved from DB.");
+    }
+
+    /**
+     * Denne metoden sorterer via javascript paramtere i url, den over tar inn forskjellige requestparam,
+     * fordi den sorterer på serversiden. Men denne er normalest å implementere med sort enn den øverst.
+     * Kommer an på om den skal sorteres automatisk elller ikke via server.
+     * @return
+     */
+    @GetMapping("/pageWithoutSortOnServer")
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(Pageable pageable) {
+        logger.info("Request ID: {} - Received request to fetch all users with page: {}, size: {}, sort: {}",
+                pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+        Page<UsersDBDTO> usersPage = usersService.fetchAllUsersPaginatedWithSortAndDirection(pageable);
+
+        PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
+
+        if (usersPage.isEmpty()) {
+            logger.info("Request ID: {} - No users found for requsted page - Page: {}, Size: {}",
+                    pageable.getPageNumber(), pageable.getPageSize());
+            // tar inn page objekt og gjlr om til et PagedResponseDTO
+            pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
+            return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
+        }
+
+        logger.info("Request ID: {} - Successfully fetched {} users - Page {} of {}, Total Users: {}",
                 usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages(), usersPage.getTotalElements());
         pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
 
