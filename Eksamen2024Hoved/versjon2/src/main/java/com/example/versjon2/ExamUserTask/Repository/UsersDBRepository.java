@@ -2,6 +2,7 @@ package com.example.versjon2.ExamUserTask.Repository;
 
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
 import lombok.AllArgsConstructor;
+import org.apache.coyote.http11.upgrade.UpgradeProcessorInternal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -13,6 +14,8 @@ import java.sql.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Repository
@@ -35,8 +38,8 @@ public class UsersDBRepository {
         });
 
         if (insertedRows != 1) {
-           logger.error("Request ID: {} - Failed to insert user with email: {} into database, Already exists or invalid argument.", requestId, userdb.getEmail());
-           throw new SQLException("Insertion of user affected " + insertedRows + " rows, expected 1 for email: " + userdb.getEmail());
+            logger.error("Request ID: {} - Failed to insert user with email: {} into database, Already exists or invalid argument.", requestId, userdb.getEmail());
+            throw new SQLException("Insertion of user affected " + insertedRows + " rows, expected 1 for email: " + userdb.getEmail());
         }
 
         logger.info("Request ID: {} - User with email {} successfully saved USer to DB.", requestId, userdb.getEmail());
@@ -118,6 +121,55 @@ public class UsersDBRepository {
         List<UsersDB> usersDBs = jdbcTemplate.query(sql, new Object[]{pageSize, offset}, usersDBRowMapper);
         logger.info("Request ID: {} - Successfully fetched page {} of {} Users: {} from DB", requestId, pageSize, offset, usersDBs);
         return usersDBs;
+    }
+
+    public List<UsersDB> getUersPageOrderByFirstNameAsc(int pageSize, long offset, Optional<String> sortBy, Optional<String> sortDirection) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting fetching page {} of {} users from DB.", requestId, pageSize, offset);
+
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM USERSDB");
+
+        if (sortBy.isPresent() && !sortBy.get().trim().isEmpty()) {
+            // White-list tillatte kolonner for å forhindre SQL-injeksjon
+            List<String> validSortColumsns = sortBy.stream()
+                    .map(String::trim)
+                    .filter(sortColumn -> !sortColumn.isEmpty() && isValidSortColumn(sortColumn))
+                    .collect(Collectors.toList());
+
+            if (validSortColumsns.isEmpty()) {
+                logger.warn("Request ID: {} - Invalid sort column, applying ordering by id: .  Ignoring sort order.", requestId);
+                sqlBuilder.append(" ORDER BY ").append(" id");
+            } else {
+                for (int i = 0; i < validSortColumsns.size(); i++) {
+                    String sortColumn = validSortColumsns.get(i);
+                    if (i == 0) {
+                        sqlBuilder.append(" ORDER BY ").append(sortColumn);
+                    }
+                    sqlBuilder.append(", ").append(sortColumn);
+                }
+            }
+            // Velger sorteringsretning
+            if (sortDirection.isPresent()) {
+                String direction = sortDirection.get().trim().toUpperCase();
+                if (direction.equals("ASC") || direction.equals("DESC")) {
+                    sqlBuilder.append(" ").append(direction);
+                } else {
+                    logger.warn("Request ID: {} - Invalid sort direction: {}. Using default ASC.", requestId, direction);
+                    sqlBuilder.append(" ASC");
+                }
+            }
+        }
+        sqlBuilder.append(" LIMIT ? OFFSET ?");
+        String sql = sqlBuilder.toString();
+        List<UsersDB> usersDBs = jdbcTemplate.query(sql, new Object[]{pageSize, offset}, usersDBRowMapper);
+        logger.info("Request ID: {} - Successfully fetched page {} of {} Users: {} from DB", requestId, pageSize, offset, usersDBs);
+        return usersDBs;
+    }
+
+    private static final Set<String> VALID_SORT_COLUMNS =
+            Set.of("id", "first_name", "last_name", "dob", "phone", "email", "created_at", "updated_at");
+    private boolean isValidSortColumn(String sortColumn) {
+        return VALID_SORT_COLUMNS.contains(sortColumn.trim().toLowerCase());
     }
 
 }

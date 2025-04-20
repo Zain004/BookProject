@@ -13,6 +13,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,8 +121,9 @@ public class UsersDBService {
 
     @Transactional(readOnly = true)
     public Page<UsersDBDTO> fetchAllUsersPaginated(Pageable pageable) {
-        logger.info("Service Request: Fetching paginated users from DB - Page: {}, Size: {}",
-                pageable.getPageNumber(), pageable.getPageSize());
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Service Request: Fetching paginated users from DB - Page: {}, Size: {}",
+                requestId, pageable.getPageNumber(), pageable.getPageSize());
 
         int pageNumber = pageable.getPageNumber(); // kun brukt for loggign
         int pageSize = pageable.getPageSize();
@@ -139,20 +141,53 @@ public class UsersDBService {
         Page<UsersDB> page = new PageImpl<>(usersDBS, pageable, totalElements);
         return page.map(UsersDBDTO::convertToDTO);
     }
-/*
+
     @Transactional(readOnly = true)
-    public Page<UsersDTO> fetchAllUsersFilteredAndSortedPaginated(String firstname, LocalDate dobFrom, LocalDate dobTo, Pageable pageable) {
+    public Page<UsersDBDTO> fetchAllUsersPaginatedWithSortAndDirection(Pageable pageable) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Service Request: Fetching paginated users from DB - Page: {}, Size: {}",
+                requestId, pageable.getPageNumber(), pageable.getPageSize());
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        long offSet = pageable.getOffset();
+        // Hent listen over sorteringskriterier
+        Optional<String> sortField = Optional.empty();
+        Optional<String> sortDirection = Optional.empty();
+
+        if (pageable.getSort().isSorted()) {
+            Sort.Order order = pageable.getSort().toList().get(0); // hent første sorteringsorder
+            logger.info("Sort field: {}, Sort direction: {}", order.getProperty(), order.getDirection());
+            sortField = Optional.of(order.getProperty());
+            sortDirection = Optional.of(order.getDirection().name());
+        }
+
+        // 1. Hent totalt antall elementer (for Page-objektet)
+        long totalElements = usersDbRepository.countElements();
+
+        // 2. Hent data for gjeldende side
+        List<UsersDB> usersDBS = usersDbRepository.getUersPageOrderByFirstNameAsc(pageSize,offSet, sortField, sortDirection);
+
+
+        logger.debug("Fetched {} Users entities from DB for page {} of {}",
+                usersDBS.size(), pageNumber + 1, (totalElements + pageSize - 1) / pageSize); // Calculate total pages
+
+        Page<UsersDB> page = new PageImpl<>(usersDBS, pageable, totalElements);
+        return page.map(UsersDBDTO::convertToDTO);
+    }
+    /*
+    @Transactional(readOnly = true)
+    public Page<UsersDBDTO> fetchAllUsersFilteredAndSortedPaginated(String firstname, LocalDate dobFrom, LocalDate dobTo, Pageable pageable) {
         logger.info("Service Request: Fetching filtered and sorted paginated users from DB - firstname: {}," +
                 "dobFrom: {}, dobTo: {}, Page: {}, Size: {}", firstname, dobFrom, dobTo, pageable.getPageNumber() + 1, pageable.getPageSize());
-        Specification<Users> spec = createSpecification(firstname, dobFrom, dobTo);
 
-        Page<Users> usersPage = usersRepository.findAll(spec, pageable);
+        Page<UsersDB> usersPage = usersRepository.findAll(spec, pageable);
         logger.debug("Fetched {} Users entities from DB for page {} of {}",
                 usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages());
 
-        return usersPage.map(UsersDTO::convertToDTO);
+        return usersPage.map(UsersDBDTO::convertToDTO);
     }
-
+/*
     private Specification<Users> createSpecification(String firstname, LocalDate dobFrom, LocalDate dobTo) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -183,8 +218,10 @@ public class UsersDBService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+
+
+
  */
-
-
 }
 

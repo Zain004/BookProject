@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -133,18 +135,18 @@ public class UsersDBController {
      * @param sortDirection
      * @return
      */
-    /*
     @GetMapping("/standardSort")
-    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "firstName") String sortBy, @RequestParam(defaultValue = "ASC") String sortDirection) {
+            @RequestParam(defaultValue = "first_name, phone") String sortBy, @RequestParam(defaultValue = "ASC") String sortDirection) {
+
         logger.info("Recieved request to fetch all users with page: {}, size: {}, sortBy: {}, sortDirection: {}", page, size, sortBy, sortDirection);
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<UsersDTO> usersPage = usersService.fetchAllUsersPaginated(pageable);
+        Page<UsersDBDTO> usersPage = usersService.fetchAllUsersPaginatedWithSortAndDirection(pageable);
 
-        PagedResponseDTO<UsersDTO> pagedResponseDTO;
+        PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
             logger.info("No users found for requsted page - Page: {}, Size: {}",
