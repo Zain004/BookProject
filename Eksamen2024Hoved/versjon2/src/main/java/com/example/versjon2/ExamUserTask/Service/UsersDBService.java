@@ -263,18 +263,25 @@ public class UsersDBService {
             }
             whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
             whereClause.append(" dob BETWEEN ? AND ? ");
-            params.add(dobFrom);
-            params.add(dobTo);
-            countParams.add(dobFrom);
-            countParams.add(dobTo);
+            java.sql.Date sqlDobFrom = java.sql.Date.valueOf(dobFrom);
+            java.sql.Date sqlDobTo = java.sql.Date.valueOf(dobTo);
+            params.add(sqlDobFrom);
+            params.add(sqlDobTo);
+            logger.info("Request ID: {} - dobFrom: {}, dobTo: {}", requestId, sqlDobFrom, sqlDobTo);
+            countParams.add(sqlDobFrom);
+            countParams.add(sqlDobTo);
         } else if (dobFrom != null) {
             whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
             whereClause.append(" dob >= ? ");
-            params.add(dobFrom);
+            java.sql.Date sqlDate = Date.valueOf(dobFrom);
+            logger.info("Request ID: {} - dobFrom: {}", requestId, sqlDate);
+            params.add(sqlDate);
         } else if (dobTo != null) {
             whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
             whereClause.append(" dob <= ? ");
-            params.add(dobTo);
+            java.sql.Date sqlDate = Date.valueOf(dobTo);
+            logger.info("Request ID: {} - dobTo: {}", requestId, sqlDate);
+            params.add(sqlDate);
         }
         sql.append(whereClause);
         // ORDER BY CLAUSE
@@ -284,6 +291,7 @@ public class UsersDBService {
         sql.append(" LIMIT ? OFFSET ?");
         params.add(pageable.getPageSize());
         params.add(pageable.getOffset());
+        logger.info("Request ID: {} - SQL query: {}", requestId, sql);
         return new SqlQueryWithParams(sql.toString(), params, whereClause.toString(), countParams);
     }
 

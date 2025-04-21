@@ -7,6 +7,7 @@ import org.apache.coyote.http11.upgrade.UpgradeProcessorInternal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -201,10 +202,26 @@ public class UsersDBRepository {
     String requestId = MDC.get("requestId");
     logger.info("Request ID: {} - Attempting Fetching users Filtered by params: ", requestId, sqlQueryWithParams.toString());
 
-    List<UsersDB> usersDBS = jdbcTemplate.query(sqlQueryWithParams.getSql(), sqlQueryWithParams.getCountParams().toArray(new Object[0]), usersDBRowMapper);
+    String query = buildFinalQuery(sqlQueryWithParams.getSql(), sqlQueryWithParams.getParams().toArray());
+    logger.info("Request ID: {} - Final SQL: {}", requestId, query);
+
+    List<UsersDB> usersDBS = jdbcTemplate.query(sqlQueryWithParams.getSql(), sqlQueryWithParams.getParams().toArray(), usersDBRowMapper);
     logger.info("Request ID: {} - Successfully fetched {} Users: {} from DB", requestId, usersDBS.size(), usersDBS);
 
     return usersDBS;
+    }
+
+    private String buildFinalQuery(String sql, Object[] params) {
+        if (params == null || params.length == 0) {
+            return sql;
+        }
+        String finalQuery = sql;
+        for (Object param : params) {
+            String paramString = (param != null) ? param.toString() : "NULL";
+            finalQuery = finalQuery.replaceFirst("\\?", "'" + paramString + "'");
+        }
+        return finalQuery;
+
     }
 
     public long getCountForFilteredElements(UsersDBService.SqlQueryWithParams sqlQueryWithParams) {

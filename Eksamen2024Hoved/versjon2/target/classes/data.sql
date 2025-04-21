@@ -17,8 +17,9 @@ INSERT INTO usersdb (first_name, last_name, dob, phone, email) VALUES
     ('Thea', 'Solberg', '1981-07-23', '00112233', 'thea.solberg@example.com');
 
 
-
  */
+
+
 INSERT INTO BOOKSQL (title, author, publishing_year, rating, category) VALUES
 ('The Sun and Her Flowers', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
 ('The Sun and flower', 'Rupi Kaur', 2017, 4.5, 'Poetry'),
