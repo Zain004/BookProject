@@ -1,11 +1,13 @@
 package com.example.versjon2.ExamUserTask.Repository;
 
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
+import com.example.versjon2.ExamUserTask.Service.UsersDBService;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.http11.upgrade.UpgradeProcessorInternal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -114,6 +116,13 @@ public class UsersDBRepository {
         return count;
     }
 
+    /**
+     * Denne metoden er standard paginering, Ganske simpel.
+     * Den paginerer korrekt men sorterer ikke eller filtrerer ikke
+     * @param pageSize
+     * @param offset
+     * @return
+     */
     public List<UsersDB> getUersPage(int pageSize, long offset) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Attempting fetching page {} of {} users from DB", requestId, pageSize, offset);
@@ -123,6 +132,17 @@ public class UsersDBRepository {
         return usersDBs;
     }
 
+    /**
+     * Denne metoden er bedre, den sorterer med flere parametre og
+     * har en private metode som den sjekker opp mot om sorteringskolonnen er gyldig.
+     * I tillegg hvis du har behov for sortering bruk denne hvis du ikke har behov
+     * bruk metoden over, fordi den er ganske rett ffrem uten sortering
+     * @param pageSize
+     * @param offset
+     * @param sortBy
+     * @param sortDirection
+     * @return
+     */
     public List<UsersDB> getUersPageOrderByAndDirection(int pageSize, long offset, List<String> sortBy, Optional<String> sortDirection) {
         String requestId = MDC.get("requestId");
         logger.info("Request ID: {} - Attempting fetching page {} of {} users from DB.", requestId, pageSize, offset);
@@ -172,8 +192,29 @@ public class UsersDBRepository {
 
     private static final Set<String> VALID_SORT_COLUMNS =
             Set.of("id", "first_name", "last_name", "dob", "phone", "email", "created_at", "updated_at");
+
     private boolean isValidSortColumn(String sortColumn) {
         return VALID_SORT_COLUMNS.contains(sortColumn.trim().toLowerCase());
     }
 
+    public List<UsersDB> getUsersFilteredAndSortedPAginated(UsersDBService.SqlQueryWithParams sqlQueryWithParams) {
+    String requestId = MDC.get("requestId");
+    logger.info("Request ID: {} - Attempting Fetching users Filtered by params: ", requestId, sqlQueryWithParams.toString());
+
+    List<UsersDB> usersDBS = jdbcTemplate.query(sqlQueryWithParams.getSql(), sqlQueryWithParams.getCountParams().toArray(new Object[0]), usersDBRowMapper);
+    logger.info("Request ID: {} - Successfully fetched {} Users: {} from DB", requestId, usersDBS.size(), usersDBS);
+
+    return usersDBS;
+    }
+
+    public long getCountForFilteredElements(UsersDBService.SqlQueryWithParams sqlQueryWithParams) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Attempting getting totalElements for query: ", requestId, sqlQueryWithParams.toString());
+
+        String countQuery = "SELECT COUNT(*) FROM USERSDB " + sqlQueryWithParams.getCountWhereClause();
+        long total = jdbcTemplate.queryForObject(countQuery, sqlQueryWithParams.getCountParams().toArray(new Object[0]), long.class);
+
+        logger.info("Request ID: {} - Successfully fetched totalElements: {} from DB", requestId, total);
+        return total;
+    }
 }

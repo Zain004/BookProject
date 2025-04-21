@@ -6,9 +6,13 @@ import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
 import com.example.versjon2.ExamUserTask.Repository.UsersDBRepository;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.cglib.core.Local;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -178,53 +182,114 @@ public class UsersDBService {
         Page<UsersDB> page = new PageImpl<>(usersDBS, pageable, totalElements);
         return page.map(UsersDBDTO::convertToDTO);
     }
-    /*
+
+    /**
+     * Denne metoden filtrerer etter fornavn og henter navn som er
+     * mellom disse 2 valgte datoene og sorterer manuels basert på fornavn.
+     * Den bruker en egen klasse for å lage spørringen fordi spørringen blir kompleks.
+     * I tillegg har den en egen private metode som har isntans til denne klassen
+     * og genererer spørringen og setter inn i klassens objekt og gir objektet.
+     * Så bruker vi dette objektet videre i repository metodene
+     * @param firstname
+     * @param dobFrom
+     * @param dobTo
+     * @param pageable
+     * @return
+     */
     @Transactional(readOnly = true)
     public Page<UsersDBDTO> fetchAllUsersFilteredAndSortedPaginated(String firstname, LocalDate dobFrom, LocalDate dobTo, Pageable pageable) {
-        logger.info("Service Request: Fetching filtered and sorted paginated users from DB - firstname: {}," +
-                "dobFrom: {}, dobTo: {}, Page: {}, Size: {}", firstname, dobFrom, dobTo, pageable.getPageNumber() + 1, pageable.getPageSize());
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Service Request: Fetching filtered and sorted paginated users from DB - firstname: {}," +
+                "dobFrom: {}, dobTo: {}, Page: {}, Size: {}", requestId, firstname, dobFrom, dobTo, pageable.getPageNumber() + 1, pageable.getPageSize());
 
-        Page<UsersDB> usersPage = usersRepository.findAll(spec, pageable);
+        // Steg 1: oppretter spørrringen med en egen metode
+        SqlQueryWithParams sqlQueryWithParams = createSqlQueryWithParams(firstname, dobFrom, dobTo, pageable);
+
+        // Steg 2: henter data fra DB med via repository-metoden getUsersFilteredAndSortedPAginated
+        List<UsersDB> users = usersDbRepository.getUsersFilteredAndSortedPAginated(sqlQueryWithParams);
+
+        // 1. Hent totalt antall elementer (for Page-objektet)
+        long total = usersDbRepository.getCountForFilteredElements(sqlQueryWithParams);
         logger.debug("Fetched {} Users entities from DB for page {} of {}",
-                usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages());
+                users.size(), pageable.getPageNumber() + 1, (total + pageable.getPageSize() - 1) / pageable.getPageSize());
 
-        return usersPage.map(UsersDBDTO::convertToDTO);
-    }
-/*
-    private Specification<Users> createSpecification(String firstname, LocalDate dobFrom, LocalDate dobTo) {
-        return (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            // Null-sjekk og Tom streng-sjekk
-            if(firstname != null && !firstname.isEmpty()) {
-                // WHERE LOWER(firstname) LIKE "%john%"
-                String searchTerm = "%" + firstname + "%";
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName"))
-                        ,searchTerm)); // vil søke etter %firstName%
-            }
-            // AND
-            if (dobTo != null && dobFrom != null) {
-                if (dobFrom.isAfter(dobTo)) {
-                 throw new IllegalArgumentException("dobFrom cannot be after dobTo"); // tidlig feilhåndteirng
-                }
-                predicates.add(criteriaBuilder.between(root.get("dob"), dobFrom, dobTo));
-            } else if (dobFrom != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dob"), dobFrom));
-            } else if (dobTo != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dob"), dobTo));
-            }
-            // ORDER BY firstName ASC - Sorter basert på bruker input
-            // kun sorter etter fornavn hvis den er fylt ut
-            if (firstname != null && !firstname.isEmpty()) {
-                query.orderBy(criteriaBuilder.asc(root.get("firstName")));
-            }
-// SELECT * FROM users WHERE LOWER(firstName) LIKE '%john%' AND dob = '1990-01-01' ORDER BY firstName ASC;
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
+        Page<UsersDB> page = new PageImpl<>(users, pageable, total);
+        return page.map(UsersDBDTO::convertToDTO);
     }
 
+    @AllArgsConstructor
+    @ToString
+    @Getter
+    @Setter
+    public static class SqlQueryWithParams {
+        String sql;
+        List<Object> params;
+        String countWhereClause;
+        List<Object> countParams;
+    }
+
+    /**
+     *
+     * @param firstName
+     * @param dobFrom
+     * @param dobTo
+     * @param pageable, tar inn dette fordi må bruke LIMIT ? OFFSET ?
+     * @return
+     */
+    private SqlQueryWithParams createSqlQueryWithParams(String firstName, LocalDate dobFrom, LocalDate dobTo, Pageable pageable) {
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Service Request: Creating SQL query with params Firstname: {}, dobFrom: {}, dobTo: {}.", requestId, firstName, dobFrom, dobTo);
+        StringBuilder sql = new StringBuilder("SELECT * FROM USERSDB");
+        StringBuilder whereClause = new StringBuilder(); // en WHERE clausul brukes for å filtrere rader
+
+        List<Object> params = new ArrayList<>();
+        List<Object> countParams = new ArrayList<>();
+
+        // WHERE klauselen
+        if (firstName != null && !firstName.isEmpty()) {
+            whereClause.append(" WHERE first_name ILIKE ? ");
+            params.add("%" + firstName + "%");
+            countParams.add("%" + firstName + "%");
+        }
+     /* Eksempel:
+        Hvis firstName = "ann", så blir SQL-spørringen noe sånt som:
+        SELECT * FROM person WHERE first_name ILIKE '%ann%'
+        Denne spørringen vil matche navn som: "Ann", "Joanna", "Brianna"
+         */
+        if (dobFrom != null && dobTo != null) {
+            if (dobFrom.isAfter(dobTo)) {
+                logger.warn("Request ID: {} - dobFrom cannot be after dobTo.");
+                throw new IllegalArgumentException("dobFrom cannot be after dobTo");
+            }
+            whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
+            whereClause.append(" dob BETWEEN ? AND ? ");
+            params.add(dobFrom);
+            params.add(dobTo);
+            countParams.add(dobFrom);
+            countParams.add(dobTo);
+        } else if (dobFrom != null) {
+            whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
+            whereClause.append(" dob >= ? ");
+            params.add(dobFrom);
+        } else if (dobTo != null) {
+            whereClause.append(whereClause.length() > 0 ? " AND " : " WHERE ");
+            whereClause.append(" dob <= ? ");
+            params.add(dobTo);
+        }
+        sql.append(whereClause);
+        // ORDER BY CLAUSE
+        if (firstName != null && !firstName.isEmpty()) {
+            sql.append(" ORDER BY first_name ASC ");
+        }
+        sql.append(" LIMIT ? OFFSET ?");
+        params.add(pageable.getPageSize());
+        params.add(pageable.getOffset());
+        return new SqlQueryWithParams(sql.toString(), params, whereClause.toString(), countParams);
+    }
 
 
 
- */
+
+
 }
 

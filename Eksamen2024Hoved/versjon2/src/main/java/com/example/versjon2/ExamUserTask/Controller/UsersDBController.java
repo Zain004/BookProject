@@ -205,18 +205,18 @@ public class UsersDBController {
      * @param pageable
      * @return
      */
-    /*
+
     @GetMapping("/volunteer-opportunities/sort-and-filter")
-    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDTO>>> getAllUsersPaginated(
+    public ResponseEntity<APIResponse<PagedResponseDTO<UsersDBDTO>>> getAllUsersPaginated(
             @RequestParam(name="firstName", required = false) String firstName,
             @RequestParam(name="dobFrom", required = false) LocalDate dobFrom,
             @RequestParam(name="dobTo", required = false) LocalDate dobTo,
             Pageable pageable) {
         logger.info("Recieved request to fetch all users with filters - firstName: {}, dobFrom: {}, dobTo: {}, pageable: {}",
                 firstName, dobFrom, dobTo, pageable);
-        Page<UsersDTO> usersPage = usersService.fetchAllUsersFilteredAndSortedPaginated(firstName, dobFrom, dobTo, pageable);
+        Page<UsersDBDTO> usersPage = usersService.fetchAllUsersFilteredAndSortedPaginated(firstName, dobFrom, dobTo, pageable);
 
-        PagedResponseDTO<UsersDTO> pagedResponseDTO;
+        PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
             logger.info("No users found for requested criteria - Page: {}, Size: {}",
@@ -233,7 +233,7 @@ public class UsersDBController {
         return APIResponse.okResponse(pagedResponseDTO, "Users successfully retrieved from DB.");
     }
 
-    */
+
 }
 
 

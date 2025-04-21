@@ -35,28 +35,31 @@
 </head>
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
-    <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
-        <a class="navbar-brand" href="#">User Management</a>
-        <!-- Hamburger menu (mobile) -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-                aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- Navigation links -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center">
-                <!-- You can add more navigation items here if needed -->
-                <li class="nav-item">
-                    <a class="nav-link text-white" href="#">
-                        User List <span class="visually-hidden">(current)</span
-                    ></a>
-                </li>
-            </ul>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+        <div class="container-fluid"> <!-- Den skal dekke hele bredden -->
+            <a class="navbar-brand" href="#">User Management</a>
+            <!-- Hamburger menu (mobile) -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- Navigation links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <!-- You can add more navigation items here if needed -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#">
+                            User List <span class="visually-hidden">(current)</span
+                        ></a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
+
 
 <!-- Main container -->
 <main class="container mt-4">
@@ -96,41 +99,39 @@
                 </tbody>
             </table>
         </div>
-    </section>
 
-    <!-- No users message -->
-    <section>
+        <!-- No users message -->
         <div id="noUserMessage" class="alert alert-info mt-3" style="display: none" role="alert">
             No users found in the database
         </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                <!-- Previos Button -->
+                <li class="page-item" id="previous-page">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">«</span>
+                        <span class="visually-hidden">Previous</span>
+                    </a>
+                </li>
+
+                <li class="page-item" id="current-page-display">
+                    <span class="page-link">
+                        <span id="current-page-number">1</span>
+                    </span>
+                </li>
+
+                <!-- Next Button -->
+                <li class="page-item" id="next-page">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">»</span>
+                        <span class="visually-hidden">Next</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </section>
-
-    <!-- Pagination -->
-    <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-center">
-            <!-- Previos Button -->
-            <li class="page-item" id="previous-page">
-                <a class="page-link" href="#" aria-label="Previous">
-                    <span aria-hidden="true">«</span>
-                    <span class="visually-hidden">Previous</span>
-                </a>
-            </li>
-
-            <li class="page-item" id="current-page-display">
-                <span class="page-link">
-                    <span id="current-page-number">1</span>
-                </span>
-            </li>
-
-            <!-- Next Button -->
-            <li class="page-item" id="next-page">
-                <a class="page-link" href="#" aria-label="Next">
-                    <span aria-hidden="true">»</span>
-                    <span class="visually-hidden">Next</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
 </main>
 
 <!-- oppretter en toast-->
@@ -159,19 +160,33 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
-    /**
-     *
-     * @param message
-     * @param isSuccess
-     */
-    const showToast = (message, isSuccess = true) => {
-        const toastElement = document.getElementById('toast');
-        const toastBody = toastElement.querySelector('.toast-body');
-        toastBody.classList.remove('bg-danger', 'bg-success');
-        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
-        toastBody.textContent = message; // Sett meldingsteksten i toast-body
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
+    class ToastService {
+        static DEFAULT_OPTIONS = {
+            toastElementId: 'toast',
+            toastBody: 'toast-body'
+        }
+
+        #options
+        #toastElementId
+        #toastBody
+        constructor(options = {}) {
+            this.#options = {
+                ...ToastService.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#toastElementId = document.getElementById(this.#options.toastElementId);
+            this.#toastBody = document.querySelector(`.${this.#options.toastBody}`);
+            if (!this.#toastElementId || !this.#toastBody) {
+                console.error("Toast element or body not found.")
+            }
+        }
+        showToast(message, isSuccess = true) {
+            this.#toastBody.classList.remove('bg-danger', 'bg-success');
+            this.#toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+            this.#toastBody.textContent = message; // Sett meldingsteksten i toast-body
+            const toast = new bootstrap.Toast(this.#toastElementId);
+            toast.show();
+        }
     }
 
     class LoadingIndicator {
@@ -335,6 +350,8 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
     }
 
+    const toast = new ToastService();
+
     class Pagination {
         static DEFAULT_OPTIONS = {
             initialPage: 0,          // Startside
@@ -413,7 +430,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         updatePagination(pagedResponse) {
             if (!pagedResponse || typeof pagedResponse !== 'object') {
                 console.warn("Invalid pagedResponse received:", pagedResponse);
-                showToast("Invalid pagedResponse received!", false);
+                toast.showToast("Invalid pagedResponse received!", false);
                 return; // Viktig: Avslutt tidlig hvis responsen er ugyldig.
             }
             this.#currentPage = pagedResponse.pageNumber;  // Bruker pageNumber
@@ -450,14 +467,14 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         const currentPage = pagination.getCurrentPage();
         const pageSize = pagination.getPageSize();
         const API_BASE_URL = '/api/usersDB';
-        const API_ENDPOINT = '/pageWithoutSortOnServer';
+        const API_ENDPOINT = '/paged';
         const PAGE = `?page=${currentPage}`;
         const SIZE = `&size=${pageSize}`;
-        const SORT = '&sort=;'
-        // SORT = '&sort='', ikke fyll inn noe hvis du ikke vil bruke den
-        // SORT = '&sort=firstName' sorter etter fornavn
-        // SORT = '&sort=firstName,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
-        // SORT = '&sort=firstName,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
+        const SORT = '&sort=first_name,Desc;'
+        // SORT = '&sort='first_name', ikke fyll inn noe hvis du ikke vil bruke den
+        // SORT = '&sort=first_name, phone,desc' sorter etter fornavn
+        // SORT = '&sort=first_name,desc' sorter etter fornavn men motsatt rekkefølge fra Z-A
+        // SORT = '&sort=first_name,email'; sorterer primært på fornavn, men hvis noen fornavn matcher og
         // de har annerledes bokstav på email, sorteres de på email også
         // vanlig sort returnerer i asc
         const url = `${API_BASE_URL}${API_ENDPOINT}${PAGE}${SIZE}${SORT}`;
@@ -469,21 +486,21 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             // 1. Sjekk om response.data eksisterer
             if (!response.data) {
                 console.warn("Empty or invalid response recieved: response.data is missing", response);
-                showToast("Recieved an unexpected response from the server.");
+                toast.showToast("Recieved an unexpected response from the server.");
                 return;
             }
             const pagedResponse = response.data.data; // hent ut listen med users
             // 2. sjekk om response.data.data er gyldig, om det inneholder noe content
             if (!pagedResponse) {
                 console.warn("Invalid response recieved: data is invalid.", data);
-                showToast("No users were found for this request.")
+                toast,showToast("No users were found for this request.")
                 return;
             }
             const users = pagedResponse.content;
             // 3. valider om det er ert array
             if (!Array.isArray(users)) {
                 console.error("API returned non-array data:", data);
-                showToast("An unexpected error occurred: Invalid data format received.", false);
+                toast.showToast("An unexpected error occurred: Invalid data format received.", false);
                 return; // avslutt
             }
             // 4. Oppdater paginering (Nå er vi sikre på gyldige data)
@@ -500,7 +517,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             return;
 
             const errorMessage = `API Error: ${response.message || 'Failed to fetch users (no message provided)'}`;
-            showToast(errorMessage, false);
+            toast.showToast(errorMessage, false);
         } catch (error) {
                 let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
                 const statusCode = error.response?.status;
@@ -531,7 +548,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 } else {
                     // Non-Axios related errors (e.g., JSON parsing, code errors)
                     console.error("Unexpected Error:", error); // Log full error object
-                    showToast("An unexpected error occurred. Please try again later.", false);
+                    toast.showToast("An unexpected error occurred. Please try again later.", false);
                 }
 // Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
 // ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
@@ -551,10 +568,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
                 if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
                     console.error("Max retries reached. Error: ", error);
-                    showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+                    toast.showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
                 }
 
-                showToast(userFriendlyErrorMessage, false);
+                toast.showToast(userFriendlyErrorMessage, false);
             } finally {
                 loadingIndicator.hide();
             }
@@ -575,7 +592,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         if (!users || !Array.isArray(users)) {
             const message = "Warning: 'users' is null, undefined, or not an array."
             console.warn(message);
-            showToast(message, false);
+            toast.showToast(message, false);
             messageHandler.displayNoUserMessage();
             return; // Avslutt tidlig
         }
@@ -610,7 +627,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         console.log(currentTime);
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
-            showToast(error.message, false);
+            toast.showToast(error.message, false);
         })
     })
 </script>
