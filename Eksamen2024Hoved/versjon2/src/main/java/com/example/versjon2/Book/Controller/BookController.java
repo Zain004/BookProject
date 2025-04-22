@@ -1,9 +1,9 @@
 package com.example.versjon2.Book.Controller;
 
-import com.example.versjon2.APIResponse;
+import com.example.versjon2.CommonItems.Response.APIResponse;
 import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Book.statistics.BookStatsDTO;
-import com.example.versjon2.Book.BooksDTO;
+import com.example.versjon2.Book.DTO.BooksDTO;
 import com.example.versjon2.Book.Entity.Book;
 import com.example.versjon2.Book.Service.AuthorService;
 import com.example.versjon2.Book.Service.BookService;

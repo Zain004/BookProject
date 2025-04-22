@@ -1,11 +1,10 @@
-package com.example.versjon2.Book;
+package com.example.versjon2.Book.DTO;
 
 import com.example.versjon2.Book.Entity.Book;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.SecondaryRow;
 
 import java.util.ArrayList;
 import java.util.List;

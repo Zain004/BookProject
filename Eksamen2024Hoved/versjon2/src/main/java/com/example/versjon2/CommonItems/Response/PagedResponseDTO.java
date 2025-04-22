@@ -1,4 +1,4 @@
-package com.example.versjon2;
+package com.example.versjon2.CommonItems.Response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

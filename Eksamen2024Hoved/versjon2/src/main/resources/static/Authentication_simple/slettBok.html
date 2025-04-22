@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-1">
+    <h2 class="mb-4">Slett en Bok</h2>
+    <!-- Skjema for å sende DELETE forespørsel -->
+    <form id="deleteBookForm">
+        <div class="form-group">
+            <label for="bookId">Bok ID</label>
+            <input type="number" class="form-control" id="bookId" required placeholder="Skriv inn Bok ID"/>
+        </div>
+        <!-- Submiot knapp for å slette-->
+        <button type="submit" class="btn btn-danger">Slett bok</button>
+    </form>
+</div>
+<!-- ResponsMelding --->
+<div id="responseMessage" class="mt-4"></div>
+<script>
+document.getElementById("deleteBookForm").addEventListener("submit", slettBok);
+    async function slettBok() {
+        event.preventDefault();
+        const bookId = document.getElementById('bookId').value;
+        if(!bookId) { // hvis bookid ikke er utfylt
+            document.getElementById('responseMessage').innerHTML =
+                '<div class="alert alert-warning">Vennligst fyll ut Bok ID</div>';
+            return; // Stopp funksjonen hvis ikke Id er fylt ut
+        }
+        const url = `/BookController/deleteBook/${bookId}`;
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'}
+            });
+            // Les responsen som ren tekst fodi bruker ResponseEntity
+            const data = await response.json();
+            if (response.ok) {
+                console.log(data.success);
+                document.getElementById("responseMessage").innerHTML =
+                    `<div class="alert alert-success">${data.success}</div>`;
+                setTimeout(() => {
+                    document.getElementById('responseMessage').innerHTML = '';
+                }, 5000)
+            } else {
+                const errorMessage = data.message || 'Ukjent feil oppstod.';
+                console.log(errorMessage);
+                document.getElementById('responseMessage').innerHTML =
+                    `<div class="alert alert-danger">${errorMessage}</div>`;
+                setTimeout(() => {
+                    document.getElementById('responseMessage').innerHTML = '';
+                }, 5000)
+            }
+        } catch (error) {
+            document.getElementById("responseMessage").innerHTML =
+                `<div class="alert alert-danger">Feil: ${error.message}</div>`;
+            console.log(error.message);
+            setTimeout(() => {
+                document.getElementById("responseMessage").innerHTML ='';
+            })
+            }
+
+    }
+</script>
+</body>
+</html>

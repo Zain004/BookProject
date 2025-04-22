@@ -1,11 +1,10 @@
 package com.example.versjon2.ExamUserTask.Controller;
 
-import com.example.versjon2.APIResponse;
+import com.example.versjon2.CommonItems.Response.APIResponse;
 import com.example.versjon2.ExamUserTask.DTO.UsersDBDTO;
-import com.example.versjon2.ExamUserTask.DTO.UsersDTO;
 import com.example.versjon2.ExamUserTask.Entity.UsersDB;
 import com.example.versjon2.ExamUserTask.Service.UsersDBService;
-import com.example.versjon2.PagedResponseDTO;
+import com.example.versjon2.CommonItems.Response.PagedResponseDTO;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -19,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;

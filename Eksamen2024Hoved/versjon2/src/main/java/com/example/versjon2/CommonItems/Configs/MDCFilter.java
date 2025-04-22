@@ -1,4 +1,4 @@
-package com.example.versjon2;
+package com.example.versjon2.CommonItems.Configs;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,11 +18,10 @@ public class MDCFilter extends OncePerRequestFilter {
     throws ServletException, IOException {
         String requestId = UUID.randomUUID().toString(); // Generer request ID her, eller hent fra header
         MDC.put("requestId", requestId);
-
-        try {
-            filterChain.doFilter(request, response);
+        try { // sender forespørselen videre ned i filterkjeden enten til neste filter eller
+            filterChain.doFilter(request, response); // til controllern
         } finally {
-            MDC.clear(); // Fjern alt fra mdc
+            MDC.clear(); // Fjern alt fra mdc, for å gjenbruke tråder og at ingen data lekker
         }
     }
 }

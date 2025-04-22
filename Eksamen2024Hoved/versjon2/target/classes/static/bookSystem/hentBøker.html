@@ -129,19 +129,34 @@
 <!-- Axios CDN lenke -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script defer>
-    /**
-     *
-     * @param message
-     * @param isSuccess
-     */
-    const showToast = (message, isSuccess = true) => {
-        const toastElement = document.getElementById('toast');
-        const toastBody = toastElement.querySelector('.toast-body');
-        toastBody.classList.remove('bg-danger', 'bg-success');
-        toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
-        toastBody.textContent = message; // Sett meldingsteksten i toast-body
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
+    class ToastService {
+        static DEFAULT_OPTIONS = {
+            toastElementId: 'toast',
+            toastBody: 'toast-body'
+        }
+
+        #options
+        #toastElementId
+        #toastBody
+
+        constructor(options = {}) {
+            this.#options = {
+                ...ToastService.DEFAULT_OPTIONS,
+                ...options
+            }
+            this.#toastElementId = document.getElementById(this.#options.toastElementId);
+            this.#toastBody = document.querySelector(`.${this.#options.toastBody}`);
+            if (!this.#toastElementId || !this.#toastBody) {
+                console.error("Toast element or body not found.")
+            }
+        }
+        showToast(message, isSuccess = true) {
+            this.#toastBody.classList.remove('bg-danger', 'bg-success');
+            this.#toastBody.classList.add(isSuccess ? 'bg-success' : 'bg-danger');
+            this.#toastBody.textContent = message; // Sett meldingsteksten i toast-body
+            const toast = new bootstrap.Toast(this.#toastElementId);
+            toast.show();
+        }
     }
 
     class LoadingIndicator {
@@ -304,7 +319,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         }
     }
 
-
+    const toast = new ToastService();
     const messageHandler = new MessageHandler({timeoutDuration : 2000});
     const loadingIndicator = new LoadingIndicator();
 
@@ -332,7 +347,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                     // kallet til axios ble fullført uten problemer,
                     // derfor skal den ikke fortsette nedover
                     const errorMessage = `API Error: ${apiResponse.message || 'Failed to fetch users (no message provided)'}`;
-                    showToast(errorMessage, false); // vis API error message
+                    toast.showToast(errorMessage, false); // vis API error message
                     console.warn(`API Error (success=false): ${errorMessage}`)
                     return;
                 }
@@ -341,7 +356,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
                 // robust type sjekk - sjekker om det virkelig er et array
                 if (!Array.isArray(users)) {
                     console.error("API returned non-array data:", apiResponse);
-                    showToast("An unexpected error occurred: Invalid data format received.", false);
+                    toast.showToast("An unexpected error occurred: Invalid data format received.", false);
                     return; // avslutt
                 }
                 // sjekker om det er noen til stede
@@ -360,7 +375,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
             // ---  Unexpected HTTP Status (not 2xx) ---
             console.warn(`Unexpected HTTP Status: ${response.status}`);
-            showToast(`Unexpected HTTP status: ${response.status}`, false);
+            toast.showToast(`Unexpected HTTP status: ${response.status}`, false);
         }
         catch (error) {
             let userFriendlyErrorMessage = "An unexpected error occurred. Please try again later.";
@@ -392,7 +407,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
             } else {
                 // Non-Axios related errors (e.g., JSON parsing, code errors)
                 console.error("Unexpected Error:", error); // Log full error object
-                showToast("An unexpected error occurred. Please try again later.", false);
+                toast.showToast("An unexpected error occurred. Please try again later.", false);
             }
 // Nettverksfeil - ECONNREFUSED betyr at tilkoblingen til serveren ble avvist.
 // ECONNABORTED refererer til en situasjon der tilkoblingen ble avbrutt
@@ -412,10 +427,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
 
             if (isRetryableError) { //Allerede sjekket om retryCount < maxRetries.
                 console.error("Max retries reached. Error: ", error);
-                showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
+                toast.showToast("Failed to fetch data after multiple attempts. Please try again later.", false);
             }
 
-            showToast(userFriendlyErrorMessage, false);
+            toast.showToast(userFriendlyErrorMessage, false);
         }
         finally {
             loadingIndicator.hide();
@@ -438,7 +453,7 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         if (!books || !Array.isArray(books)) {
             const message = "Warning: 'users' is null, undefined, or not an array."
             console.warn(message);
-            showToast(message, false);
+            toast.showToast(message, false);
             messageHandler.displayNoUserMessage();
             return; // Avslutt tidlig
         }
@@ -471,9 +486,10 @@ Alle verdiene fra objekt2 kopieres oppå de første, og overskriver eventuelle d
         console.log("ready")
         const currentTime = Intl.DateTimeFormat("no-No", {dateStyle: "medium", timeStyle: "medium"}).format(new Date());
         console.log(currentTime);
+        toast.showToast("Hello World!", false);
         fetchUsers().catch(error => {
             console.error("Error during initial user fetch: ", error);
-            showToast(error.message, false);
+            toast.showToast(error.message, false);
         })
     })
 </script>

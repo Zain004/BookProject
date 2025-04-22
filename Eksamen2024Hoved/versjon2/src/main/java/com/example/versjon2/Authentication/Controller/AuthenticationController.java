@@ -1,6 +1,6 @@
 package com.example.versjon2.Authentication.Controller;
 
-import com.example.versjon2.APIResponse;
+import com.example.versjon2.CommonItems.Response.APIResponse;
 import com.example.versjon2.Authentication.LoginRequest;
 import com.example.versjon2.Authentication.Service.UserService;
 import com.example.versjon2.Authentication.UserEntity.User;
