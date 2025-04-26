@@ -210,21 +210,22 @@ public class UsersDBController {
             @RequestParam(name="dobFrom", required = false) LocalDate dobFrom,
             @RequestParam(name="dobTo", required = false) LocalDate dobTo,
             Pageable pageable) {
-        logger.info("Recieved request to fetch all users with filters - firstName: {}, dobFrom: {}, dobTo: {}, pageable: {}",
+        String requestId = MDC.get("requestId");
+        logger.info("Request ID: {} - Recieved request to fetch all users with filters - firstName: {}, dobFrom: {}, dobTo: {}, pageable: {}",
                 firstName, dobFrom, dobTo, pageable);
         Page<UsersDBDTO> usersPage = usersService.fetchAllUsersFilteredAndSortedPaginated(firstName, dobFrom, dobTo, pageable);
 
         PagedResponseDTO<UsersDBDTO> pagedResponseDTO;
 
         if (usersPage.isEmpty()) {
-            logger.info("No users found for requested criteria - Page: {}, Size: {}",
+            logger.info("Request ID: {} - No users found for requested criteria - Page: {}, Size: {}",
                     pageable.getPageNumber(), pageable.getPageSize());
             // tar inn page objekt og gjlr om til et PagedResponseDTO
             pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
             return APIResponse.okResponse(pagedResponseDTO, "No users found. ");
         }
 
-        logger.info("Successfully fetched {} users - Page {} of {}, Total Users: {}",
+        logger.info("Request ID: {}- Successfully fetched {} users - Page {} of {}, Total Users: {}",
                 usersPage.getContent().size(), usersPage.getNumber() + 1, usersPage.getTotalPages(), usersPage.getTotalElements());
         pagedResponseDTO = PagedResponseDTO.fromPage(usersPage);
 
